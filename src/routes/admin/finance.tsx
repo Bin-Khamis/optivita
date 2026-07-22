@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar } from "recharts";
 import { toast } from "sonner";
+import { isWebhookOffline } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/finance")({
   component: AdminFinance,
@@ -424,7 +425,7 @@ function AdminFinance() {
     const pointsEarned = Math.max(1, Math.round((amt / targetCost) * 100));
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       // Mock offline receipt processing
       setTimeout(() => {
         // 1. Add receipt
@@ -641,7 +642,7 @@ function AdminFinance() {
     const expenseId = "EXP-ERP-" + Math.floor(10000 + Math.random() * 90000);
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       setTimeout(() => {
         expenses.push({
           ExpenseId: expenseId,
@@ -745,7 +746,7 @@ function AdminFinance() {
     const rawId = editingTransaction.rawId;
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || webhookUrl.includes("placeholder");
+    const isOffline = isWebhookOffline(webhookUrl);
 
     // Prepare update fields
     let fields: Record<string, any> = {};
@@ -840,7 +841,7 @@ function AdminFinance() {
     const rawId = txn.rawId;
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || webhookUrl.includes("placeholder");
+    const isOffline = isWebhookOffline(webhookUrl);
 
     if (!isOffline) {
       try {

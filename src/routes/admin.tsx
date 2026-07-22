@@ -8,6 +8,7 @@ import { toast, Toaster } from "sonner";
 
 import { CRMContext, type UserSession } from "../lib/crmContext";
 import { getCRMDataFromFirestore, saveCRMDataToFirestore } from "@/lib/firebase";
+import { isWebhookOffline } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -72,7 +73,7 @@ function AdminLayout() {
       setLoading(true);
     }
 
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       setLoading(false);
       return;
     }

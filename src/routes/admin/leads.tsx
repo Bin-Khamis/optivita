@@ -7,6 +7,7 @@ import {
   XCircle, Clock, AlertCircle, FileText, UserPlus, HeartPulse, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
+import { isWebhookOffline } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/leads")({
   component: AdminLeads,
@@ -150,7 +151,7 @@ function AdminLeads() {
 
     // 4. Background Master Google Sheets Sync
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (webhookUrl && !webhookUrl.includes("placeholder")) {
+    if (!isWebhookOffline(webhookUrl)) {
       fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
@@ -231,7 +232,7 @@ function AdminLeads() {
     toast.success(`Joining status updated to: ${nextJoiningStatus}`);
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       return;
     }
 
@@ -282,7 +283,7 @@ function AdminLeads() {
     await updateFirestoreRecord("Program Enrollments", "Enrollment ID", editingLead["Enrollment ID"], updateFields);
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       editingLead["Lead Status"] = editStatus;
       editingLead["Joining Status"] = editJoiningStatus;
       editingLead["Assigned To"] = editAgent;
@@ -338,7 +339,7 @@ function AdminLeads() {
     if (!confirm("Are you sure you want to delete this lead record? This action will remove it permanently.")) return;
     
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       const cached = localStorage.getItem("optivita_crm_cache");
       if (cached) {
         try {

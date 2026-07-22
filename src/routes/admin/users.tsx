@@ -6,6 +6,7 @@ import {
   MapPin, Clock, X, Lock, KeyRound
 } from "lucide-react";
 import { toast } from "sonner";
+import { isWebhookOffline } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/users")({
   component: AdminUsers,
@@ -46,7 +47,7 @@ function AdminUsers() {
 
     setSaving(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       // Mock create
       setTimeout(() => {
         users.push({
@@ -101,7 +102,7 @@ function AdminUsers() {
     const nextActive = !targetUser.Active;
     
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       targetUser.Active = nextActive;
       toast.success(`Account status updated to ${nextActive ? "Active" : "Inactive"}`);
       refreshData();
@@ -143,7 +144,7 @@ function AdminUsers() {
     if (!confirm("Are you sure you want to delete this staff user? This cannot be undone.")) return;
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       toast.success("User deleted (Offline Mode)");
       refreshData();
       return;

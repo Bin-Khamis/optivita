@@ -6,6 +6,7 @@ import {
   Download, Printer, Sparkles, AlertCircle, RefreshCw, X
 } from "lucide-react";
 import { toast } from "sonner";
+import { isWebhookOffline } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/loyalty")({
   component: AdminLoyalty,
@@ -75,7 +76,7 @@ function AdminLoyalty() {
     const pointsRedeemed = adjustType === "deduct" ? pointsAmount : 0;
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       // Mock update
       setTimeout(() => {
         const clientPts = parseInt(adjustingClient["Loyalty Points"] || 0, 10);

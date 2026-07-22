@@ -7,6 +7,7 @@ import {
   Sliders, UserPlus
 } from "lucide-react";
 import { toast } from "sonner";
+import { isWebhookOffline } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/hr")({
   component: AdminHR,
@@ -73,7 +74,7 @@ function AdminHR() {
     const staffId = "EMP-" + Math.floor(100 + Math.random() * 900);
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       setTimeout(() => {
         staff.push({
           StaffId: staffId,

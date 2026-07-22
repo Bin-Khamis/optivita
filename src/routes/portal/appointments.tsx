@@ -6,6 +6,7 @@ import {
   X, CheckSquare, AlertCircle, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
+import { isWebhookOffline } from "@/lib/utils";
 
 export const Route = createFileRoute("/portal/appointments")({
   component: CustomerAppointments,
@@ -33,7 +34,7 @@ function CustomerAppointments() {
 
     setSaving(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       // Mock book
       setTimeout(() => {
         appointments.push({

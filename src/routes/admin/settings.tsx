@@ -6,6 +6,7 @@ import {
   HelpCircle, RefreshCw, X, Gift, Percent
 } from "lucide-react";
 import { toast } from "sonner";
+import { isWebhookOffline } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/settings")({
   component: AdminSettings,
@@ -55,7 +56,7 @@ function AdminSettings() {
 
     setSaving(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       // Mock add
       setTimeout(() => {
         rewards.push({
@@ -111,7 +112,7 @@ function AdminSettings() {
     const nextActive = !reward.Active;
     
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       reward.Active = nextActive;
       toast.success(`Reward item status set to ${nextActive ? "Enabled" : "Disabled"}`);
       refreshData();

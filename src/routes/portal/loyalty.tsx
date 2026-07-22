@@ -6,6 +6,7 @@ import {
   Sparkles, CheckSquare, AlertCircle, RefreshCw, ChevronRight, X, Lock
 } from "lucide-react";
 import { toast } from "sonner";
+import { isWebhookOffline } from "@/lib/utils";
 
 export const Route = createFileRoute("/portal/loyalty")({
   component: CustomerLoyalty,
@@ -81,7 +82,7 @@ function CustomerLoyalty() {
     setSaving(true);
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       // Mock redeem
       setTimeout(() => {
         if (points < redeemingReward.PointsRequired) {

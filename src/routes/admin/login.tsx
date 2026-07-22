@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Lock, User, Eye, EyeOff, Sparkles, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { isWebhookOffline } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/login")({
   component: AdminLogin,
@@ -41,7 +42,7 @@ function AdminLogin() {
     }
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (isWebhookOffline(webhookUrl)) {
       toast.error("Invalid login. Try default credentials: admin / admin123");
       setLoading(false);
       return;
