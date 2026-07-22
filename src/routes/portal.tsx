@@ -108,7 +108,11 @@ function PortalLayout() {
       console.warn("Firestore portal read warning:", e);
     }
 
-    if (!webhookUrl || webhookUrl.includes("placeholder")) {
+    if (!webhookUrl || 
+        webhookUrl.includes("placeholder") || 
+        webhookUrl === "undefined" || 
+        webhookUrl === "null" || 
+        webhookUrl.trim() === "") {
       if (!cached) {
         const mock = getMockCustomerDataset();
         setData(mock);

@@ -105,7 +105,11 @@ function SecuritySettings() {
 
     // Check offline simulation client preferences
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || webhookUrl.includes("placeholder");
+    const isOffline = !webhookUrl || 
+                      webhookUrl.includes("placeholder") || 
+                      webhookUrl === "undefined" || 
+                      webhookUrl === "null" || 
+                      webhookUrl.trim() === "";
 
     if (isOffline) {
       const cached = localStorage.getItem("optivita_crm_cache");
@@ -170,7 +174,11 @@ function SecuritySettings() {
 
     setLoading(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || webhookUrl.includes("placeholder");
+    const isOffline = !webhookUrl || 
+                      webhookUrl.includes("placeholder") || 
+                      webhookUrl === "undefined" || 
+                      webhookUrl === "null" || 
+                      webhookUrl.trim() === "";
 
     if (isOffline) {
       // Simulated Update
@@ -229,7 +237,11 @@ function SecuritySettings() {
 
     setLoading(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || webhookUrl.includes("placeholder");
+    const isOffline = !webhookUrl || 
+                      webhookUrl.includes("placeholder") || 
+                      webhookUrl === "undefined" || 
+                      webhookUrl === "null" || 
+                      webhookUrl.trim() === "";
 
     if (isOffline) {
       // Client-side Web Crypto Validation

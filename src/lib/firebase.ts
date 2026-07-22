@@ -12,7 +12,15 @@ const firebaseConfig = {
 
 const hasFirebaseKeys = !!(
   firebaseConfig.apiKey &&
-  firebaseConfig.projectId
+  firebaseConfig.apiKey !== "undefined" &&
+  firebaseConfig.apiKey !== "null" &&
+  firebaseConfig.apiKey.trim() !== "" &&
+  !firebaseConfig.apiKey.includes("placeholder") &&
+  firebaseConfig.projectId &&
+  firebaseConfig.projectId !== "undefined" &&
+  firebaseConfig.projectId !== "null" &&
+  firebaseConfig.projectId.trim() !== "" &&
+  !firebaseConfig.projectId.includes("placeholder")
 );
 
 export const app = hasFirebaseKeys ? initializeApp(firebaseConfig) : null;

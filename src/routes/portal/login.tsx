@@ -191,7 +191,11 @@ function CustomerLogin() {
     setLoading(true);
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || webhookUrl.includes("placeholder");
+    const isOffline = !webhookUrl || 
+                      webhookUrl.includes("placeholder") || 
+                      webhookUrl === "undefined" || 
+                      webhookUrl === "null" || 
+                      webhookUrl.trim() === "";
 
     if (isOffline) {
       // Simulated Offline credentials lookup
@@ -273,7 +277,11 @@ function CustomerLogin() {
     localStorage.setItem(`optivita_pref_${enrollmentId}`, selectedMethod);
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || webhookUrl.includes("placeholder");
+    const isOffline = !webhookUrl || 
+                      webhookUrl.includes("placeholder") || 
+                      webhookUrl === "undefined" || 
+                      webhookUrl === "null" || 
+                      webhookUrl.trim() === "";
 
     if (selectedMethod === "totp") {
       setLoading(false);
@@ -391,7 +399,11 @@ function CustomerLogin() {
 
     setLoading(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || webhookUrl.includes("placeholder");
+    const isOffline = !webhookUrl || 
+                      webhookUrl.includes("placeholder") || 
+                      webhookUrl === "undefined" || 
+                      webhookUrl === "null" || 
+                      webhookUrl.trim() === "";
     const meta = getClientMetadata();
 
     // Fast check: verify against local active OTP first
@@ -476,7 +488,11 @@ function CustomerLogin() {
 
     setLoading(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || webhookUrl.includes("placeholder");
+    const isOffline = !webhookUrl || 
+                      webhookUrl.includes("placeholder") || 
+                      webhookUrl === "undefined" || 
+                      webhookUrl === "null" || 
+                      webhookUrl.trim() === "";
 
     if (isOffline) {
       const valid = await verifyTOTP(tempSecret, totpCode);
@@ -565,7 +581,11 @@ function CustomerLogin() {
 
     setLoading(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || webhookUrl.includes("placeholder");
+    const isOffline = !webhookUrl || 
+                      webhookUrl.includes("placeholder") || 
+                      webhookUrl === "undefined" || 
+                      webhookUrl === "null" || 
+                      webhookUrl.trim() === "";
     const meta = getClientMetadata();
 
     if (isOffline) {
@@ -642,7 +662,11 @@ function CustomerLogin() {
     if (countdown > 0) return;
     setLoading(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || webhookUrl.includes("placeholder");
+    const isOffline = !webhookUrl || 
+                      webhookUrl.includes("placeholder") || 
+                      webhookUrl === "undefined" || 
+                      webhookUrl === "null" || 
+                      webhookUrl.trim() === "";
 
     if (selectedMethod === "whatsapp") {
       const otpCode = String(Math.floor(100000 + Math.random() * 900000));

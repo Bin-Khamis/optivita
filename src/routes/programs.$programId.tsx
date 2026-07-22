@@ -5,6 +5,7 @@ import { getProgram, type FormField, type Program } from "@/lib/programs";
 import { Printer, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getNextEnrollmentId, saveEnrollmentToFirestore, markEnrollmentSynced } from "@/lib/firebase";
+import { isWebhookOffline } from "@/lib/utils";
 
 export const Route = createFileRoute("/programs/$programId")({
   loader: ({ params }) => {
@@ -431,7 +432,7 @@ function ProgramPage() {
 
     // Determine mode
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || webhookUrl.includes("placeholder");
+    const isOffline = isWebhookOffline(webhookUrl);
 
     setSubmitting(true);
 
