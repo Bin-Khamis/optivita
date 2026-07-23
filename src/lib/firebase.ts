@@ -38,7 +38,7 @@ export async function getNextEnrollmentId(): Promise<string> {
   }
 
   const timeoutPromise = new Promise<string>((_, reject) =>
-    setTimeout(() => reject(new Error("Firestore transaction timeout")), 3000)
+    setTimeout(() => reject(new Error("Firestore transaction timeout")), 1500)
   );
 
   try {
@@ -80,7 +80,7 @@ export async function saveEnrollmentToFirestore(enrollmentId: string, data: any)
   }
 
   const timeoutPromise = new Promise<boolean>((resolve) =>
-    setTimeout(() => resolve(false), 3000)
+    setTimeout(() => resolve(false), 1500)
   );
 
   try {

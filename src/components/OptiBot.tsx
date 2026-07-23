@@ -445,11 +445,11 @@ export default function OptiBot() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[999] flex flex-col items-end">
+    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[999] flex flex-col items-end pointer-events-none">
       
       {/* Pulse alert badge above Closed Mascot bubble */}
       {!isOpen && showPulsingAlert && (
-        <div className="bg-card text-foreground border border-border/80 rounded-2xl p-3.5 shadow-glow mb-3 mr-2 w-64 text-xs animate-bounce relative">
+        <div className="bg-card text-foreground border border-border/80 rounded-2xl p-3.5 shadow-glow mb-3 mr-2 w-64 text-xs animate-bounce relative pointer-events-auto">
           <button 
             onClick={(e) => {
               e.stopPropagation();
@@ -473,7 +473,7 @@ export default function OptiBot() {
       {!isOpen && (
         <button
           onClick={handleOpenToggle}
-          className="relative h-32 w-32 md:h-64 md:w-64 bg-transparent border-0 outline-none flex items-center justify-center overflow-visible hover:scale-105 transition-all duration-300 cursor-pointer"
+          className="relative h-24 w-24 md:h-44 md:w-44 bg-transparent border-0 outline-none flex items-center justify-center overflow-visible hover:scale-105 transition-all duration-300 cursor-pointer pointer-events-auto"
           aria-label="Open OptiBot chatbot"
         >
           {/* Loop Mascot webm video file inside floating bubble */}
@@ -486,7 +486,7 @@ export default function OptiBot() {
             className="h-full w-full object-contain bg-transparent" 
           />
           {unreadCount > 0 && (
-            <span className="absolute top-2 right-2 md:top-6 md:right-6 bg-vital text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center animate-pulse border-2 border-white shadow-md">
+            <span className="absolute top-1 right-1 md:top-4 md:right-4 bg-vital text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center animate-pulse border-2 border-white shadow-md">
               {unreadCount}
             </span>
           )}
@@ -497,7 +497,7 @@ export default function OptiBot() {
       {isOpen && (
         <div 
           ref={chatWindowRef}
-          className="bg-card border border-border/80 rounded-3xl w-[calc(100vw-32px)] sm:w-[380px] md:w-[400px] h-[500px] md:h-[600px] shadow-glow flex flex-col overflow-hidden animate-scale-up text-foreground"
+          className="bg-card border border-border/80 rounded-3xl w-[calc(100vw-32px)] sm:w-[380px] md:w-[400px] h-[500px] md:h-[600px] shadow-glow flex flex-col overflow-hidden animate-scale-up text-foreground pointer-events-auto"
         >
           {/* Glassmorphic Header */}
           <div className="relative bg-secondary/80 backdrop-blur-md border-b border-border/50 p-4 flex items-center justify-between">

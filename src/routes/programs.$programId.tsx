@@ -462,12 +462,10 @@ function ProgramPage() {
     data["Loyalty Tier"] = "Silver";
     data["Referral Code"] = `OPT-${(data.fullName || "GUEST").split(" ")[0].toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // 2. Save client record to Firestore for instant authentication portal
-    try {
-      await saveEnrollmentToFirestore(enrollmentId, data);
-    } catch (err) {
-      console.warn("Firestore save enrollment warning:", err);
-    }
+    // 2. Save client record to Firestore for instant authentication portal (run in background)
+    saveEnrollmentToFirestore(enrollmentId, data).catch((err) => {
+      console.warn("Firestore save enrollment background error:", err);
+    });
 
     // 3. Always save to local CRM cache so lead appears immediately in Admin Panel / Portal
     try {
