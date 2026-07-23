@@ -103,6 +103,17 @@ function doPost(e) {
       case "update-security-preference":
         response = updateSecurityPreference(requestData);
         break;
+      case "bookAppointment":
+        requestData.sheetName = "Appointments";
+        requestData.fullName = requestData.customerName;
+        requestData["Customer Name"] = requestData.customerName;
+        requestData.AppointmentId = "APT-" + Math.floor(100000 + Math.random() * 900000);
+        requestData["Appointment ID"] = requestData.AppointmentId;
+        response = handleWebhookSubmit(requestData);
+        break;
+      case "redeemReward":
+        response = redeemReward(requestData);
+        break;
       case "getData":
         response = handleGetData();
         break;
@@ -651,6 +662,116 @@ function updateSecurityPreference(data) {
   }
 
   return { status: "error", message: "Client not found." };
+}
+
+// 4b. Redeem Loyalty Points for Reward Action
+function redeemReward(data) {
+  var enrollmentId = String(data.enrollmentId || "").trim();
+  var rewardName = String(data.rewardName || "").trim();
+  var pointsRequired = parseInt(data.pointsRequired || 0, 10);
+
+  if (!enrollmentId || !rewardName || !pointsRequired) {
+    return { status: "error", message: "Missing required parameters for redemption." };
+  }
+
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var enrollSheet = getSheetSafe(spreadsheet, "Program Enrollments");
+  var ledgerSheet = getSheetSafe(spreadsheet, "Loyalty Ledger");
+
+  if (!enrollSheet || !ledgerSheet) {
+    return { status: "error", message: "Database tables missing." };
+  }
+
+  // Find the client in Program Enrollments
+  var enrollRows = enrollSheet.getDataRange().getValues();
+  var enrollHeaders = enrollRows[0];
+  var idColIdx = -1, pointsColIdx = -1, nameColIdx = -1;
+
+  for (var c = 0; c < enrollHeaders.length; c++) {
+    var h = String(enrollHeaders[c]).trim().toLowerCase();
+    if (h === "enrollment id" || h === "enrollmentid") idColIdx = c;
+    else if (h === "loyalty points" || h === "loyaltypoints") pointsColIdx = c;
+    else if (h === "fullname") nameColIdx = c;
+  }
+
+  if (idColIdx === -1 || pointsColIdx === -1) {
+    return { status: "error", message: "Enrollment ID or Loyalty Points column missing." };
+  }
+
+  var foundRowIdx = -1;
+  var currentPoints = 0;
+  var customerName = "Client";
+
+  for (var r = 1; r < enrollRows.length; r++) {
+    if (String(enrollRows[r][idColIdx]).trim() === enrollmentId) {
+      foundRowIdx = r + 1;
+      currentPoints = parseInt(enrollRows[r][pointsColIdx] || 0, 10);
+      if (nameColIdx !== -1) {
+        customerName = String(enrollRows[r][nameColIdx]).trim();
+      }
+      break;
+    }
+  }
+
+  if (foundRowIdx === -1) {
+    return { status: "error", message: "Client enrollment record not found." };
+  }
+
+  if (currentPoints < pointsRequired) {
+    return { status: "error", message: "Insufficient loyalty points. Balance: " + currentPoints };
+  }
+
+  var newPoints = currentPoints - pointsRequired;
+
+  // Deduct points in Program Enrollments sheet
+  enrollSheet.getRange(foundRowIdx, pointsColIdx + 1).setValue(newPoints);
+
+  // Also try to deduct in Clients sheet if exists there
+  var clientsSheet = getSheetSafe(spreadsheet, "Clients");
+  if (clientsSheet) {
+    var clientRows = clientsSheet.getDataRange().getValues();
+    for (var i = 1; i < clientRows.length; i++) {
+      if (String(clientRows[i][0]).trim() === enrollmentId) {
+        // Col H is index 7 (TOTP Secret), Col E is Program, Col G is preferred method
+        break;
+      }
+    }
+  }
+
+  // Append entry to Loyalty Ledger
+  var ledgerHeaders = ledgerSheet.getDataRange().getValues()[0];
+  var ledgerRow = [];
+  var timestampStr = formatTimestamp(new Date());
+
+  for (var l = 0; l < ledgerHeaders.length; l++) {
+    var lh = String(ledgerHeaders[l]).trim();
+    var lVal = "";
+    if (lh === "Timestamp") {
+      lVal = timestampStr;
+    } else if (lh === "Enrollment ID" || lh === "EnrollmentID") {
+      lVal = enrollmentId;
+    } else if (lh === "Customer Name" || lh === "CustomerName") {
+      lVal = customerName;
+    } else if (lh === "Activity") {
+      lVal = "Redeemed Reward: " + rewardName;
+    } else if (lh === "Points Earned" || lh === "PointsEarned") {
+      lVal = 0;
+    } else if (lh === "Points Redeemed" || lh === "PointsRedeemed") {
+      lVal = pointsRequired;
+    } else if (lh === "Current Balance" || lh === "CurrentBalance") {
+      lVal = newPoints;
+    }
+    ledgerRow.push(lVal);
+  }
+
+  ledgerSheet.appendRow(ledgerRow);
+  SpreadsheetApp.flush();
+
+  return { 
+    status: "success", 
+    message: "Reward redeemed successfully.", 
+    newPoints: newPoints 
+  };
 }
 
 /* ==========================================

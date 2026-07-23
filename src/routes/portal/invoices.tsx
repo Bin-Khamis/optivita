@@ -6,6 +6,10 @@ import {
   Printer, ArrowRight, Wallet, BadgeCheck, ShieldAlert, Lock
 } from "lucide-react";
 import { toast } from "sonner";
+import { 
+  getEnrollmentId, getJoiningStatus, getPhone, getEmail, 
+  getAmount, getInvoiceId, getProgramName, getInvoiceStatus, getInvoiceDate
+} from "@/lib/utils";
 
 export const Route = createFileRoute("/portal/invoices")({
   component: CustomerInvoices,
@@ -17,23 +21,37 @@ function CustomerInvoices() {
   const [paying, setPaying] = useState(false);
 
   const enrollments = data?.["Program Enrollments"] || [];
-  const clientEnrollment = enrollments.find((e: any) => 
-    (e["Enrollment ID"] && customer?.enrollmentId && String(e["Enrollment ID"]).trim() === String(customer.enrollmentId).trim()) ||
-    (e["phone"] && customer?.phone && String(e["phone"]).replace(/[^0-9]/g, "").endsWith(String(customer.phone).replace(/[^0-9]/g, "").slice(-9))) ||
-    (e["Email Address"] && customer?.email && String(e["Email Address"]).toLowerCase().trim() === String(customer.email).toLowerCase().trim())
-  ) || enrollments[0] || {};
+  const clientEnrollment = enrollments.find((e: any) => {
+    const eId = getEnrollmentId(e);
+    const ePhone = getPhone(e);
+    const eEmail = getEmail(e);
+    return (
+      (eId && customer?.enrollmentId && String(eId).trim() === String(customer.enrollmentId).trim()) ||
+      (ePhone && customer?.phone && String(ePhone).replace(/[^0-9]/g, "").endsWith(String(customer.phone).replace(/[^0-9]/g, "").slice(-9))) ||
+      (eEmail && customer?.email && String(eEmail).toLowerCase().trim() === String(customer.email).toLowerCase().trim())
+    );
+  }) || enrollments[0] || {};
   
   // Check Admin Joining Confirmation Status
+  const jStatus = String(getJoiningStatus(clientEnrollment) || "").trim().toLowerCase();
+  const cStatus = String(getJoiningStatus(customer) || "").trim().toLowerCase();
   const isConfirmed = 
-    clientEnrollment["Joining Status"] === "Confirmed" || 
-    clientEnrollment["Lead Status"] === "Enrolled" || 
-    clientEnrollment["Status"] === "Confirmed" ||
-    clientEnrollment["Status"] === "Active" ||
-    customer?.joiningStatus === "Confirmed" ||
-    customer?.status === "Confirmed";
+    jStatus === "confirmed" || 
+    jStatus === "enrolled" || 
+    jStatus === "active" ||
+    cStatus === "confirmed" ||
+    cStatus === "enrolled" ||
+    cStatus === "active";
 
   const invoices = data?.["Invoices"] || [];
-  const clientInvoices = invoices.filter((i: any) => i["Enrollment ID"] === customer?.enrollmentId);
+  const clientInvoices = invoices.filter((i: any) => {
+    const invEnrollId = getEnrollmentId(i);
+    const invPhone = getPhone(i);
+    return (
+      (invEnrollId && customer?.enrollmentId && String(invEnrollId).trim() === String(customer.enrollmentId).trim()) ||
+      (invPhone && customer?.phone && String(invPhone).replace(/[^0-9]/g, "").endsWith(String(customer.phone).replace(/[^0-9]/g, "").slice(-9)))
+    );
+  });
 
   const handlePayInvoice = () => {
     if (!checkingOutInvoice) return;
@@ -93,42 +111,49 @@ function CustomerInvoices() {
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800/40">
               {clientInvoices.length > 0 ? (
-                clientInvoices.map((inv: any) => (
-                  <tr key={inv.InvoiceId} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
-                    <td className="py-4 px-5 font-bold text-slate-400 dark:text-slate-500">{inv.InvoiceId}</td>
-                    <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-100">{inv.ProgramName}</td>
-                    <td className="py-4 px-5 text-slate-400">{inv.Date || "Just now"}</td>
-                    <td className="py-4 px-5 text-center font-black text-slate-900 dark:text-slate-100 text-sm">
-                      SAR {inv.Amount}
-                    </td>
-                    <td className="py-4 px-5">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider ${
-                        inv.Status === "Paid" ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"
-                      }`}>
-                        {inv.Status || "Unpaid"}
-                      </span>
-                    </td>
-                    <td className="py-4 px-5">
-                      <div className="flex items-center justify-center gap-2">
-                        <button 
-                          onClick={() => window.print()}
-                          className="p-1.5 rounded-lg border text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                          title="Print Receipt"
-                        >
-                          <Printer className="h-4 w-4" />
-                        </button>
-                        {inv.Status !== "Paid" && (
+                clientInvoices.map((inv: any) => {
+                  const invId = getInvoiceId(inv);
+                  const pName = getProgramName(inv) || customer?.programName;
+                  const invDate = getInvoiceDate(inv) || "Just now";
+                  const invAmount = getAmount(inv);
+                  const invStatus = getInvoiceStatus(inv) || "Unpaid";
+                  return (
+                    <tr key={invId} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
+                      <td className="py-4 px-5 font-bold text-slate-400 dark:text-slate-500">{invId}</td>
+                      <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-100">{pName}</td>
+                      <td className="py-4 px-5 text-slate-400">{invDate}</td>
+                      <td className="py-4 px-5 text-center font-black text-slate-900 dark:text-slate-100 text-sm">
+                        SAR {invAmount}
+                      </td>
+                      <td className="py-4 px-5">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider ${
+                          invStatus === "Paid" ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"
+                        }`}>
+                          {invStatus}
+                        </span>
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="flex items-center justify-center gap-2">
                           <button 
-                            onClick={() => setCheckingOutInvoice(inv)}
-                            className="px-2.5 py-1 bg-emerald-650 text-white font-bold rounded-lg text-[10px] hover:bg-emerald-700 transition-colors"
+                            onClick={() => window.print()}
+                            className="p-1.5 rounded-lg border text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            title="Print Receipt"
                           >
-                            Pay Invoice
+                            <Printer className="h-4 w-4" />
                           </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          {invStatus !== "Paid" && (
+                            <button 
+                              onClick={() => setCheckingOutInvoice(inv)}
+                              className="px-2.5 py-1 bg-emerald-650 text-white font-bold rounded-lg text-[10px] hover:bg-emerald-700 transition-colors"
+                            >
+                              Pay Invoice
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-slate-400 leading-normal">

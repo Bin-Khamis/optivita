@@ -6,7 +6,10 @@ import {
   Sparkles, CheckSquare, AlertCircle, RefreshCw, ChevronRight, X, Lock
 } from "lucide-react";
 import { toast } from "sonner";
-import { isWebhookOffline } from "@/lib/utils";
+import { 
+  getEnrollmentId, getJoiningStatus, getPhone, getEmail, 
+  getLoyaltyPoints, getLoyaltyTier, getReferralCode, isWebhookOffline
+} from "@/lib/utils";
 
 export const Route = createFileRoute("/portal/loyalty")({
   component: CustomerLoyalty,
@@ -19,30 +22,40 @@ function CustomerLoyalty() {
   const [saving, setSaving] = useState(false);
 
   const enrollments = data?.["Program Enrollments"] || [];
-  const clientEnrollment = enrollments.find((e: any) => 
-    (e["Enrollment ID"] && customer?.enrollmentId && String(e["Enrollment ID"]).trim() === String(customer.enrollmentId).trim()) ||
-    (e["phone"] && customer?.phone && String(e["phone"]).replace(/[^0-9]/g, "").endsWith(String(customer.phone).replace(/[^0-9]/g, "").slice(-9))) ||
-    (e["Email Address"] && customer?.email && String(e["Email Address"]).toLowerCase().trim() === String(customer.email).toLowerCase().trim())
-  ) || enrollments[0] || {};
+  const clientEnrollment = enrollments.find((e: any) => {
+    const eId = getEnrollmentId(e);
+    const ePhone = getPhone(e);
+    const eEmail = getEmail(e);
+    return (
+      (eId && customer?.enrollmentId && String(eId).trim() === String(customer.enrollmentId).trim()) ||
+      (ePhone && customer?.phone && String(ePhone).replace(/[^0-9]/g, "").endsWith(String(customer.phone).replace(/[^0-9]/g, "").slice(-9))) ||
+      (eEmail && customer?.email && String(eEmail).toLowerCase().trim() === String(customer.email).toLowerCase().trim())
+    );
+  }) || enrollments[0] || {};
   
   // Check Admin Joining Confirmation Status
+  const jStatus = String(getJoiningStatus(clientEnrollment) || "").trim().toLowerCase();
+  const cStatus = String(getJoiningStatus(customer) || "").trim().toLowerCase();
   const isConfirmed = 
-    clientEnrollment["Joining Status"] === "Confirmed" || 
-    clientEnrollment["Lead Status"] === "Enrolled" || 
-    clientEnrollment["Status"] === "Confirmed" ||
-    clientEnrollment["Status"] === "Active" ||
-    customer?.joiningStatus === "Confirmed" ||
-    customer?.status === "Confirmed";
+    jStatus === "confirmed" || 
+    jStatus === "enrolled" || 
+    jStatus === "active" ||
+    cStatus === "confirmed" ||
+    cStatus === "enrolled" ||
+    cStatus === "active";
 
   const ledger = data?.["Loyalty Ledger"] || [];
-  const clientLedger = ledger.filter((l: any) => l["Enrollment ID"] === customer?.enrollmentId);
+  const clientLedger = ledger.filter((l: any) => {
+    const ledgerEnrollId = getEnrollmentId(l);
+    return ledgerEnrollId && customer?.enrollmentId && String(ledgerEnrollId).trim() === String(customer.enrollmentId).trim();
+  });
 
   const rewards = data?.["Rewards Catalog"] || [];
   const activeRewards = rewards.filter((r: any) => r.Active);
 
-  const points = clientEnrollment["Loyalty Points"] || 500;
-  const tier = clientEnrollment["Loyalty Tier"] || "Silver";
-  const referralCode = clientEnrollment["Referral Code"] || "OPT-GUEST-1234";
+  const points = getLoyaltyPoints(clientEnrollment) || 500;
+  const tier = getLoyaltyTier(clientEnrollment) || "Silver";
+  const referralCode = getReferralCode(clientEnrollment) || "OPT-GUEST-1234";
 
   const handleCopyReferral = () => {
     const origin = window.location.origin;

@@ -4,6 +4,11 @@ import {
   HeartPulse, Award, Calendar, DollarSign, Activity, FileText, CheckSquare,
   Sparkles, ArrowRight, User, TrendingUp, RefreshCw, Star, CreditCard, Wallet, Printer, CheckCircle2, AlertCircle, Lock
 } from "lucide-react";
+import { 
+  getEnrollmentId, getJoiningStatus, getPhone, getEmail, 
+  getLoyaltyPoints, getLoyaltyTier, getProgress, 
+  getAmount, getInvoiceId, getProgramName, getInvoiceStatus, getInvoiceDate
+} from "@/lib/utils";
 
 export const Route = createFileRoute("/portal/dashboard")({
   component: CustomerDashboard,
@@ -13,20 +18,27 @@ function CustomerDashboard() {
   const { data, customer, refreshData } = usePortal();
 
   const enrollments = data?.["Program Enrollments"] || [];
-  const clientEnrollment = enrollments.find((e: any) => 
-    (e["Enrollment ID"] && customer?.enrollmentId && String(e["Enrollment ID"]).trim() === String(customer.enrollmentId).trim()) ||
-    (e["phone"] && customer?.phone && String(e["phone"]).replace(/[^0-9]/g, "").endsWith(String(customer.phone).replace(/[^0-9]/g, "").slice(-9))) ||
-    (e["Email Address"] && customer?.email && String(e["Email Address"]).toLowerCase().trim() === String(customer.email).toLowerCase().trim())
-  ) || enrollments[0] || {};
+  const clientEnrollment = enrollments.find((e: any) => {
+    const eId = getEnrollmentId(e);
+    const ePhone = getPhone(e);
+    const eEmail = getEmail(e);
+    return (
+      (eId && customer?.enrollmentId && String(eId).trim() === String(customer.enrollmentId).trim()) ||
+      (ePhone && customer?.phone && String(ePhone).replace(/[^0-9]/g, "").endsWith(String(customer.phone).replace(/[^0-9]/g, "").slice(-9))) ||
+      (eEmail && customer?.email && String(eEmail).toLowerCase().trim() === String(customer.email).toLowerCase().trim())
+    );
+  }) || enrollments[0] || {};
 
   // Check Admin Joining Confirmation Status
+  const jStatus = String(getJoiningStatus(clientEnrollment) || "").trim().toLowerCase();
+  const cStatus = String(getJoiningStatus(customer) || "").trim().toLowerCase();
   const isConfirmed = 
-    clientEnrollment["Joining Status"] === "Confirmed" || 
-    clientEnrollment["Lead Status"] === "Enrolled" || 
-    clientEnrollment["Status"] === "Confirmed" ||
-    clientEnrollment["Status"] === "Active" ||
-    customer?.joiningStatus === "Confirmed" ||
-    customer?.status === "Confirmed";
+    jStatus === "confirmed" || 
+    jStatus === "enrolled" || 
+    jStatus === "active" ||
+    cStatus === "confirmed" ||
+    cStatus === "enrolled" ||
+    cStatus === "active";
   
   const assessments = data?.["Health Assessments"] || [];
   const clientAssessment = assessments.find((a: any) => a.fullName === customer?.fullName) || assessments[0] || {};
@@ -35,21 +47,26 @@ function CustomerDashboard() {
   const clientAppointments = appointments.filter((a: any) => a.fullName === customer?.fullName || a.phone === customer?.phone);
 
   const invoices = data?.["Invoices"] || [];
-  const clientInvoices = invoices.filter((i: any) => i["Enrollment ID"] === customer?.enrollmentId || i.phone === customer?.phone);
+  const clientInvoices = invoices.filter((i: any) => {
+    const invEnrollId = getEnrollmentId(i);
+    const invPhone = getPhone(i);
+    return (
+      (invEnrollId && customer?.enrollmentId && String(invEnrollId).trim() === String(customer.enrollmentId).trim()) ||
+      (invPhone && customer?.phone && String(invPhone).replace(/[^0-9]/g, "").endsWith(String(customer.phone).replace(/[^0-9]/g, "").slice(-9)))
+    );
+  });
 
-  const points = clientEnrollment["Loyalty Points"] || 500;
-  const tier = clientEnrollment["Loyalty Tier"] || "Silver";
+  const points = getLoyaltyPoints(clientEnrollment) || 500;
+  const tier = getLoyaltyTier(clientEnrollment) || "Silver";
 
   // Calculate dynamic program completion (Defaults to 0% for newly joined clients)
-  const progressVal = clientEnrollment["Progress"] !== undefined 
-    ? Number(clientEnrollment["Progress"])
-    : (clientEnrollment["Completion Progress"] !== undefined 
-      ? Number(clientEnrollment["Completion Progress"]) 
-      : 0);
+  const progressVal = getProgress(clientEnrollment) !== undefined 
+    ? Number(getProgress(clientEnrollment))
+    : 0;
 
   // Financial summary calculations
-  const totalBilled = clientInvoices.reduce((sum: number, i: any) => sum + Number(i.Amount || 0), 0);
-  const totalPaid = clientInvoices.filter((i: any) => i.Status === "Paid").reduce((sum: number, i: any) => sum + Number(i.Amount || 0), 0);
+  const totalBilled = clientInvoices.reduce((sum: number, i: any) => sum + Number(getAmount(i) || 0), 0);
+  const totalPaid = clientInvoices.filter((i: any) => getInvoiceStatus(i) === "Paid").reduce((sum: number, i: any) => sum + Number(getAmount(i) || 0), 0);
   const outstandingBalance = totalBilled - totalPaid;
 
   return (
@@ -248,26 +265,33 @@ function CustomerDashboard() {
                   </thead>
                   <tbody className="divide-y divide-slate-50 dark:divide-slate-800/40">
                     {clientInvoices.length > 0 ? (
-                      clientInvoices.slice(0, 5).map((inv: any) => (
-                        <tr key={inv.InvoiceId} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
-                          <td className="py-3 px-4 font-bold text-slate-400 dark:text-slate-500">{inv.InvoiceId}</td>
-                          <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">{inv.ProgramName || customer?.programName}</td>
-                          <td className="py-3 px-4 text-slate-400">{inv.Date || "Just now"}</td>
-                          <td className="py-3 px-4 text-center font-bold text-slate-900 dark:text-slate-100">SAR {inv.Amount}</td>
-                          <td className="py-3 px-4">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider ${
-                              inv.Status === "Paid" ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"
-                            }`}>
-                              {inv.Status || "Unpaid"}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <Link to="/portal/invoices" className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
-                              View Details
-                            </Link>
-                          </td>
-                        </tr>
-                      ))
+                      clientInvoices.slice(0, 5).map((inv: any) => {
+                        const invId = getInvoiceId(inv);
+                        const pName = getProgramName(inv) || customer?.programName;
+                        const invDate = getInvoiceDate(inv) || "Just now";
+                        const invAmount = getAmount(inv);
+                        const invStatus = getInvoiceStatus(inv) || "Unpaid";
+                        return (
+                          <tr key={invId} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
+                            <td className="py-3 px-4 font-bold text-slate-400 dark:text-slate-500">{invId}</td>
+                            <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-100">{pName}</td>
+                            <td className="py-3 px-4 text-slate-400">{invDate}</td>
+                            <td className="py-3 px-4 text-center font-bold text-slate-900 dark:text-slate-100">SAR {invAmount}</td>
+                            <td className="py-3 px-4">
+                              <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider ${
+                                invStatus === "Paid" ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"
+                              }`}>
+                                {invStatus}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <Link to="/portal/invoices" className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
+                                View Details
+                              </Link>
+                            </td>
+                          </tr>
+                        );
+                      })
                     ) : (
                       <tr>
                         <td colSpan={6} className="py-8 text-center text-slate-400 leading-normal">

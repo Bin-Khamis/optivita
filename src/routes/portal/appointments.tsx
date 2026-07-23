@@ -6,7 +6,7 @@ import {
   X, CheckSquare, AlertCircle, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
-import { isWebhookOffline } from "@/lib/utils";
+import { getCustomerName, getPhone, isWebhookOffline } from "@/lib/utils";
 
 export const Route = createFileRoute("/portal/appointments")({
   component: CustomerAppointments,
@@ -23,7 +23,14 @@ function CustomerAppointments() {
   const [saving, setSaving] = useState(false);
 
   const appointments = data?.["Appointments"] || [];
-  const clientAppointments = appointments.filter((a: any) => a.fullName === customer?.fullName || a.phone === customer?.phone);
+  const clientAppointments = appointments.filter((a: any) => {
+    const aptName = getCustomerName(a);
+    const aptPhone = getPhone(a);
+    return (
+      (aptName && customer?.fullName && String(aptName).trim().toLowerCase() === String(customer.fullName).trim().toLowerCase()) ||
+      (aptPhone && customer?.phone && String(aptPhone).replace(/[^0-9]/g, "").endsWith(String(customer.phone).replace(/[^0-9]/g, "").slice(-9)))
+    );
+  });
 
   const handleBookSessionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
