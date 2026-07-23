@@ -102,6 +102,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const isSPA = typeof window !== "undefined" && !!document.getElementById("root");
+  
+  if (isSPA) {
+    return children;
+  }
+
   return (
     <html lang="en">
       <head>

@@ -181,7 +181,6 @@ function PortalLayout() {
       <PortalContext.Provider value={{ data: null, loading: false, refreshData: async () => {}, customer: null, logout: () => {} }}>
         <div className="min-h-screen bg-slate-50 text-slate-900">
           <Outlet />
-          <Toaster position="top-right" richColors />
         </div>
       </PortalContext.Provider>
     );
@@ -306,7 +305,7 @@ function PortalLayout() {
 
         </div>
 
-        <Toaster position="top-right" richColors />
+        
       </div>
     </PortalContext.Provider>
   );
