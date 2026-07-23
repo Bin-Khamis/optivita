@@ -86,14 +86,24 @@ function CustomerDashboard() {
       {/* Welcome Banner */}
       <div className="bg-gradient-to-r from-[#064e3b] to-[#0f766e] rounded-[32px] p-8 text-white relative overflow-hidden shadow-soft">
         <div className="absolute inset-0 opacity-15" style={{ background: "radial-gradient(circle at 80% 20%, white 0%, transparent 60%)" }} />
-        <div className="relative z-10 space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-xs font-bold uppercase tracking-wider text-emerald-200">
-            <Sparkles className="h-3.5 w-3.5" /> Client Portal Active
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-xs font-bold uppercase tracking-wider text-emerald-200">
+              <Sparkles className="h-3.5 w-3.5" /> Client Portal Active
+            </div>
+            <h1 className="font-display font-extrabold text-3xl md:text-4xl leading-tight">Welcome back, {customer?.fullName}!</h1>
+            <p className="text-sm md:text-base text-emerald-100/90 max-w-xl">
+              Track your personalized nutrition progress, schedule clinical reviews, and view your account statements.
+            </p>
           </div>
-          <h1 className="font-display font-extrabold text-3xl md:text-4xl leading-tight">Welcome back, {customer?.fullName}!</h1>
-          <p className="text-sm md:text-base text-emerald-100/90 max-w-xl">
-            Track your personalized nutrition progress, schedule clinical reviews, and view your account statements.
-          </p>
+          <div className="shrink-0">
+            <Link 
+              to="/" 
+              className="inline-flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl text-xs font-bold transition-all border border-white/15"
+            >
+              <ArrowRight className="h-4 w-4 rotate-180" /> Return to Website Home
+            </Link>
+          </div>
         </div>
       </div>
 

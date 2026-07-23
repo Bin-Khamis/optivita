@@ -1072,18 +1072,6 @@ function CustomerLogin() {
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify & Access Hub"}
                 </button>
-
-                {/* WhatsApp self-hosted developer notice warnings */}
-                {selectedMethod === "whatsapp" && (
-                  <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-2xl flex items-start gap-2.5 animate-fade-in text-left">
-                    <AlertTriangle className="h-4.5 w-4.5 text-amber-600 shrink-0 mt-0.5" />
-                    <div className="text-[10px] text-amber-700 dark:text-amber-300 space-y-0.5 leading-normal">
-                      <p className="font-bold text-amber-800">Developer warning (Self-Hosted WhatsApp integration):</p>
-                      <p>• Dev mode connects via scan-in bridge. Message delivery stops if host logs out.</p>
-                      <p>• Bridges (whatsapp-web.js, Baileys) might trigger ToS actions; use official API for production.</p>
-                    </div>
-                  </div>
-                )}
               </form>
             )}
 
