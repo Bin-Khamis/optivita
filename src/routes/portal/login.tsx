@@ -300,9 +300,13 @@ function CustomerLogin() {
     }
 
   const dispatchWhatsAppBridgeMessage = async (targetPhone: string, code: string) => {
+    const fullPhone = `${phoneCountryCode}${targetPhone.replace(/[^0-9]/g, "")}`;
+    const configuredBridgeUrl = import.meta.env.VITE_WHATSAPP_BRIDGE_URL;
+    const defaultBridgeUrl = "http://localhost:3000/send-whatsapp";
+    const bridgeUrl = configuredBridgeUrl || defaultBridgeUrl;
+
     try {
-      const fullPhone = `${phoneCountryCode}${targetPhone.replace(/[^0-9]/g, "")}`;
-      const res = await fetch("http://localhost:3000/send-whatsapp", {
+      const res = await fetch(bridgeUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -317,7 +321,15 @@ function CustomerLogin() {
         toast.warning(data.message || "Could not deliver message via WhatsApp bridge.");
       }
     } catch (err) {
-      console.warn("Local WhatsApp bridge connection error:", err);
+      console.warn("WhatsApp bridge connection error:", err);
+      if (window.location.protocol === "https:" && bridgeUrl.startsWith("http://localhost")) {
+        toast.error(
+          "Could not connect to the WhatsApp automation bridge. Since this site is hosted on a secure connection (HTTPS), the browser blocks insecure requests to localhost (Mixed Content). To test WhatsApp OTP, please run the site locally on http://localhost:8080/ or configure a secure WhatsApp Bridge URL.",
+          { duration: 10000 }
+        );
+      } else {
+        toast.error("Failed to connect to the WhatsApp automation bridge. Please ensure the local bridge is running on port 3000.");
+      }
     }
   };
 

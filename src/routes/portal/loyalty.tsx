@@ -45,7 +45,10 @@ function CustomerLoyalty() {
   const referralCode = clientEnrollment["Referral Code"] || "OPT-GUEST-1234";
 
   const handleCopyReferral = () => {
-    navigator.clipboard.writeText(`http://localhost:8080/?ref=${referralCode}`);
+    const origin = window.location.origin;
+    const base = import.meta.env.BASE_URL || "/";
+    const fullUrl = `${origin}${base.endsWith("/") ? base : base + "/" }?ref=${referralCode}`;
+    navigator.clipboard.writeText(fullUrl);
     toast.success("Referral link copied to clipboard!");
   };
 
