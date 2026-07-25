@@ -42,7 +42,8 @@ function ensureRequiredSheets(spreadsheet) {
   var required = {
     "Clients": ["Enrollment ID", "Client Name", "Mobile Number", "Email Address", "Program", "Status", "Preferred Auth Method", "TOTP Secret"],
     "OTP": ["Enrollment ID", "OTP", "Created Time", "Expiry Time", "Verified", "Attempts", "Last Attempt Time"],
-    "Login Logs": ["Enrollment ID", "Login Time", "Browser", "Device", "IP", "Status"]
+    "Login Logs": ["Enrollment ID", "Login Time", "Browser", "Device", "IP", "Status"],
+    "Settings": ["Key", "Value"]
   };
   
   for (var name in required) {
@@ -55,8 +56,27 @@ function ensureRequiredSheets(spreadsheet) {
            .setFontWeight("bold")
            .setBackground("#0f766e")
            .setFontColor("#ffffff");
+           
+      if (name === "Settings") {
+        sheet.appendRow(["WhatsApp Bridge URL", "https://your-ngrok-url-here.ngrok-free.app/send-whatsapp"]);
+      }
     }
   }
+}
+
+// Helper: Get WhatsApp Bridge URL from Settings sheet or config
+function getWhatsAppBridgeUrl(spreadsheet) {
+  var settingsSheet = getSheetSafe(spreadsheet, "Settings");
+  if (settingsSheet) {
+    var rows = settingsSheet.getDataRange().getValues();
+    for (var i = 1; i < rows.length; i++) {
+      if (String(rows[i][0]).trim().toLowerCase() === "whatsapp bridge url") {
+        var val = String(rows[i][1]).trim();
+        if (val) return val;
+      }
+    }
+  }
+  return WHATSAPP_BRIDGE_URL;
 }
 
 function doGet(e) {
@@ -387,8 +407,9 @@ function sendOTP(data) {
   // Handle Multi-Channel Dispatch
   if (method === "whatsapp") {
     var messageText = "Hello " + clientName + ",\n\nYour Optivita verification code is: " + pin + "\n\nThis code expires in 5 minutes.";
+    var activeBridgeUrl = getWhatsAppBridgeUrl(spreadsheet);
     
-    if (WHATSAPP_BRIDGE_URL) {
+    if (activeBridgeUrl && activeBridgeUrl.indexOf("your-ngrok-url-here") === -1) {
       var options = {
         method: "post",
         contentType: "application/json",
@@ -400,7 +421,7 @@ function sendOTP(data) {
       };
       
       try {
-        var response = UrlFetchApp.fetch(WHATSAPP_BRIDGE_URL, options);
+        var response = UrlFetchApp.fetch(activeBridgeUrl, options);
         Logger.log("WhatsApp Bridge Response: " + response.getContentText());
       } catch (err) {
         Logger.log("WhatsApp Bridge Error: " + err.toString());
