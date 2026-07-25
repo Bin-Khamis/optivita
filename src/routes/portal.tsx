@@ -80,6 +80,14 @@ function PortalLayout() {
     };
   }, [navigate]);
 
+  const pathname = router.state.location.pathname;
+
+  useEffect(() => {
+    if (pathname !== "/portal/login") {
+      fetchCustomerData();
+    }
+  }, [pathname]);
+
   const fetchCustomerData = async () => {
     setLoading(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
