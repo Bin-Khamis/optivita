@@ -282,24 +282,40 @@ function CustomerInvoices() {
             {/* Print style block wrapper specifically for this print modal rendering */}
             <style dangerouslySetInnerHTML={{ __html: `
               @media print {
-                body * {
-                  visibility: hidden !important;
+                aside, header, nav, .no-print, button, .border-b.bg-slate-50 {
+                  display: none !important;
                 }
-                #optivita-print-invoice-modal-content, #optivita-print-invoice-modal-content * {
-                  visibility: visible !important;
-                }
-                #optivita-print-invoice-modal-content {
-                  position: absolute !important;
-                  left: 0 !important;
-                  top: 0 !important;
-                  width: 210mm !important;
-                  height: 297mm !important;
+                body, html, #root, main, .bg-slate-100 {
                   background: white !important;
-                  padding: 15mm !important;
+                  padding: 0 !important;
                   margin: 0 !important;
+                  overflow: visible !important;
+                  height: auto !important;
+                }
+                .fixed.inset-0 {
+                  position: relative !important;
+                  background: white !important;
+                  padding: 0 !important;
+                  margin: 0 !important;
+                  overflow: visible !important;
+                  display: block !important;
+                }
+                .max-w-4xl {
+                  max-width: 100% !important;
+                  max-height: none !important;
                   border: none !important;
                   box-shadow: none !important;
+                  display: block !important;
+                }
+                #optivita-print-invoice-modal-content {
+                  border: none !important;
+                  box-shadow: none !important;
+                  padding: 15mm !important;
+                  margin: 0 !important;
+                  width: 210mm !important;
+                  height: 297mm !important;
                   box-sizing: border-box !important;
+                  display: block !important;
                 }
                 @page {
                   size: A4 portrait;
@@ -343,11 +359,12 @@ function CustomerInvoices() {
                 >
                   
                   {/* Subtle water-mark behind content */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05] z-0">
-                    <svg className="w-[500px] h-[500px] text-[#0D4E8A]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                      <path d="M12 5v7m-3.5-3.5h7" stroke="currentColor" strokeWidth="1.2" />
-                    </svg>
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06] z-0">
+                    <img 
+                      src={window.location.origin + "/optivita-logo.png"} 
+                      alt="Optivita Logo Watermark" 
+                      className="w-[450px] h-[450px] object-contain"
+                    />
                   </div>
 
                   <div className="relative z-10 space-y-6">
@@ -358,12 +375,13 @@ function CustomerInvoices() {
                       {/* Left: Brand logo & taglines */}
                       <div className="space-y-2 text-left">
                         <div className="flex items-center gap-2">
-                          {/* Premium SVG Logo */}
-                          <div className="h-10 w-10 text-[#0D4E8A] flex items-center justify-center bg-sky-50 rounded-xl">
-                            <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                              <path d="M12 5v7m-3.5-3.5h7" stroke="#13B5B1" strokeWidth="2" />
-                            </svg>
+                          {/* Premium Brand Logo */}
+                          <div className="h-10 w-10 flex items-center justify-center bg-white rounded-xl overflow-hidden">
+                            <img 
+                              src={window.location.origin + "/optivita-logo.png"} 
+                              alt="Optivita Logo" 
+                              className="h-full w-full object-contain"
+                            />
                           </div>
                           <div>
                             <h1 className="font-extrabold text-2xl tracking-wider text-[#0D4E8A] leading-none">OPTIVITA</h1>
