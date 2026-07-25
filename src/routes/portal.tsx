@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, Link, useNavigate, useRouter } from "@tanstack
 import { useState, useEffect, createContext, useContext } from "react";
 import { 
   User, Award, Calendar, DollarSign, Activity, FileText, CheckSquare,
-  LogOut, Menu, Bell, Sun, Moon, Sparkles, HeartPulse, Trophy, Key
+  LogOut, Menu, Bell, Sun, Moon, Sparkles, HeartPulse, Trophy, Key, RefreshCw
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
@@ -274,6 +274,20 @@ function PortalLayout() {
 
             <div className="flex items-center gap-4">
               
+              <button 
+                onClick={async () => {
+                  toast.promise(fetchCustomerData(), {
+                    loading: "Syncing database...",
+                    success: "Database updated successfully!",
+                    error: "Failed to connect to database."
+                  });
+                }}
+                className="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400"
+                title="Sync Database"
+              >
+                <RefreshCw className="h-5 w-5" />
+              </button>
+
               <button onClick={toggleDarkMode} className="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400">
                 {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
