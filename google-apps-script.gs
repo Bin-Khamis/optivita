@@ -413,6 +413,9 @@ function sendOTP(data) {
       var options = {
         method: "post",
         contentType: "application/json",
+        headers: {
+          "Bypass-Tunnel-Reminder": "true"
+        },
         payload: JSON.stringify({
           phone: clientPhone,
           message: messageText
