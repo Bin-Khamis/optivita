@@ -44,3 +44,28 @@ export const getCustomerName = (obj: any) => getValSafe(obj, ["Customer Name", "
 export const getInvoiceStatus = (obj: any) => getValSafe(obj, ["Status", "status", "InvoiceStatus", "invoiceStatus"]);
 export const getInvoiceDate = (obj: any) => getValSafe(obj, ["Date", "date", "InvoiceDate", "invoiceDate", "Billing Date", "BillingDate"]);
 
+export function findClientEnrollment(enrollments: any[], customer: any): any {
+  if (!enrollments || enrollments.length === 0) return {};
+  if (!customer) return enrollments[0] || {};
+
+  // 1. Try to find an exact Enrollment ID match first
+  if (customer.enrollmentId) {
+    const matchById = enrollments.find(e => {
+      const eId = getEnrollmentId(e);
+      return eId && String(eId).trim() === String(customer.enrollmentId).trim();
+    });
+    if (matchById) return matchById;
+  }
+
+  // 2. Fallback to phone / email match only if no ID match was found
+  const matchByContact = enrollments.find(e => {
+    const ePhone = getPhone(e);
+    const eEmail = getEmail(e);
+    const hasPhoneMatch = ePhone && customer.phone && String(ePhone).replace(/[^0-9]/g, "").endsWith(String(customer.phone).replace(/[^0-9]/g, "").slice(-9));
+    const hasEmailMatch = eEmail && customer.email && String(eEmail).toLowerCase().trim() === String(customer.email).toLowerCase().trim();
+    return hasPhoneMatch || hasEmailMatch;
+  });
+
+  return matchByContact || enrollments[0] || {};
+}
+

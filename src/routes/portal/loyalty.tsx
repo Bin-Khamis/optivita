@@ -8,7 +8,8 @@ import {
 import { toast } from "sonner";
 import { 
   getEnrollmentId, getJoiningStatus, getPhone, getEmail, 
-  getLoyaltyPoints, getLoyaltyTier, getReferralCode, isWebhookOffline
+  getLoyaltyPoints, getLoyaltyTier, getReferralCode, isWebhookOffline,
+  findClientEnrollment
 } from "@/lib/utils";
 
 export const Route = createFileRoute("/portal/loyalty")({
@@ -22,16 +23,7 @@ function CustomerLoyalty() {
   const [saving, setSaving] = useState(false);
 
   const enrollments = data?.["Program Enrollments"] || [];
-  const clientEnrollment = enrollments.find((e: any) => {
-    const eId = getEnrollmentId(e);
-    const ePhone = getPhone(e);
-    const eEmail = getEmail(e);
-    return (
-      (eId && customer?.enrollmentId && String(eId).trim() === String(customer.enrollmentId).trim()) ||
-      (ePhone && customer?.phone && String(ePhone).replace(/[^0-9]/g, "").endsWith(String(customer.phone).replace(/[^0-9]/g, "").slice(-9))) ||
-      (eEmail && customer?.email && String(eEmail).toLowerCase().trim() === String(customer.email).toLowerCase().trim())
-    );
-  }) || enrollments[0] || {};
+  const clientEnrollment = findClientEnrollment(enrollments, customer);
   
   // Check Admin Joining Confirmation Status
   const jStatus = String(getJoiningStatus(clientEnrollment) || "").trim().toLowerCase();

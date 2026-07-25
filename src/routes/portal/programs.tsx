@@ -6,7 +6,7 @@ import {
   HelpCircle, Sparkles, ChevronRight, Play, BookOpen, CheckCircle, Clock, AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
-import { getEnrollmentId, getPhone, getEmail } from "@/lib/utils";
+import { getEnrollmentId, getPhone, getEmail, findClientEnrollment } from "@/lib/utils";
 
 export const Route = createFileRoute("/portal/programs")({
   component: CustomerPrograms,
@@ -17,16 +17,7 @@ function CustomerPrograms() {
   const [renewing, setRenewing] = useState(false);
 
   const enrollments = data?.["Program Enrollments"] || [];
-  const clientEnrollment = enrollments.find((e: any) => {
-    const eId = getEnrollmentId(e);
-    const ePhone = getPhone(e);
-    const eEmail = getEmail(e);
-    return (
-      (eId && customer?.enrollmentId && String(eId).trim() === String(customer.enrollmentId).trim()) ||
-      (ePhone && customer?.phone && String(ePhone).replace(/[^0-9]/g, "").endsWith(String(customer.phone).replace(/[^0-9]/g, "").slice(-9))) ||
-      (eEmail && customer?.email && String(eEmail).toLowerCase().trim() === String(customer.email).toLowerCase().trim())
-    );
-  }) || enrollments[0] || {};
+  const clientEnrollment = findClientEnrollment(enrollments, customer);
 
   const progressVal = clientEnrollment["Progress"] !== undefined 
     ? Number(clientEnrollment["Progress"]) 
