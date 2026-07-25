@@ -154,6 +154,8 @@ function PortalLayout() {
         } catch (e) {}
       }
 
+      console.log("Optivita Debug: fetch result =", result);
+
       if (result && result.status === "success" && result.data) {
         setData(result.data);
         localStorage.setItem("optivita_crm_cache", JSON.stringify(result.data));

@@ -514,12 +514,34 @@ function verifyOTP(data) {
       clientRowIndex = j + 1;
       preferredMethod = String(clientRows[j][6] || "email").trim().toLowerCase();
       totpSecret = String(clientRows[j][7] || "").trim();
+      var joinStatusVal = "Pending Confirmation";
+      var enrollSheetForStatus = getSheetSafe(spreadsheet, "Program Enrollments");
+      if (enrollSheetForStatus) {
+        var enrollRowsForStatus = enrollSheetForStatus.getDataRange().getValues();
+        var enrollHeadersForStatus = enrollRowsForStatus[0];
+        var idIdxForStatus = -1, statusIdxForStatus = -1;
+        for (var h = 0; h < enrollHeadersForStatus.length; h++) {
+          var hName = String(enrollHeadersForStatus[h]).trim().toLowerCase();
+          if (hName === "enrollment id" || hName === "enrollmentid") idIdxForStatus = h;
+          if (hName === "joining status" || hName === "joiningstatus" || hName === "status" || hName === "lead status") statusIdxForStatus = h;
+        }
+        if (idIdxForStatus !== -1 && statusIdxForStatus !== -1) {
+          for (var r = 1; r < enrollRowsForStatus.length; r++) {
+            if (String(enrollRowsForStatus[r][idIdxForStatus]).trim() === enrollmentId) {
+              joinStatusVal = String(enrollRowsForStatus[r][statusIdxForStatus]).trim();
+              break;
+            }
+          }
+        }
+      }
+
       clientData = {
         enrollmentId: String(clientRows[j][0]).trim(),
         fullName: String(clientRows[j][1]).trim(),
         phone: String(clientRows[j][2]).trim(),
         email: String(clientRows[j][3]).trim(),
-        programName: String(clientRows[j][4]).trim()
+        programName: String(clientRows[j][4]).trim(),
+        status: joinStatusVal
       };
       break;
     }
@@ -530,7 +552,7 @@ function verifyOTP(data) {
     if (enrollSheet) {
       var enrollRows = enrollSheet.getDataRange().getValues();
       var enrollHeaders = enrollRows[0];
-      var idIdx = -1, nameIdx = -1, phoneIdx = -1, emailIdx = -1, progIdx = -1;
+      var idIdx = -1, nameIdx = -1, phoneIdx = -1, emailIdx = -1, progIdx = -1, statusIdx = -1;
       for (var h = 0; h < enrollHeaders.length; h++) {
         var hName = String(enrollHeaders[h]).trim().toLowerCase();
         if (hName === "enrollment id" || hName === "enrollmentid") idIdx = h;
@@ -538,6 +560,7 @@ function verifyOTP(data) {
         else if (hName === "phone") phoneIdx = h;
         else if (hName === "email") emailIdx = h;
         else if (hName === "programname") progIdx = h;
+        else if (hName === "joining status" || hName === "joiningstatus" || hName === "status" || hName === "lead status") statusIdx = h;
       }
       if (idIdx !== -1) {
         for (var r = 1; r < enrollRows.length; r++) {
@@ -547,7 +570,8 @@ function verifyOTP(data) {
               fullName: nameIdx !== -1 ? String(enrollRows[r][nameIdx]).trim() : "Client",
               phone: phoneIdx !== -1 ? String(enrollRows[r][phoneIdx]).trim() : "",
               email: emailIdx !== -1 ? String(enrollRows[r][emailIdx]).trim() : "client@optivita.com",
-              programName: progIdx !== -1 ? String(enrollRows[r][progIdx]).trim() : "Optivita Program"
+              programName: progIdx !== -1 ? String(enrollRows[r][progIdx]).trim() : "Optivita Program",
+              status: statusIdx !== -1 ? String(enrollRows[r][statusIdx]).trim() : "Pending Confirmation"
             };
             break;
           }

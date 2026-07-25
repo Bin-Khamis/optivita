@@ -40,6 +40,9 @@ function CustomerDashboard() {
     cStatus === "enrolled" ||
     cStatus === "active";
   
+  console.log("Optivita Debug: clientEnrollment =", clientEnrollment);
+  console.log("Optivita Debug: jStatus =", jStatus, "cStatus =", cStatus, "isConfirmed =", isConfirmed);
+  
   const assessments = data?.["Health Assessments"] || [];
   const clientAssessment = assessments.find((a: any) => a.fullName === customer?.fullName) || assessments[0] || {};
 
