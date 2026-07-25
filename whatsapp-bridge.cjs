@@ -57,6 +57,7 @@ process.on('unhandledRejection', (reason, promise) => {
 // Print QR code in terminal for scanning
 client.on('qr', (qr) => {
     console.log('\n--- SCAN THIS QR CODE WITH WHATSAPP LINKED DEVICES ---');
+    console.log('RAW_QR_DATA:', qr);
     qrcode.generate(qr, { small: true });
     console.log('------------------------------------------------------\n');
 });
