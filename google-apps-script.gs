@@ -602,25 +602,30 @@ function verifyOTP(data) {
   var success = false;
   var statusLabel = "Failed OTP";
 
-  // Validate Code based on selected method
-  if (preferredMethod === "totp") {
-    if (!totpSecret) {
-      return { status: "error", message: "Authenticator App not configured yet." };
+  // Check standard OTP sheet match first
+  var standardOtpMatched = false;
+  if (otpRowIndex !== -1 && dbOtp === otpCode) {
+    if (nowTime <= dbExpiry) {
+      standardOtpMatched = true;
+      success = true;
+      statusLabel = "Success";
     }
-    // Verify TOTP token
+  }
+
+  if (standardOtpMatched) {
+    // Verified via standard OTP
+  } else if (preferredMethod === "totp" && totpSecret) {
+    // Fallback to TOTP if standard OTP didn't match and preferred method is TOTP
     success = verifyTOTP(totpSecret, otpCode, 1);
     statusLabel = success ? "Success" : "Failed Authenticator";
   } else {
-    // Validate standard OTP
-    if (otpRowIndex === -1) {
-      return { status: "error", message: "Invalid OTP." };
-    }
-    if (nowTime > dbExpiry) {
+    // Verification failed
+    if (otpRowIndex !== -1 && nowTime > dbExpiry) {
       logsSheet.appendRow([enrollmentId, new Date(), clientBrowser, clientDevice, clientIP, "Expired OTP"]);
       return { status: "error", message: "OTP expired. Please request a new verification code." };
     }
-    success = (dbOtp === otpCode);
-    statusLabel = success ? "Success" : "Failed OTP";
+    success = false;
+    statusLabel = "Failed OTP";
   }
 
   if (success) {
