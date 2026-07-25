@@ -207,9 +207,15 @@ function CustomerLogin() {
             const db = JSON.parse(cached);
             const enrollments = db["Program Enrollments"] || [];
             clientData = enrollments.find((e: any) => {
+              if (e["Enrollment ID"] !== enrollmentId.trim()) return false;
               const cleanDbPhone = (e.phone || "").replace(/[^0-9]/g, "");
               const cleanInputPhone = fullPhone.replace(/[^0-9]/g, "");
-              return e["Enrollment ID"] === enrollmentId.trim() && cleanDbPhone === cleanInputPhone;
+              if (cleanDbPhone === cleanInputPhone) return true;
+              if (cleanDbPhone.length >= 7 && cleanInputPhone.length >= 7) {
+                const minLen = Math.min(cleanDbPhone.length, cleanInputPhone.length, 8);
+                return cleanDbPhone.slice(-minLen) === cleanInputPhone.slice(-minLen);
+              }
+              return false;
             });
           } catch (err) {
             console.error("Cache error:", err);

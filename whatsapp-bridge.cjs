@@ -89,16 +89,42 @@ app.post('/send-whatsapp', async (req, res) => {
     }
 
     try {
-        // Format phone number to WhatsApp JID format (e.g. 966538530413@c.us)
+        // Format phone number to WhatsApp JID format
         let cleanPhone = phone.replace(/[^0-9]/g, "");
-        if (cleanPhone.startsWith("0")) {
-            cleanPhone = cleanPhone.substring(1);
-        }
-        if (cleanPhone.length === 9 && cleanPhone.startsWith("5")) {
-            cleanPhone = "966" + cleanPhone;
+        
+        // If it starts with 00, strip it to treat as international
+        if (phone.startsWith("00")) {
+            cleanPhone = cleanPhone.substring(2);
         }
         
-        // Append @c.us for standard mobile chats
+        // Strip a leading 0 if the number doesn't start with a country code (like 966, 971, etc.)
+        const countryCodes = ["966", "971", "968", "965", "974", "973", "20", "962", "961", "1", "44", "91"];
+        let matchedCC = "";
+        for (let i = 0; i < countryCodes.length; i++) {
+            if (cleanPhone.startsWith(countryCodes[i])) {
+                matchedCC = countryCodes[i];
+                break;
+            }
+        }
+        
+        if (matchedCC) {
+            // Strip any leading 0 right after the country code (e.g., 971050... -> 97150...)
+            let rest = cleanPhone.substring(matchedCC.length);
+            if (rest.startsWith("0")) {
+                rest = rest.substring(1);
+            }
+            cleanPhone = matchedCC + rest;
+        } else {
+            // If it starts with 0, strip it
+            if (cleanPhone.startsWith("0")) {
+                cleanPhone = cleanPhone.substring(1);
+            }
+            // If no country code and length is 9, default to Saudi (+966)
+            if (cleanPhone.length === 9) {
+                cleanPhone = "966" + cleanPhone;
+            }
+        }
+        
         const jid = `${cleanPhone}@c.us`;
 
         // Check if number is registered on WhatsApp

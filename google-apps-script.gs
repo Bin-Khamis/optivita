@@ -174,11 +174,22 @@ function verifyClient(data) {
 
   for (var i = 1; i < rows.length; i++) {
     var dbId = String(rows[i][0]).trim();
-    var dbPhone = String(rows[i][2]).trim().replace(/[^0-9+]/g, "");
+    var dbPhoneRaw = String(rows[i][2]).trim();
+    var dbPhone = dbPhoneRaw.replace(/[^0-9]/g, "");
     var dbStatus = String(rows[i][5]).trim();
 
     if (dbId === enrollmentId) {
-      if (dbPhone === phoneInput) {
+      var phoneInputDigits = phoneInput.replace(/[^0-9]/g, "");
+      var isPhoneMatch = false;
+      
+      if (dbPhone === phoneInputDigits) {
+        isPhoneMatch = true;
+      } else if (dbPhone.length >= 7 && phoneInputDigits.length >= 7) {
+        var minLen = Math.min(dbPhone.length, phoneInputDigits.length, 8);
+        isPhoneMatch = dbPhone.slice(-minLen) === phoneInputDigits.slice(-minLen);
+      }
+
+      if (isPhoneMatch) {
         if (dbStatus.toLowerCase() === "suspended" || dbStatus.toLowerCase() === "inactive") {
           return { status: "error", message: "Account is inactive. Please contact support." };
         }
