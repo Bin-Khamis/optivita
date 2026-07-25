@@ -339,29 +339,42 @@ function CustomerLogin() {
     }
   };
 
-    // Handle WhatsApp OTP with instant local bridge delivery
+    // Handle WhatsApp OTP
     if (selectedMethod === "whatsapp") {
-      const otpCode = String(Math.floor(100000 + Math.random() * 900000));
-      localStorage.setItem("optivita_portal_simulated_otp", otpCode);
-      setCountdown(300);
-      setOtpDigits(["", "", "", "", "", ""]);
-      setLoading(false);
-      setStep("otp");
+      if (isOffline) {
+        const otpCode = String(Math.floor(100000 + Math.random() * 900000));
+        localStorage.setItem("optivita_portal_simulated_otp", otpCode);
+        setCountdown(300);
+        setOtpDigits(["", "", "", "", "", ""]);
+        setLoading(false);
+        setStep("otp");
+        dispatchWhatsAppBridgeMessage(phone, otpCode);
+      } else {
+        try {
+          const res = await fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({
+              action: "send-otp",
+              enrollmentId: enrollmentId.trim(),
+              method: "whatsapp"
+            })
+          });
 
-      // Deliver message instantly to phone via local WhatsApp bridge
-      dispatchWhatsAppBridgeMessage(phone, otpCode);
-
-      // Sync with Google Sheets database in background
-      if (!isOffline) {
-        fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({
-            action: "send-otp",
-            enrollmentId: enrollmentId.trim(),
-            method: "whatsapp"
-          })
-        }).catch(() => {});
+          const result = await res.json();
+          if (result.status === "success") {
+            setCountdown(300);
+            setOtpDigits(["", "", "", "", "", ""]);
+            setStep("otp");
+            toast.success("Verification code sent successfully via WhatsApp.");
+          } else {
+            toast.error(result.message || "Failed to deliver WhatsApp OTP.");
+          }
+        } catch (err) {
+          toast.error("Failed to connect to authentication server.");
+        } finally {
+          setLoading(false);
+        }
       }
       return;
     }
@@ -687,21 +700,36 @@ function CustomerLogin() {
                       webhookUrl.trim() === "";
 
     if (selectedMethod === "whatsapp") {
-      const otpCode = String(Math.floor(100000 + Math.random() * 900000));
-      localStorage.setItem("optivita_portal_simulated_otp", otpCode);
-      setCountdown(300);
-      setLoading(false);
-      dispatchWhatsAppBridgeMessage(phone, otpCode);
-      if (!isOffline) {
-        fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({
-            action: "send-otp",
-            enrollmentId: enrollmentId.trim(),
-            method: "whatsapp"
-          })
-        }).catch(() => {});
+      if (isOffline) {
+        const otpCode = String(Math.floor(100000 + Math.random() * 900000));
+        localStorage.setItem("optivita_portal_simulated_otp", otpCode);
+        setCountdown(300);
+        setLoading(false);
+        dispatchWhatsAppBridgeMessage(phone, otpCode);
+      } else {
+        try {
+          const res = await fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({
+              action: "send-otp",
+              enrollmentId: enrollmentId.trim(),
+              method: "whatsapp"
+            })
+          });
+
+          const result = await res.json();
+          if (result.status === "success") {
+            setCountdown(300);
+            toast.success("Verification code resent successfully via WhatsApp.");
+          } else {
+            toast.error(result.message || "Failed to resend WhatsApp OTP.");
+          }
+        } catch (err) {
+          toast.error("Failed to connect to authentication server.");
+        } finally {
+          setLoading(false);
+        }
       }
       return;
     }
