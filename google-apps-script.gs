@@ -75,6 +75,10 @@ function getWhatsAppBridgeUrl(spreadsheet) {
         if (val) return val;
       }
     }
+    // Fail-safe: if B2 has a URL starting with http, use it
+    if (rows.length > 1 && String(rows[1][1] || "").indexOf("http") === 0) {
+      return String(rows[1][1]).trim();
+    }
   }
   return WHATSAPP_BRIDGE_URL;
 }
