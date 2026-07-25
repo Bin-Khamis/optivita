@@ -75,9 +75,15 @@ function getWhatsAppBridgeUrl(spreadsheet) {
         if (val) return val;
       }
     }
-    // Fail-safe: if B2 has a URL starting with http, use it
-    if (rows.length > 1 && String(rows[1][1] || "").indexOf("http") === 0) {
-      return String(rows[1][1]).trim();
+    // Fail-safe: scan all cells in the second row (row index 1) for a URL starting with http
+    if (rows.length > 1) {
+      var secondRow = rows[1];
+      for (var j = 0; j < secondRow.length; j++) {
+        var val = String(secondRow[j] || "").trim();
+        if (val.indexOf("http") === 0) {
+          return val;
+        }
+      }
     }
   }
   return WHATSAPP_BRIDGE_URL;
@@ -967,27 +973,45 @@ function handleWebhookSubmit(data) {
     // Generate unique sequential Enrollment ID server-side ONLY if not already provided by Firestore
     var enrollmentId = String(data["Enrollment ID"] || data["EnrollmentID"] || "").trim();
     var isEnrollment = (sheet.getName() === "Program Enrollments" || sheet.getName() === "Clients");
+    var allSheets = spreadsheet.getSheets();
+    
+    // Check if the received enrollmentId already exists in any sheet in the spreadsheet
+    if (isEnrollment && enrollmentId) {
+      var idAlreadyExists = false;
+      for (var s = 0; s < allSheets.length; s++) {
+        var scanSheet = allSheets[s];
+        var values = scanSheet.getDataRange().getValues();
+        for (var r = 1; r < values.length; r++) {
+          for (var c = 0; c < values[r].length; c++) {
+            if (String(values[r][c]).trim() === enrollmentId) {
+              idAlreadyExists = true;
+              break;
+            }
+          }
+          if (idAlreadyExists) break;
+        }
+        if (idAlreadyExists) break;
+      }
+      if (idAlreadyExists) {
+        Logger.log("Duplicate enrollment ID detected: " + enrollmentId + ". Discarding and regenerating server-side.");
+        enrollmentId = ""; // Force regeneration
+      }
+    }
     
     if (isEnrollment && !enrollmentId) {
       var maxId = 1000;
-      var sheetNamesToScan = ["Clients", "Program Enrollments"];
-      if (sheetNamesToScan.indexOf(sheet.getName()) === -1) {
-        sheetNamesToScan.push(sheet.getName());
-      }
       
-      // Step A: Find the max ID number by scanning every single cell in all relevant sheets
-      for (var s = 0; s < sheetNamesToScan.length; s++) {
-        var scanSheet = getSheetSafe(spreadsheet, sheetNamesToScan[s]);
-        if (scanSheet) {
-          var values = scanSheet.getDataRange().getValues();
-          for (var r = 1; r < values.length; r++) {
-            for (var c = 0; c < values[r].length; c++) {
-              var val = String(values[r][c]).trim();
-              if (val.indexOf("OPT-2026-") === 0) {
-                var num = parseInt(val.replace("OPT-2026-", ""), 10);
-                if (!isNaN(num) && num > maxId) {
-                  maxId = num;
-                }
+      // Step A: Find the max ID number by scanning every single cell in all sheets
+      for (var s = 0; s < allSheets.length; s++) {
+        var scanSheet = allSheets[s];
+        var values = scanSheet.getDataRange().getValues();
+        for (var r = 1; r < values.length; r++) {
+          for (var c = 0; c < values[r].length; c++) {
+            var val = String(values[r][c]).trim();
+            if (val.indexOf("OPT-2026-") === 0) {
+              var num = parseInt(val.replace("OPT-2026-", ""), 10);
+              if (!isNaN(num) && num > maxId) {
+                maxId = num;
               }
             }
           }
@@ -1000,20 +1024,18 @@ function handleWebhookSubmit(data) {
       while (idExists) {
         idExists = false;
         var candidateId = "OPT-2026-" + leftpad(nextIdNumber.toString(), 6, "0");
-        for (var s = 0; s < sheetNamesToScan.length; s++) {
-          var scanSheet = getSheetSafe(spreadsheet, sheetNamesToScan[s]);
-          if (scanSheet) {
-            var values = scanSheet.getDataRange().getValues();
-            for (var r = 1; r < values.length; r++) {
-              for (var c = 0; c < values[r].length; c++) {
-                if (String(values[r][c]).trim() === candidateId) {
-                  idExists = true;
-                  nextIdNumber++;
-                  break;
-                }
+        for (var s = 0; s < allSheets.length; s++) {
+          var scanSheet = allSheets[s];
+          var values = scanSheet.getDataRange().getValues();
+          for (var r = 1; r < values.length; r++) {
+            for (var c = 0; c < values[r].length; c++) {
+              if (String(values[r][c]).trim() === candidateId) {
+                idExists = true;
+                nextIdNumber++;
+                break;
               }
-              if (idExists) break;
             }
+            if (idExists) break;
           }
           if (idExists) break;
         }
