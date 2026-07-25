@@ -34,8 +34,24 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         handleSIGINT: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--disable-features=IsolateOrigins,site-per-process',
+            '--disable-site-isolation-trials'
+        ]
     }
+});
+
+// Prevent process from crashing due to unhandled exceptions or library rejections
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
 // Print QR code in terminal for scanning
@@ -51,6 +67,17 @@ client.on('ready', () => {
 
 client.on('auth_failure', (msg) => {
     console.error('WhatsApp Authentication failure:', msg);
+});
+
+client.on('disconnected', (reason) => {
+    console.log('WhatsApp client was disconnected:', reason);
+    try {
+        client.destroy();
+    } catch (e) {
+        console.error('Error destroying client after disconnect:', e);
+    }
+    console.log('Re-initializing client...');
+    client.initialize();
 });
 
 // Endpoint to send verification codes
@@ -88,6 +115,17 @@ app.post('/send-whatsapp', async (req, res) => {
     } catch (error) {
         console.error('Failed to send WhatsApp message:', error);
         res.status(500).json({ status: 'error', message: error.message });
+
+        // If it's a Puppeteer frame issue or protocol error, attempt client re-initialization
+        if (error.message && (error.message.includes('detached Frame') || error.message.includes('Protocol error') || error.message.includes('Session closed'))) {
+            console.log('Puppeteer frame or protocol crash detected. Attempting to re-initialize WhatsApp client...');
+            try {
+                await client.destroy();
+            } catch (e) {
+                console.error('Error destroying client during recovery:', e);
+            }
+            client.initialize();
+        }
     }
 });
 

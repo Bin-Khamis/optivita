@@ -497,12 +497,15 @@ function ProgramPage() {
         "dob": data.dob,
         "age": data.age,
         "Lead Status": "New Lead",
+        "Joining Status": "Pending Confirmation",
         "Assigned To": "None",
         "Priority": "Medium",
         "Payment Status": "Unpaid",
         "Loyalty Points": 500,
         "Loyalty Tier": "Silver",
         "Referral Code": data["Referral Code"],
+        "referredByCode": data.referredByCode || "",
+        "Referral Processed": "",
         "Action Notes": ""
       };
 

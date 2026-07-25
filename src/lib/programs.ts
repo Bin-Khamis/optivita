@@ -37,6 +37,7 @@ const personalInfo: FormSection = {
     { name: "dob", label: "Date of Birth", type: "date", required: true },
     { name: "gender", label: "Gender", type: "radio", options: ["Female", "Male", "Prefer not to say"], required: true },
     { name: "city", label: "City / Country", type: "text" },
+    { name: "referredByCode", label: "Referral Code (Optional)", type: "text", placeholder: "e.g. OPT-SUFAID-2142" },
   ],
 };
 

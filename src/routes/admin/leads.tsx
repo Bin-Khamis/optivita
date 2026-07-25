@@ -197,6 +197,68 @@ function AdminLeads() {
     return matchesSearch;
   });
 
+  const processOfflineReferral = (lead: any, db: any) => {
+    if (!lead || !lead.referredByCode || lead["Referral Processed"] === true || lead["Referral Processed"] === "true") {
+      return;
+    }
+
+    const referrer = db["Program Enrollments"]?.find(
+      (x: any) => x && x["Referral Code"] && String(x["Referral Code"]).trim().toLowerCase() === String(lead.referredByCode).trim().toLowerCase()
+    );
+
+    if (referrer) {
+      // 1. Award Referrer +300 points
+      const refOldPoints = parseInt(referrer["Loyalty Points"] || 0, 10);
+      const refNewPoints = refOldPoints + 300;
+      referrer["Loyalty Points"] = refNewPoints;
+      
+      const getPointsTier = (pts: number) => {
+        if (pts >= 5000) return "Diamond";
+        if (pts >= 2000) return "Platinum";
+        if (pts >= 1000) return "Gold";
+        if (pts >= 500) return "Silver";
+        return "Bronze";
+      };
+      referrer["Loyalty Tier"] = getPointsTier(refNewPoints);
+
+      const now = new Date();
+      const timestampStr = `${String(now.getDate()).padStart(2, "0")}-${String(now.getMonth() + 1).padStart(2, "0")}-${now.getFullYear()} | ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+
+      // Add to Loyalty Ledger
+      if (!db["Loyalty Ledger"]) db["Loyalty Ledger"] = [];
+      db["Loyalty Ledger"].unshift({
+        Timestamp: timestampStr,
+        "Enrollment ID": referrer["Enrollment ID"],
+        "Customer Name": referrer.fullName,
+        Activity: `Referral Reward: referred ${lead.fullName}`,
+        "Points Earned": 300,
+        "Points Redeemed": 0,
+        "Current Balance": refNewPoints
+      });
+
+      // 2. Award Referee (the new client) +100 points
+      const oldPoints = parseInt(lead["Loyalty Points"] || 500, 10);
+      const newPoints = oldPoints + 100;
+      lead["Loyalty Points"] = newPoints;
+      lead["Loyalty Tier"] = getPointsTier(newPoints);
+
+      db["Loyalty Ledger"].unshift({
+        Timestamp: timestampStr,
+        "Enrollment ID": lead["Enrollment ID"],
+        "Customer Name": lead.fullName,
+        Activity: "Referral Welcome Bonus",
+        "Points Earned": 100,
+        "Points Redeemed": 0,
+        "Current Balance": newPoints
+      });
+
+      lead["Referral Processed"] = true;
+      toast.success(`Referral benefits applied! Referrer ${referrer.fullName} (+300 pts) and Referee ${lead.fullName} (+100 pts).`);
+    } else {
+      console.warn("Offline Simulation: Referrer with code " + lead.referredByCode + " not found.");
+    }
+  };
+
   const handleToggleConfirmJoining = async (lead: any) => {
     const isCurrentlyConfirmed = lead["Joining Status"] === "Confirmed" || lead["Lead Status"] === "Enrolled";
     const nextJoiningStatus = isCurrentlyConfirmed ? "Pending Confirmation" : "Confirmed";
@@ -216,6 +278,14 @@ function AdminLeads() {
         if (idx !== -1) {
           db["Program Enrollments"][idx]["Joining Status"] = nextJoiningStatus;
           db["Program Enrollments"][idx]["Lead Status"] = nextLeadStatus;
+          
+          if (nextJoiningStatus === "Confirmed") {
+            processOfflineReferral(db["Program Enrollments"][idx], db);
+            lead["Loyalty Points"] = db["Program Enrollments"][idx]["Loyalty Points"];
+            lead["Loyalty Tier"] = db["Program Enrollments"][idx]["Loyalty Tier"];
+            lead["Referral Processed"] = db["Program Enrollments"][idx]["Referral Processed"];
+          }
+          
           localStorage.setItem("optivita_crm_cache", JSON.stringify(db));
         }
       } catch (e) {
@@ -297,7 +367,18 @@ function AdminLeads() {
           const db = JSON.parse(cached);
           const idx = db["Program Enrollments"].findIndex((x: any) => x["Enrollment ID"] === editingLead["Enrollment ID"]);
           if (idx !== -1) {
-            db["Program Enrollments"][idx] = { ...editingLead };
+            db["Program Enrollments"][idx] = { 
+              ...db["Program Enrollments"][idx],
+              ...updateFields
+            };
+            
+            if (editJoiningStatus === "Confirmed") {
+              processOfflineReferral(db["Program Enrollments"][idx], db);
+              editingLead["Loyalty Points"] = db["Program Enrollments"][idx]["Loyalty Points"];
+              editingLead["Loyalty Tier"] = db["Program Enrollments"][idx]["Loyalty Tier"];
+              editingLead["Referral Processed"] = db["Program Enrollments"][idx]["Referral Processed"];
+            }
+            
             localStorage.setItem("optivita_crm_cache", JSON.stringify(db));
           }
         } catch (e) {

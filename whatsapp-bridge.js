@@ -24,7 +24,14 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         handleSIGINT: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--disable-features=IsolateOrigins,site-per-process',
+            '--disable-site-isolation-trials'
+        ]
     }
 });
 

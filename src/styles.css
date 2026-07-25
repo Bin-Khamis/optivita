@@ -31,6 +31,7 @@
   --color-ring: var(--ring);
   --color-teal: var(--teal);
   --color-vital: var(--vital);
+  --color-slate-850: #172237;
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
 }

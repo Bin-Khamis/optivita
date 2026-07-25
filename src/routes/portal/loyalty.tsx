@@ -150,7 +150,7 @@ function CustomerLoyalty() {
       const isBlack = (hash + i * 3) % 2 === 0 || (i % 6 === 0);
       const width = (hash + i * 5) % 3 === 0 ? "w-1" : "w-[2.5px]";
       lines.push(
-        <div key={i} className={`h-10 ${isBlack ? "bg-slate-850" : "bg-transparent"} ${width} shrink-0`} />
+        <div key={i} className={`h-10 ${isBlack ? "bg-slate-800" : "bg-transparent"} ${width} shrink-0`} />
       );
     }
 

@@ -17,7 +17,7 @@
 
 // CONFIGURATION: Set your self-hosted WhatsApp Bridge tunnel URL here (e.g. ngrok URL)
 // Leave as "" to fallback to email simulations during local testing.
-var WHATSAPP_BRIDGE_URL = "";
+var WHATSAPP_BRIDGE_URL = "https://a1b2-34-56-78.ngrok-free.app/send-whatsapp";
 
 // CONFIGURATION: Set your Resend API Key here to send emails through Resend
 // Leave as "" to use Google's native MailApp under the deployer's account.
@@ -981,6 +981,27 @@ function handleWebhookSubmit(data) {
     var timestampStr = formatTimestamp(now);
     var lastCol = sheet.getLastColumn();
     var headers = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+    
+    // Self-healing headers: dynamically append new fields submitted to the sheets headers row
+    for (var key in data) {
+      if (key === "action" || key === "sheetName") continue;
+      var foundHeader = false;
+      for (var hIdx = 0; hIdx < headers.length; hIdx++) {
+        if (String(headers[hIdx]).trim().toLowerCase() === key.trim().toLowerCase()) {
+          foundHeader = true;
+          break;
+        }
+      }
+      if (!foundHeader) {
+        var nextColIdx = headers.length + 1;
+        sheet.getRange(1, nextColIdx).setValue(key)
+             .setFontWeight("bold")
+             .setBackground("#0f766e")
+             .setFontColor("#ffffff");
+        headers.push(key);
+      }
+    }
+    
     var newRow = [];
     
     for (var c = 0; c < headers.length; c++) {
@@ -1273,6 +1294,155 @@ function handleUpdateRecord(data) {
     }
 
     sheet.getRange(targetRowIdx + 1, colIdx + 1).setValue(fields[fieldKey]);
+  }
+
+  // Trigger Referral rewards routine if confirming joining on Program Enrollments sheet
+  if (sheetName === "Program Enrollments" && (fields["Joining Status"] === "Confirmed" || fields["Lead Status"] === "Enrolled")) {
+    try {
+      // Reload values to get latest updates
+      var latestValues = sheet.getDataRange().getValues();
+      var latestHeaders = latestValues[0];
+      
+      // Map column indexes case-insensitively
+      var colMap = {};
+      for (var col = 0; col < latestHeaders.length; col++) {
+        colMap[String(latestHeaders[col]).trim().toLowerCase()] = col;
+      }
+      
+      var refByCodeIdx = colMap["referredbycode"];
+      var refProcessedIdx = colMap["referral processed"] || colMap["referralprocessed"];
+      var refCodeIdx = colMap["referral code"] || colMap["referralcode"];
+      var ptsIdx = colMap["loyalty points"] || colMap["loyaltypoints"];
+      var tierIdx = colMap["loyalty tier"] || colMap["loyaltytier"];
+      var nameIdx = colMap["fullname"] || colMap["client name"] || colMap["customer name"];
+      var idIdxVal = colMap["enrollment id"] || colMap["enrollmentid"] || 0;
+      
+      // Ensure Referral Processed column exists in headers, if not, create it
+      if (refProcessedIdx === undefined) {
+        refProcessedIdx = latestHeaders.length;
+        sheet.getRange(1, refProcessedIdx + 1).setValue("Referral Processed").setFontWeight("bold")
+             .setBackground("#0f766e").setFontColor("#ffffff");
+        latestHeaders.push("Referral Processed");
+      }
+      
+      var clientRow = latestValues[targetRowIdx];
+      var refereeId = String(clientRow[idIdxVal]).trim();
+      var refereeName = nameIdx !== undefined ? String(clientRow[nameIdx]).trim() : "Referee Client";
+      var refereeReferredBy = refByCodeIdx !== undefined ? String(clientRow[refByCodeIdx]).trim() : "";
+      var isProcessed = refProcessedIdx !== undefined ? String(clientRow[refProcessedIdx]).trim() : "";
+      
+      if (refereeReferredBy && isProcessed !== "true" && isProcessed !== "Confirmed") {
+        // Find Referrer row
+        var referrerRowIdx = -1;
+        if (refCodeIdx !== undefined) {
+          for (var rIdx = 1; rIdx < latestValues.length; rIdx++) {
+            var dbRefCode = String(latestValues[rIdx][refCodeIdx]).trim();
+            if (dbRefCode.toLowerCase() === refereeReferredBy.toLowerCase()) {
+              referrerRowIdx = rIdx;
+              break;
+            }
+          }
+        }
+        
+        if (referrerRowIdx !== -1) {
+          var referrerRow = latestValues[referrerRowIdx];
+          var referrerId = String(referrerRow[idIdxVal]).trim();
+          var referrerName = nameIdx !== undefined ? String(referrerRow[nameIdx]).trim() : "Referrer Client";
+          
+          var nowTimeStr = formatTimestamp(new Date());
+          
+          // Function to determine Tier
+          var getPointsTierVal = function(ptsVal) {
+            if (ptsVal >= 5000) return "Diamond";
+            if (ptsVal >= 2000) return "Platinum";
+            if (ptsVal >= 1000) return "Gold";
+            if (ptsVal >= 500) return "Silver";
+            return "Bronze";
+          };
+          
+          // 1. Award Referrer +300 points
+          if (ptsIdx !== undefined) {
+            var refOldPts = parseInt(referrerRow[ptsIdx] || 0, 10);
+            var refNewPts = refOldPts + 300;
+            sheet.getRange(referrerRowIdx + 1, ptsIdx + 1).setValue(refNewPts);
+            if (tierIdx !== undefined) {
+              sheet.getRange(referrerRowIdx + 1, tierIdx + 1).setValue(getPointsTierVal(refNewPts));
+            }
+            
+            // Add Referrer Ledger row
+            var ledgerSht = getSheetSafe(spreadsheet, "Loyalty Ledger");
+            if (ledgerSht) {
+              var ledgerHeaders = ledgerSht.getDataRange().getValues()[0];
+              var ledgerRow = [];
+              for (var l = 0; l < ledgerHeaders.length; l++) {
+                var lh = String(ledgerHeaders[l]).trim();
+                var lVal = "";
+                if (lh === "Timestamp") {
+                  lVal = nowTimeStr;
+                } else if (lh === "Enrollment ID" || lh === "EnrollmentID") {
+                  lVal = referrerId;
+                } else if (lh === "Customer Name" || lh === "CustomerName") {
+                  lVal = referrerName;
+                } else if (lh === "Activity") {
+                  lVal = "Referral Reward: referred " + refereeName;
+                } else if (lh === "Points Earned" || lh === "PointsEarned") {
+                  lVal = 300;
+                } else if (lh === "Points Redeemed" || lh === "PointsRedeemed") {
+                  lVal = 0;
+                } else if (lh === "Current Balance" || lh === "CurrentBalance") {
+                  lVal = refNewPts;
+                }
+                ledgerRow.push(lVal);
+              }
+              ledgerSht.appendRow(ledgerRow);
+            }
+          }
+          
+          // 2. Award Referee +100 points
+          if (ptsIdx !== undefined) {
+            var currentRefereePts = parseInt(sheet.getRange(targetRowIdx + 1, ptsIdx + 1).getValue() || 500, 10);
+            var refereeNewPts = currentRefereePts + 100;
+            sheet.getRange(targetRowIdx + 1, ptsIdx + 1).setValue(refereeNewPts);
+            if (tierIdx !== undefined) {
+              sheet.getRange(targetRowIdx + 1, tierIdx + 1).setValue(getPointsTierVal(refereeNewPts));
+            }
+            
+            // Add Referee Ledger row
+            var ledgerSht2 = getSheetSafe(spreadsheet, "Loyalty Ledger");
+            if (ledgerSht2) {
+              var ledgerHeaders2 = ledgerSht2.getDataRange().getValues()[0];
+              var ledgerRow2 = [];
+              for (var l = 0; l < ledgerHeaders2.length; l++) {
+                var lh = String(ledgerHeaders2[l]).trim();
+                var lVal = "";
+                if (lh === "Timestamp") {
+                  lVal = nowTimeStr;
+                } else if (lh === "Enrollment ID" || lh === "EnrollmentID") {
+                  lVal = refereeId;
+                } else if (lh === "Customer Name" || lh === "CustomerName") {
+                  lVal = refereeName;
+                } else if (lh === "Activity") {
+                  lVal = "Referral Welcome Bonus";
+                } else if (lh === "Points Earned" || lh === "PointsEarned") {
+                  lVal = 100;
+                } else if (lh === "Points Redeemed" || lh === "PointsRedeemed") {
+                  lVal = 0;
+                } else if (lh === "Current Balance" || lh === "CurrentBalance") {
+                  lVal = refereeNewPts;
+                }
+                ledgerRow2.push(lVal);
+              }
+              ledgerSht2.appendRow(ledgerRow2);
+            }
+          }
+          
+          // 3. Mark Referral Processed as true
+          sheet.getRange(targetRowIdx + 1, refProcessedIdx + 1).setValue("true");
+        }
+      }
+    } catch (err) {
+      Logger.log("Error in referral reward processing: " + err.toString());
+    }
   }
 
   SpreadsheetApp.flush();
