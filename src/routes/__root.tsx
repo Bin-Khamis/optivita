@@ -80,10 +80,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Optivita — Your Precision Health Partner" },
-      { name: "description", content: "Optivita is a precision-health nutrition coaching brand. Personalized programs for weight loss, diabetes, PCOS and lifelong wellness." },
+      {
+        name: "description",
+        content:
+          "Optivita is a precision-health nutrition coaching brand. Personalized programs for weight loss, diabetes, PCOS and lifelong wellness.",
+      },
       { name: "author", content: "Optivita" },
       { property: "og:title", content: "Optivita — Your Precision Health Partner" },
-      { property: "og:description", content: "Personalized nutrition coaching programs with real accountability and measurable results." },
+      {
+        property: "og:description",
+        content:
+          "Personalized nutrition coaching programs with real accountability and measurable results.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -92,7 +100,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -103,7 +114,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   const isSPA = typeof window !== "undefined" && !!document.getElementById("root");
-  
+
   if (isSPA) {
     return children;
   }
@@ -124,7 +135,9 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
-  const isPortalOrAdmin = router.state.location.pathname.startsWith("/admin") || router.state.location.pathname.startsWith("/portal");
+  const isPortalOrAdmin =
+    router.state.location.pathname.startsWith("/admin") ||
+    router.state.location.pathname.startsWith("/portal");
 
   return (
     <QueryClientProvider client={queryClient}>

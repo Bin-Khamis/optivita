@@ -48,22 +48,19 @@ async function generateTOTP(secretBase32: string, timeStep: number): Promise<str
       new Uint8Array(keyBytes),
       { name: "HMAC", hash: { name: "SHA-1" } },
       false,
-      ["sign"]
+      ["sign"],
     );
-    
-    const signature = await window.crypto.subtle.sign(
-      "HMAC",
-      key,
-      new Uint8Array(timeBytes)
-    );
-    
+
+    const signature = await window.crypto.subtle.sign("HMAC", key, new Uint8Array(timeBytes));
+
     const hmac = new Uint8Array(signature);
     const offset = hmac[hmac.length - 1] & 0xf;
-    const binary = ((hmac[offset] & 0x7f) << 24) |
-                   ((hmac[offset + 1] & 0xff) << 16) |
-                   ((hmac[offset + 2] & 0xff) << 8) |
-                   (hmac[offset + 3] & 0xff);
-    
+    const binary =
+      ((hmac[offset] & 0x7f) << 24) |
+      ((hmac[offset + 1] & 0xff) << 16) |
+      ((hmac[offset + 2] & 0xff) << 8) |
+      (hmac[offset + 3] & 0xff);
+
     const otp = binary % 1000000;
     return otp.toString().padStart(6, "0");
   } catch (err) {
@@ -75,7 +72,7 @@ async function generateTOTP(secretBase32: string, timeStep: number): Promise<str
 async function verifyTOTP(secretBase32: string, code: string): Promise<boolean> {
   const epoch = Math.round(Date.now() / 1000.0);
   const currentStep = Math.floor(epoch / 30);
-  
+
   // Accept window drift of +/- 30 seconds
   for (let i = -1; i <= 1; i++) {
     const calculatedCode = await generateTOTP(secretBase32, currentStep + i);
@@ -105,11 +102,12 @@ function SecuritySettings() {
 
     // Check offline simulation client preferences
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || 
-                      webhookUrl.includes("placeholder") || 
-                      webhookUrl === "undefined" || 
-                      webhookUrl === "null" || 
-                      webhookUrl.trim() === "";
+    const isOffline =
+      !webhookUrl ||
+      webhookUrl.includes("placeholder") ||
+      webhookUrl === "undefined" ||
+      webhookUrl === "null" ||
+      webhookUrl.trim() === "";
 
     if (isOffline) {
       const cached = localStorage.getItem("optivita_crm_cache");
@@ -136,8 +134,8 @@ function SecuritySettings() {
             body: JSON.stringify({
               action: "verify-client",
               enrollmentId: customer.enrollmentId,
-              phone: customer.phone
-            })
+              phone: customer.phone,
+            }),
           });
           const result = await res.json();
           if (result.status === "success") {
@@ -155,7 +153,10 @@ function SecuritySettings() {
   // Generates a random Base32 string for Authenticator bindings
   const generateRandomSecret = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-    const secret = Array.from({ length: 16 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    const secret = Array.from(
+      { length: 16 },
+      () => chars[Math.floor(Math.random() * chars.length)],
+    ).join("");
     setTempSecret(secret);
     setVerificationCode("");
   };
@@ -174,11 +175,12 @@ function SecuritySettings() {
 
     setLoading(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || 
-                      webhookUrl.includes("placeholder") || 
-                      webhookUrl === "undefined" || 
-                      webhookUrl === "null" || 
-                      webhookUrl.trim() === "";
+    const isOffline =
+      !webhookUrl ||
+      webhookUrl.includes("placeholder") ||
+      webhookUrl === "undefined" ||
+      webhookUrl === "null" ||
+      webhookUrl.trim() === "";
 
     if (isOffline) {
       // Simulated Update
@@ -187,7 +189,9 @@ function SecuritySettings() {
         if (cached) {
           try {
             const db = JSON.parse(cached);
-            const index = db["Program Enrollments"].findIndex((e: any) => e["Enrollment ID"] === customer?.enrollmentId);
+            const index = db["Program Enrollments"].findIndex(
+              (e: any) => e["Enrollment ID"] === customer?.enrollmentId,
+            );
             if (index !== -1) {
               db["Program Enrollments"][index].preferredAuthMethod = method;
               localStorage.setItem("optivita_crm_cache", JSON.stringify(db));
@@ -209,8 +213,8 @@ function SecuritySettings() {
           body: JSON.stringify({
             action: "update-security-preference",
             enrollmentId: customer?.enrollmentId,
-            preferredMethod: method
-          })
+            preferredMethod: method,
+          }),
         });
         const result = await res.json();
         if (result.status === "success") {
@@ -237,11 +241,12 @@ function SecuritySettings() {
 
     setLoading(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || 
-                      webhookUrl.includes("placeholder") || 
-                      webhookUrl === "undefined" || 
-                      webhookUrl === "null" || 
-                      webhookUrl.trim() === "";
+    const isOffline =
+      !webhookUrl ||
+      webhookUrl.includes("placeholder") ||
+      webhookUrl === "undefined" ||
+      webhookUrl === "null" ||
+      webhookUrl.trim() === "";
 
     if (isOffline) {
       // Client-side Web Crypto Validation
@@ -257,7 +262,9 @@ function SecuritySettings() {
         if (cached) {
           try {
             const db = JSON.parse(cached);
-            const index = db["Program Enrollments"].findIndex((e: any) => e["Enrollment ID"] === customer?.enrollmentId);
+            const index = db["Program Enrollments"].findIndex(
+              (e: any) => e["Enrollment ID"] === customer?.enrollmentId,
+            );
             if (index !== -1) {
               db["Program Enrollments"][index].totpSecret = tempSecret;
               db["Program Enrollments"][index].preferredAuthMethod = "totp";
@@ -284,8 +291,8 @@ function SecuritySettings() {
             enrollmentId: customer?.enrollmentId,
             preferredMethod: "totp",
             totpSecret: tempSecret,
-            verificationCode: verificationCode
-          })
+            verificationCode: verificationCode,
+          }),
         });
         const result = await res.json();
         if (result.status === "success") {
@@ -314,7 +321,6 @@ function SecuritySettings() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-12">
-      
       {/* Banner */}
       <div className="bg-[#173B63] rounded-[32px] p-8 text-white relative overflow-hidden shadow-soft">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_70%_120%,#fff,transparent)]" />
@@ -322,7 +328,9 @@ function SecuritySettings() {
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-xs font-bold uppercase tracking-wider text-emerald-300">
             <Shield className="h-3.5 w-3.5" /> Security Center
           </div>
-          <h1 className="font-display font-extrabold text-3xl leading-tight">Security Preferences</h1>
+          <h1 className="font-display font-extrabold text-3xl leading-tight">
+            Security Preferences
+          </h1>
           <p className="text-sm text-slate-200/90 max-w-xl">
             Choose your preferred sign-in method and configure two-factor authenticator settings.
           </p>
@@ -330,77 +338,97 @@ function SecuritySettings() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
         {/* Verification Preferences Panel */}
         <div className="md:col-span-2 space-y-6">
           <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-soft space-y-6">
             <div>
-              <h3 className="font-display font-bold text-lg text-[#173B63] dark:text-slate-50">Two-Factor Authentication</h3>
+              <h3 className="font-display font-bold text-lg text-[#173B63] dark:text-slate-50">
+                Two-Factor Authentication
+              </h3>
               <p className="text-xs text-slate-400 mt-1 leading-normal">
-                Choose how you would like to receive your verification code for future portal logins.
+                Choose how you would like to receive your verification code for future portal
+                logins.
               </p>
             </div>
 
             <div className="space-y-4">
               {/* Email Option */}
-              <label className={`flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${
-                preferredMethod === "email" ? "border-emerald-500 bg-emerald-50/10" : "border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850"
-              }`}>
-                <input 
-                  type="radio" 
-                  name="auth-pref" 
-                  checked={preferredMethod === "email"} 
+              <label
+                className={`flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${
+                  preferredMethod === "email"
+                    ? "border-emerald-500 bg-emerald-50/10"
+                    : "border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="auth-pref"
+                  checked={preferredMethod === "email"}
                   onChange={() => handleSavePreferences("email")}
-                  className="mt-1 accent-emerald-500" 
+                  className="mt-1 accent-emerald-500"
                 />
                 <div className="space-y-1">
                   <span className="font-semibold text-sm flex items-center gap-1.5 text-slate-850 dark:text-slate-100">
-                    <Mail className="h-4 w-4 text-[#173B63] dark:text-[#7ee0c8]" /> Email OTP (Recommended)
+                    <Mail className="h-4 w-4 text-[#173B63] dark:text-[#7ee0c8]" /> Email OTP
+                    (Recommended)
                   </span>
                   <p className="text-xs text-slate-400 leading-normal">
-                    Fast and secure. A verification code will be sent to your registered email address.
+                    Fast and secure. A verification code will be sent to your registered email
+                    address.
                   </p>
                 </div>
               </label>
 
               {/* WhatsApp Option */}
-              <label className={`flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${
-                preferredMethod === "whatsapp" ? "border-emerald-500 bg-emerald-50/10" : "border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850"
-              }`}>
-                <input 
-                  type="radio" 
-                  name="auth-pref" 
-                  checked={preferredMethod === "whatsapp"} 
+              <label
+                className={`flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${
+                  preferredMethod === "whatsapp"
+                    ? "border-emerald-500 bg-emerald-50/10"
+                    : "border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="auth-pref"
+                  checked={preferredMethod === "whatsapp"}
                   onChange={() => handleSavePreferences("whatsapp")}
-                  className="mt-1 accent-emerald-500" 
+                  className="mt-1 accent-emerald-500"
                 />
                 <div className="space-y-1">
                   <span className="font-semibold text-sm flex items-center gap-1.5 text-slate-850 dark:text-slate-100">
-                    <Smartphone className="h-4 w-4 text-[#173B63] dark:text-[#7ee0c8]" /> WhatsApp OTP (Optional)
+                    <Smartphone className="h-4 w-4 text-[#173B63] dark:text-[#7ee0c8]" /> WhatsApp
+                    OTP (Optional)
                   </span>
                   <p className="text-xs text-slate-400 leading-normal">
-                    Receive your 6-digit verification code directly on your registered WhatsApp phone number.
+                    Receive your 6-digit verification code directly on your registered WhatsApp
+                    phone number.
                   </p>
                 </div>
               </label>
 
               {/* Authenticator Option */}
-              <label className={`flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${
-                preferredMethod === "totp" ? "border-emerald-500 bg-emerald-50/10" : "border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850"
-              }`}>
-                <input 
-                  type="radio" 
-                  name="auth-pref" 
-                  checked={preferredMethod === "totp"} 
+              <label
+                className={`flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${
+                  preferredMethod === "totp"
+                    ? "border-emerald-500 bg-emerald-50/10"
+                    : "border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="auth-pref"
+                  checked={preferredMethod === "totp"}
                   onChange={() => handleSavePreferences("totp")}
-                  className="mt-1 accent-emerald-500" 
+                  className="mt-1 accent-emerald-500"
                 />
                 <div className="space-y-1">
                   <span className="font-semibold text-sm flex items-center gap-1.5 text-slate-850 dark:text-slate-100">
-                    <Key className="h-4 w-4 text-[#173B63] dark:text-[#7ee0c8]" /> Authenticator App (Google/Microsoft/Authy)
+                    <Key className="h-4 w-4 text-[#173B63] dark:text-[#7ee0c8]" /> Authenticator App
+                    (Google/Microsoft/Authy)
                   </span>
                   <p className="text-xs text-slate-400 leading-normal">
-                    Use Google Authenticator, Microsoft Authenticator, Authy, or FreeOTP to generate a verification code without requiring internet or message delivery.
+                    Use Google Authenticator, Microsoft Authenticator, Authy, or FreeOTP to generate
+                    a verification code without requiring internet or message delivery.
                   </p>
                 </div>
               </label>
@@ -411,11 +439,19 @@ function SecuritySettings() {
               <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-2xl flex items-start gap-3 animate-fade-in">
                 <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                 <div className="space-y-1 text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-                  <p className="font-bold text-amber-800 dark:text-amber-200">Developer Warning (WhatsApp OTP Mode)</p>
+                  <p className="font-bold text-amber-800 dark:text-amber-200">
+                    Developer Warning (WhatsApp OTP Mode)
+                  </p>
                   <p>• Development and testing mode only.</p>
-                  <p>• Self-hosted bridges (whatsapp-web.js, Baileys) require active QR-code sessions.</p>
+                  <p>
+                    • Self-hosted bridges (whatsapp-web.js, Baileys) require active QR-code
+                    sessions.
+                  </p>
                   <p>• Message delivery stops if the host device disconnects or is blocked.</p>
-                  <p>• Not recommended for high-volume production; use official WhatsApp Business APIs.</p>
+                  <p>
+                    • Not recommended for high-volume production; use official WhatsApp Business
+                    APIs.
+                  </p>
                 </div>
               </div>
             )}
@@ -425,8 +461,10 @@ function SecuritySettings() {
         {/* Authenticator App Configurations Wizard */}
         <div className="space-y-6">
           <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-3xl p-6 shadow-soft space-y-4">
-            <h3 className="font-display font-bold text-sm text-[#173B63] dark:text-slate-50 uppercase tracking-wider">Authenticator Hub</h3>
-            
+            <h3 className="font-display font-bold text-sm text-[#173B63] dark:text-slate-50 uppercase tracking-wider">
+              Authenticator Hub
+            </h3>
+
             {totpConfigured ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 p-3.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 border border-emerald-100 rounded-2xl text-xs">
@@ -436,7 +474,7 @@ function SecuritySettings() {
                     <p className="mt-0.5">Google/Authy app is linked.</p>
                   </div>
                 </div>
-                
+
                 <button
                   onClick={handleStartTotpSetup}
                   className="w-full text-center py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 transition"
@@ -449,9 +487,11 @@ function SecuritySettings() {
                 <Shield className="h-10 w-10 text-slate-300 mx-auto" />
                 <div className="space-y-1">
                   <p className="font-bold text-xs">Not Configured</p>
-                  <p className="text-[10px] text-slate-400 leading-normal max-w-[180px] mx-auto">Link Google or Microsoft Authenticator to enable offline 2FA.</p>
+                  <p className="text-[10px] text-slate-400 leading-normal max-w-[180px] mx-auto">
+                    Link Google or Microsoft Authenticator to enable offline 2FA.
+                  </p>
                 </div>
-                
+
                 <button
                   onClick={handleStartTotpSetup}
                   className="w-full text-center py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition shadow-soft"
@@ -462,35 +502,43 @@ function SecuritySettings() {
             )}
           </div>
         </div>
-
       </div>
 
       {/* TOTP BINDING WIZARD OVERLAY */}
       {showTotpWizard && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 animate-fade-in">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTotpWizard(false)} />
-          
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowTotpWizard(false)}
+          />
+
           <div className="relative bg-white border rounded-[32px] w-full max-w-md p-8 shadow-glow z-10 overflow-hidden text-slate-900 animate-scale-up">
-            <h3 className="font-display font-extrabold text-xl text-[#173B63]">Setup Authenticator App</h3>
+            <h3 className="font-display font-extrabold text-xl text-[#173B63]">
+              Setup Authenticator App
+            </h3>
             <p className="text-xs text-slate-500 leading-normal mt-1">
-              Add your Optivita Client profile to your Authenticator Application (Google Authenticator, Microsoft, Authy, or FreeOTP).
+              Add your Optivita Client profile to your Authenticator Application (Google
+              Authenticator, Microsoft, Authy, or FreeOTP).
             </p>
 
             <form onSubmit={handleVerifyAndBindTotp} className="mt-6 space-y-6">
-              
               {/* QR Code Container */}
               <div className="flex flex-col items-center gap-3 p-4 bg-slate-50 rounded-2xl border">
-                <img 
-                  src={qrCodeUrl} 
-                  alt="Scan QR" 
+                <img
+                  src={qrCodeUrl}
+                  alt="Scan QR"
                   className="h-44 w-44 object-contain rounded-lg border bg-white p-2"
                 />
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Scan this QR Code</span>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  Scan this QR Code
+                </span>
               </div>
 
               {/* Manual Secret Key */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Or enter secret key manually</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Or enter secret key manually
+                </label>
                 <div className="flex gap-2">
                   <code className="flex-1 px-3 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-700 select-all border flex items-center justify-center font-mono">
                     {tempSecret}
@@ -507,7 +555,9 @@ function SecuritySettings() {
 
               {/* Code Verification Input */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Confirm 6-Digit App Code</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Confirm 6-Digit App Code
+                </label>
                 <input
                   type="text"
                   maxLength={6}
@@ -535,12 +585,10 @@ function SecuritySettings() {
                   Cancel
                 </button>
               </div>
-
             </form>
           </div>
         </div>
       )}
-
     </div>
   );
 }

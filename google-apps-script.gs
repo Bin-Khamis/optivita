@@ -1,6 +1,6 @@
 /**
  * OPTIVITA CLIENT PORTAL SECURE MULTI-CHANNEL AUTHENTICATION ENDPOINTS
- * 
+ *
  * Column Schema for the sheets:
  * 1. "Clients"
  *    - Col A: Enrollment ID
@@ -37,28 +37,171 @@ function getSheetSafe(spreadsheet, name) {
   return spreadsheet.getSheetByName(name);
 }
 
-// Self-healing database: Automatically creates missing portal auth sheets and headers
+// Self-healing database: Automatically creates missing portal auth and ERP sheets and headers
 function ensureRequiredSheets(spreadsheet) {
   var required = {
-    "Clients": ["Enrollment ID", "Client Name", "Mobile Number", "Email Address", "Program", "Status", "Preferred Auth Method", "TOTP Secret"],
-    "OTP": ["Enrollment ID", "OTP", "Created Time", "Expiry Time", "Verified", "Attempts", "Last Attempt Time"],
+    Clients: [
+      "Enrollment ID",
+      "Client Name",
+      "Mobile Number",
+      "Email Address",
+      "Program",
+      "Status",
+      "Preferred Auth Method",
+      "TOTP Secret",
+    ],
+    OTP: [
+      "Enrollment ID",
+      "OTP",
+      "Created Time",
+      "Expiry Time",
+      "Verified",
+      "Attempts",
+      "Last Attempt Time",
+      "Resend Count",
+    ],
     "Login Logs": ["Enrollment ID", "Login Time", "Browser", "Device", "IP", "Status"],
-    "Settings": ["Key", "Value"]
+    Settings: ["Key", "Value"],
+    Invoices: [
+      "InvoiceId",
+      "Enrollment ID",
+      "Customer Name",
+      "Program Name",
+      "Amount",
+      "Date",
+      "Status",
+      "Due Date",
+    ],
+    Receipts: [
+      "ReceiptId",
+      "Enrollment ID",
+      "Customer Name",
+      "Program Name",
+      "Payment Method",
+      "Amount",
+      "Tax",
+      "Discount",
+      "Received By",
+      "Date",
+      "Branch",
+      "Remarks",
+      "Reference No",
+    ],
+    Expenses: [
+      "ExpenseId",
+      "Date",
+      "Category",
+      "Amount",
+      "Remarks",
+      "Status",
+      "Approved By",
+      "ReceiptUrl",
+    ],
+    Refunds: [
+      "RefundId",
+      "Date",
+      "Customer Name",
+      "Program",
+      "Amount",
+      "Payment Method",
+      "Approved By",
+      "Status",
+      "Reason",
+    ],
+    "Cash Treasury": ["TxnId", "Date", "Type", "Amount", "Source", "Destination", "Remarks"],
+    "Journal Ledger": [
+      "JournalId",
+      "Date",
+      "Account Code",
+      "Account Name",
+      "Debit",
+      "Credit",
+      "Description",
+      "Reference",
+      "Party",
+      "Created By",
+      "Status",
+      "Branch",
+    ],
+    "Payment Requests": [
+      "PR No",
+      "Client ID",
+      "Client Name",
+      "Invoice ID",
+      "Amount",
+      "Payment Method",
+      "Submitted Date",
+      "Status",
+      "Proof Of Payment",
+      "Notes",
+    ],
+    Notifications: [
+      "Notification ID",
+      "Title",
+      "Message",
+      "Sender",
+      "Date",
+      "Recipients Type",
+      "Recipients List",
+    ],
+    "Notification Recipients": ["Notification ID", "Client ID", "Read Status", "Read Date"],
+    Messages: ["Message ID", "Sender ID", "Sender Type", "Recipient ID", "Message", "Timestamp"],
+    "Voucher Series": ["Series Key", "Prefix", "Next Number"],
+    "Financial Periods": ["Period Code", "Start Date", "End Date", "Status"],
+    Appointments: [
+      "Appointment ID",
+      "Client ID",
+      "Client Name",
+      "Email",
+      "Phone",
+      "Appointment Date",
+      "Appointment Time",
+      "Time Zone",
+      "Reason",
+      "Status",
+      "Requested On",
+      "Coach",
+      "Internal Notes",
+      "Google Meet Link",
+    ],
+    Staff: [
+      "StaffId",
+      "Name",
+      "Role",
+      "Branch",
+      "Joining Date",
+      "Salary",
+      "Allowances",
+      "Deductions",
+      "Status",
+    ],
   };
-  
+
   for (var name in required) {
     var sheet = getSheetSafe(spreadsheet, name);
     if (!sheet) {
       sheet = spreadsheet.insertSheet(name);
       sheet.appendRow(required[name]);
       // Format header row to bold, white text with teal background
-      sheet.getRange(1, 1, 1, required[name].length)
-           .setFontWeight("bold")
-           .setBackground("#0f766e")
-           .setFontColor("#ffffff");
-           
+      sheet
+        .getRange(1, 1, 1, required[name].length)
+        .setFontWeight("bold")
+        .setBackground("#0f766e")
+        .setFontColor("#ffffff");
+
       if (name === "Settings") {
-        sheet.appendRow(["WhatsApp Bridge URL", "https://your-ngrok-url-here.ngrok-free.app/send-whatsapp"]);
+        sheet.appendRow([
+          "WhatsApp Bridge URL",
+          "https://your-ngrok-url-here.ngrok-free.app/send-whatsapp",
+        ]);
+      } else if (name === "Voucher Series") {
+        sheet.appendRow(["Invoice", "INV-", 1001]);
+        sheet.appendRow(["Receipt", "RCPT-", 2001]);
+        sheet.appendRow(["PaymentRequest", "PR-", 15]);
+        sheet.appendRow(["Journal", "JV-", 3001]);
+        sheet.appendRow(["Voucher", "VCH-", 4001]);
+      } else if (name === "Financial Periods") {
+        sheet.appendRow(["FY-2026", "2026-01-01", "2026-12-31", "Unlocked"]);
       }
     }
   }
@@ -94,20 +237,24 @@ function doGet(e) {
     var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     ensureRequiredSheets(spreadsheet);
     var action = e && e.parameter ? e.parameter.action : "getData";
-    
+
     if (action === "getData" || !action) {
       var data = handleGetData();
-      return ContentService.createTextOutput(JSON.stringify(data))
-        .setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(
+        ContentService.MimeType.JSON,
+      );
     }
-    
-    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Invalid GET action." }))
-      .setMimeType(ContentService.MimeType.JSON);
+
+    return ContentService.createTextOutput(
+      JSON.stringify({ status: "error", message: "Invalid GET action." }),
+    ).setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ 
-      status: "error", 
-      message: "Unexpected error in doGet: " + error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        status: "error",
+        message: "Unexpected error in doGet: " + error.toString(),
+      }),
+    ).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
@@ -116,7 +263,7 @@ function doPost(e) {
     var requestData = JSON.parse(e.postData.contents);
     var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     ensureRequiredSheets(spreadsheet); // Auto-creates Clients, OTP, Login Logs if missing
-    
+
     var action = requestData.action;
     var response;
 
@@ -161,21 +308,26 @@ function doPost(e) {
         }
     }
 
-    return ContentService.createTextOutput(JSON.stringify(response))
-      .setMimeType(ContentService.MimeType.JSON);
-
+    return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(
+      ContentService.MimeType.JSON,
+    );
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ 
-      status: "error", 
-      message: "Unexpected error: " + error.toString() + (error.stack ? "\nStack: " + error.stack : "")
-    })).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        status: "error",
+        message:
+          "Unexpected error: " + error.toString() + (error.stack ? "\nStack: " + error.stack : ""),
+      }),
+    ).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
 // 1. Verify Client Credentials Action
 function verifyClient(data) {
   var enrollmentId = String(data.enrollmentId || "").trim();
-  var phoneInput = String(data.phone || "").trim().replace(/[^0-9+]/g, "");
+  var phoneInput = String(data.phone || "")
+    .trim()
+    .replace(/[^0-9+]/g, "");
 
   if (!enrollmentId || !phoneInput) {
     return { status: "error", message: "Invalid Enrollment ID or Mobile Number." };
@@ -189,9 +341,12 @@ function verifyClient(data) {
     for (var i = 0; i < sheets.length; i++) {
       available.push(sheets[i].getName());
     }
-    return { 
-      status: "error", 
-      message: "Database connection failed. Clients sheet missing. Available sheets in your document: [" + available.join(", ") + "]" 
+    return {
+      status: "error",
+      message:
+        "Database connection failed. Clients sheet missing. Available sheets in your document: [" +
+        available.join(", ") +
+        "]",
     };
   }
 
@@ -211,7 +366,7 @@ function verifyClient(data) {
     if (dbId === enrollmentId) {
       var phoneInputDigits = phoneInput.replace(/[^0-9]/g, "");
       var isPhoneMatch = false;
-      
+
       if (dbPhone === phoneInputDigits) {
         isPhoneMatch = true;
       } else if (dbPhone.length >= 7 && phoneInputDigits.length >= 7) {
@@ -224,7 +379,9 @@ function verifyClient(data) {
           return { status: "error", message: "Account is inactive. Please contact support." };
         }
         email = String(rows[i][3]).trim();
-        preferredMethod = String(rows[i][6] || "email").trim().toLowerCase();
+        preferredMethod = String(rows[i][6] || "email")
+          .trim()
+          .toLowerCase();
         totpSecret = String(rows[i][7] || "").trim();
         totpConfigured = !!totpSecret;
         found = true;
@@ -239,9 +396,13 @@ function verifyClient(data) {
     if (enrollSheet) {
       var enrollRows = enrollSheet.getDataRange().getValues();
       var enrollHeaders = enrollRows[0];
-      
+
       // Map indexes
-      var idIdx = -1, nameIdx = -1, phoneIdx = -1, emailIdx = -1, progIdx = -1;
+      var idIdx = -1,
+        nameIdx = -1,
+        phoneIdx = -1,
+        emailIdx = -1,
+        progIdx = -1;
       for (var h = 0; h < enrollHeaders.length; h++) {
         var hName = String(enrollHeaders[h]).trim().toLowerCase();
         if (hName === "enrollment id" || hName === "enrollmentid") idIdx = h;
@@ -255,10 +416,15 @@ function verifyClient(data) {
         for (var r = 1; r < enrollRows.length; r++) {
           if (String(enrollRows[r][idIdx]).trim() === enrollmentId) {
             var inputPhoneClean = phoneInput.replace(/[^0-9]/g, "");
-            var dbEnrollPhoneClean = String(enrollRows[r][phoneIdx] || "").trim().replace(/[^0-9]/g, "");
-            
+            var dbEnrollPhoneClean = String(enrollRows[r][phoneIdx] || "")
+              .trim()
+              .replace(/[^0-9]/g, "");
+
             // Allow sub-string matching for country code flexibility
-            if (dbEnrollPhoneClean.indexOf(inputPhoneClean) !== -1 || inputPhoneClean.indexOf(dbEnrollPhoneClean) !== -1) {
+            if (
+              dbEnrollPhoneClean.indexOf(inputPhoneClean) !== -1 ||
+              inputPhoneClean.indexOf(dbEnrollPhoneClean) !== -1
+            ) {
               var clientName = nameIdx !== -1 ? String(enrollRows[r][nameIdx]).trim() : "";
               var clientPhone = phoneIdx !== -1 ? String(enrollRows[r][phoneIdx]).trim() : "";
               email = emailIdx !== -1 ? String(enrollRows[r][emailIdx]).trim() : "";
@@ -276,11 +442,12 @@ function verifyClient(data) {
                 else if (ch === "Email Address" || ch === "EmailAddress") chVal = email;
                 else if (ch === "Program") chVal = program;
                 else if (ch === "Status") chVal = "Active";
-                else if (ch === "Preferred Auth Method" || ch === "PreferredAuthMethod") chVal = "email";
+                else if (ch === "Preferred Auth Method" || ch === "PreferredAuthMethod")
+                  chVal = "email";
                 else if (ch === "TOTP Secret" || ch === "TOTPSecret") chVal = "";
                 newClientRow.push(chVal);
               }
-              
+
               sheet.appendRow(newClientRow);
               SpreadsheetApp.flush();
 
@@ -305,14 +472,16 @@ function verifyClient(data) {
     message: "Client verified.",
     emailMasked: maskEmail(email),
     preferredMethod: preferredMethod,
-    totpConfigured: totpConfigured
+    totpConfigured: totpConfigured,
   };
 }
 
 // 2. Generate and Dispatch OTP
 function sendOTP(data) {
   var enrollmentId = String(data.enrollmentId || "").trim();
-  var method = String(data.method || "email").trim().toLowerCase(); // email | whatsapp
+  var method = String(data.method || "email")
+    .trim()
+    .toLowerCase(); // email | whatsapp
 
   if (!enrollmentId) {
     return { status: "error", message: "Invalid request. Missing ID." };
@@ -331,7 +500,7 @@ function sendOTP(data) {
   var clientEmail = "";
   var clientName = "";
   var clientPhone = "";
-  
+
   for (var i = 1; i < clientRows.length; i++) {
     if (String(clientRows[i][0]).trim() === enrollmentId) {
       clientName = String(clientRows[i][1]).trim();
@@ -347,7 +516,10 @@ function sendOTP(data) {
     if (enrollSheet) {
       var enrollRows = enrollSheet.getDataRange().getValues();
       var enrollHeaders = enrollRows[0];
-      var idIdx = -1, nameIdx = -1, phoneIdx = -1, emailIdx = -1;
+      var idIdx = -1,
+        nameIdx = -1,
+        phoneIdx = -1,
+        emailIdx = -1;
       for (var h = 0; h < enrollHeaders.length; h++) {
         var hName = String(enrollHeaders[h]).trim().toLowerCase();
         if (hName === "enrollment id" || hName === "enrollmentid") idIdx = h;
@@ -376,7 +548,7 @@ function sendOTP(data) {
   var nowTime = new Date().getTime();
   var otpRows = otpSheet.getDataRange().getValues();
   var requestCount = 0;
-  var oneHourAgo = nowTime - (60 * 60 * 1000);
+  var oneHourAgo = nowTime - 60 * 60 * 1000;
 
   for (var j = 1; j < otpRows.length; j++) {
     if (String(otpRows[j][0]).trim() === enrollmentId) {
@@ -388,96 +560,156 @@ function sendOTP(data) {
   }
 
   if (requestCount >= 5) {
-    return { status: "error", message: "Too many requests. Please wait an hour before requesting a new OTP." };
+    return {
+      status: "error",
+      message: "Too many requests. Please wait an hour before requesting a new OTP.",
+    };
   }
 
   // Generate 6-digit OTP
   var pin = String(Math.floor(100000 + Math.random() * 900000));
-  var expiry = new Date(nowTime + (5 * 60 * 1000));
+  var expiry = new Date(nowTime + 5 * 60 * 1000);
 
-  // Save to OTP sheet
+  // Save to OTP sheet & check resend count limit
   var exists = false;
+  var resendCount = 0;
+  var existingRowIndex = -1;
   for (var k = 1; k < otpRows.length; k++) {
     if (String(otpRows[k][0]).trim() === enrollmentId) {
-      otpSheet.getRange(k + 1, 2).setValue(pin);
-      otpSheet.getRange(k + 1, 3).setValue(new Date());
-      otpSheet.getRange(k + 1, 4).setValue(expiry);
-      otpSheet.getRange(k + 1, 5).setValue("false");
-      otpSheet.getRange(k + 1, 6).setValue(0);
-      otpSheet.getRange(k + 1, 7).setValue("");
+      resendCount = parseInt(otpRows[k][7] || 0, 10);
+      existingRowIndex = k;
       exists = true;
       break;
     }
   }
 
-  if (!exists) {
-    otpSheet.appendRow([enrollmentId, pin, new Date(), expiry, "false", 0, ""]);
+  if (exists && resendCount >= 3) {
+    var createdTime = new Date(otpRows[existingRowIndex][2]).getTime();
+    var resendLockRemaining = 15 * 60 * 1000 - (nowTime - createdTime);
+    if (resendLockRemaining > 0) {
+      var mins = Math.ceil(resendLockRemaining / (60 * 1000));
+      return {
+        status: "error",
+        code: "RESEND_LIMIT_EXCEEDED",
+        message: "Too many resend attempts. Please wait " + mins + " minutes.",
+      };
+    } else {
+      resendCount = 0;
+    }
+  }
+
+  // Generate 6-digit OTP
+  var pin = String(Math.floor(100000 + Math.random() * 900000));
+  var expiry = new Date(nowTime + 5 * 60 * 1000);
+
+  if (exists) {
+    otpSheet.getRange(existingRowIndex + 1, 2).setValue(pin);
+    otpSheet.getRange(existingRowIndex + 1, 3).setValue(new Date());
+    otpSheet.getRange(existingRowIndex + 1, 4).setValue(expiry);
+    otpSheet.getRange(existingRowIndex + 1, 5).setValue("false");
+    otpSheet.getRange(existingRowIndex + 1, 6).setValue(0);
+    otpSheet.getRange(existingRowIndex + 1, 7).setValue("");
+    otpSheet.getRange(existingRowIndex + 1, 8).setValue(resendCount + 1);
+  } else {
+    otpSheet.appendRow([enrollmentId, pin, new Date(), expiry, "false", 0, "", 0]);
   }
 
   // Handle Multi-Channel Dispatch
   if (method === "whatsapp") {
-    var messageText = "Hello " + clientName + ",\n\nYour Optivita verification code is: " + pin + "\n\nThis code expires in 5 minutes.";
+    var messageText =
+      "Hello " +
+      clientName +
+      ",\n\nYour Optivita verification code is: " +
+      pin +
+      "\n\nThis code expires in 5 minutes.";
     var activeBridgeUrl = getWhatsAppBridgeUrl(spreadsheet);
-    
+
     if (activeBridgeUrl && activeBridgeUrl.indexOf("your-ngrok-url-here") === -1) {
       var options = {
         method: "post",
         contentType: "application/json",
         headers: {
-          "Bypass-Tunnel-Reminder": "true"
+          "Bypass-Tunnel-Reminder": "true",
         },
         payload: JSON.stringify({
           phone: clientPhone,
-          message: messageText
+          message: messageText,
         }),
-        muteHttpExceptions: true
+        muteHttpExceptions: true,
       };
-      
+
       try {
         var response = UrlFetchApp.fetch(activeBridgeUrl, options);
-        Logger.log("WhatsApp Bridge Response: " + response.getContentText());
+        var respText = response.getContentText();
+        Logger.log("WhatsApp Bridge Response: " + respText);
+
+        var respJson = JSON.parse(respText);
+        if (respJson && respJson.status === "error") {
+          return {
+            status: "error",
+            code: respJson.code || "FAILED_SEND",
+            message: respJson.message || "Failed to Send OTP",
+          };
+        }
       } catch (err) {
         Logger.log("WhatsApp Bridge Error: " + err.toString());
+        return {
+          status: "error",
+          code: "FAILED_SEND",
+          message: "Failed to Send OTP",
+        };
       }
     } else {
       var logMsg = "Simulated WhatsApp delivery to " + clientPhone + " with OTP: " + pin;
       Logger.log(logMsg);
-      
+
       // For development convenience, we also dispatch an email backup so they always receive it
       try {
         sendEmailViaProvider(
           clientEmail,
           "Optivita Client Portal Verification (WhatsApp Request)",
-          "<p>Hello <strong>" + clientName + "</strong>,</p><p>Your WhatsApp verification code was requested. Code is:</p><h2>" + pin + "</h2>"
+          "<p>Hello <strong>" +
+            clientName +
+            "</strong>,</p><p>Your WhatsApp verification code was requested. Code is:</p><h2>" +
+            pin +
+            "</h2>",
         );
-      } catch(e) {}
+      } catch (e) {}
     }
   } else {
     // Email Delivery
     var subject = "Optivita Client Portal Verification Code";
-    var htmlBody = "<div style='font-family:sans-serif; max-width:600px; padding:20px; border:1px solid #e2e8f0; border-radius:16px;'>" +
-                   "<h2 style='color:#0f766e;'>Optivita Precision Health</h2>" +
-                   "<p>Hello <strong>" + clientName + "</strong>,</p>" +
-                   "<p>Your verification code is:</p>" +
-                   "<div style='background-color:#f1f5f9; padding:15px; text-align:center; font-size:24px; font-weight:bold; letter-spacing:4px; margin:20px 0; color:#1e293b; border-radius:8px;'>" + pin + "</div>" +
-                   "<p style='color:#ef4444; font-size:12px;'>This verification code is valid for 5 minutes.</p>" +
-                   "<p>Do not share this code with anyone.</p><br/>" +
-                   "<p>Regards,<br/><strong>Optivita Team</strong></p>" +
-                   "</div>";
+    var htmlBody =
+      "<div style='font-family:sans-serif; max-width:600px; padding:20px; border:1px solid #e2e8f0; border-radius:16px;'>" +
+      "<h2 style='color:#0f766e;'>Optivita Precision Health</h2>" +
+      "<p>Hello <strong>" +
+      clientName +
+      "</strong>,</p>" +
+      "<p>Your verification code is:</p>" +
+      "<div style='background-color:#f1f5f9; padding:15px; text-align:center; font-size:24px; font-weight:bold; letter-spacing:4px; margin:20px 0; color:#1e293b; border-radius:8px;'>" +
+      pin +
+      "</div>" +
+      "<p style='color:#ef4444; font-size:12px;'>This verification code is valid for 5 minutes.</p>" +
+      "<p>Do not share this code with anyone.</p><br/>" +
+      "<p>Regards,<br/><strong>Optivita Team</strong></p>" +
+      "</div>";
 
     try {
       sendEmailViaProvider(clientEmail, subject, htmlBody);
     } catch (err) {
-      return { status: "error", message: "Failed to dispatch verification email: " + err.toString() };
+      return {
+        status: "error",
+        message: "Failed to dispatch verification email: " + err.toString(),
+      };
     }
   }
 
-  return { 
-    status: "success", 
-    message: "Verification code sent successfully.", 
+  return {
+    status: "success",
+    message: "Verification code sent successfully.",
     emailMasked: maskEmail(clientEmail),
     phoneMasked: maskPhone(clientPhone),
-    otp: pin
+    otp: pin,
   };
 }
 
@@ -512,18 +744,27 @@ function verifyOTP(data) {
   for (var j = 1; j < clientRows.length; j++) {
     if (String(clientRows[j][0]).trim() === enrollmentId) {
       clientRowIndex = j + 1;
-      preferredMethod = String(clientRows[j][6] || "email").trim().toLowerCase();
+      preferredMethod = String(clientRows[j][6] || "email")
+        .trim()
+        .toLowerCase();
       totpSecret = String(clientRows[j][7] || "").trim();
       var joinStatusVal = "Pending Confirmation";
       var enrollSheetForStatus = getSheetSafe(spreadsheet, "Program Enrollments");
       if (enrollSheetForStatus) {
         var enrollRowsForStatus = enrollSheetForStatus.getDataRange().getValues();
         var enrollHeadersForStatus = enrollRowsForStatus[0];
-        var idIdxForStatus = -1, statusIdxForStatus = -1;
+        var idIdxForStatus = -1,
+          statusIdxForStatus = -1;
         for (var h = 0; h < enrollHeadersForStatus.length; h++) {
           var hName = String(enrollHeadersForStatus[h]).trim().toLowerCase();
           if (hName === "enrollment id" || hName === "enrollmentid") idIdxForStatus = h;
-          if (hName === "joining status" || hName === "joiningstatus" || hName === "status" || hName === "lead status") statusIdxForStatus = h;
+          if (
+            hName === "joining status" ||
+            hName === "joiningstatus" ||
+            hName === "status" ||
+            hName === "lead status"
+          )
+            statusIdxForStatus = h;
         }
         if (idIdxForStatus !== -1 && statusIdxForStatus !== -1) {
           for (var r = 1; r < enrollRowsForStatus.length; r++) {
@@ -541,7 +782,7 @@ function verifyOTP(data) {
         phone: String(clientRows[j][2]).trim(),
         email: String(clientRows[j][3]).trim(),
         programName: String(clientRows[j][4]).trim(),
-        status: joinStatusVal
+        status: joinStatusVal,
       };
       break;
     }
@@ -552,7 +793,12 @@ function verifyOTP(data) {
     if (enrollSheet) {
       var enrollRows = enrollSheet.getDataRange().getValues();
       var enrollHeaders = enrollRows[0];
-      var idIdx = -1, nameIdx = -1, phoneIdx = -1, emailIdx = -1, progIdx = -1, statusIdx = -1;
+      var idIdx = -1,
+        nameIdx = -1,
+        phoneIdx = -1,
+        emailIdx = -1,
+        progIdx = -1,
+        statusIdx = -1;
       for (var h = 0; h < enrollHeaders.length; h++) {
         var hName = String(enrollHeaders[h]).trim().toLowerCase();
         if (hName === "enrollment id" || hName === "enrollmentid") idIdx = h;
@@ -560,7 +806,13 @@ function verifyOTP(data) {
         else if (hName === "phone") phoneIdx = h;
         else if (hName === "email") emailIdx = h;
         else if (hName === "programname") progIdx = h;
-        else if (hName === "joining status" || hName === "joiningstatus" || hName === "status" || hName === "lead status") statusIdx = h;
+        else if (
+          hName === "joining status" ||
+          hName === "joiningstatus" ||
+          hName === "status" ||
+          hName === "lead status"
+        )
+          statusIdx = h;
       }
       if (idIdx !== -1) {
         for (var r = 1; r < enrollRows.length; r++) {
@@ -569,9 +821,12 @@ function verifyOTP(data) {
               enrollmentId: enrollmentId,
               fullName: nameIdx !== -1 ? String(enrollRows[r][nameIdx]).trim() : "Client",
               phone: phoneIdx !== -1 ? String(enrollRows[r][phoneIdx]).trim() : "",
-              email: emailIdx !== -1 ? String(enrollRows[r][emailIdx]).trim() : "client@optivita.com",
-              programName: progIdx !== -1 ? String(enrollRows[r][progIdx]).trim() : "Optivita Program",
-              status: statusIdx !== -1 ? String(enrollRows[r][statusIdx]).trim() : "Pending Confirmation"
+              email:
+                emailIdx !== -1 ? String(enrollRows[r][emailIdx]).trim() : "client@optivita.com",
+              programName:
+                progIdx !== -1 ? String(enrollRows[r][progIdx]).trim() : "Optivita Program",
+              status:
+                statusIdx !== -1 ? String(enrollRows[r][statusIdx]).trim() : "Pending Confirmation",
             };
             break;
           }
@@ -586,7 +841,7 @@ function verifyOTP(data) {
       fullName: "Client",
       phone: "",
       email: "client@optivita.com",
-      programName: "Optivita Program"
+      programName: "Optivita Program",
     };
   }
 
@@ -613,12 +868,12 @@ function verifyOTP(data) {
 
   // Brute Force Lock check (15 mins lockout)
   if (dbAttempts >= 5) {
-    var lockTimeRemaining = (15 * 60 * 1000) - (nowTime - lastAttemptTime);
+    var lockTimeRemaining = 15 * 60 * 1000 - (nowTime - lastAttemptTime);
     if (lockTimeRemaining > 0) {
       var minutesRemaining = Math.ceil(lockTimeRemaining / (60 * 1000));
-      return { 
-        status: "error", 
-        message: "Too many attempts. Please wait " + minutesRemaining + " minutes." 
+      return {
+        status: "error",
+        message: "Too many attempts. Please wait " + minutesRemaining + " minutes.",
       };
     } else {
       dbAttempts = 0;
@@ -651,47 +906,97 @@ function verifyOTP(data) {
   } else {
     // Verification failed
     if (otpRowIndex !== -1 && nowTime > dbExpiry) {
-      logsSheet.appendRow([enrollmentId, new Date(), clientBrowser, clientDevice, clientIP, "Expired OTP"]);
-      return { status: "error", message: "OTP expired. Please request a new verification code." };
+      logsSheet.appendRow([
+        enrollmentId,
+        new Date(),
+        clientBrowser,
+        clientDevice,
+        clientIP,
+        "Expired OTP",
+      ]);
+      return { status: "error", code: "OTP_EXPIRED", message: "OTP Expired" };
     }
     success = false;
     statusLabel = "Failed OTP";
   }
 
   if (success) {
+    // If successful standard OTP and preferred method is whatsapp, hit verify-whatsapp-log endpoint
+    if (standardOtpMatched && preferredMethod === "whatsapp") {
+      var activeBridgeUrl = getWhatsAppBridgeUrl(spreadsheet);
+      if (activeBridgeUrl && activeBridgeUrl.indexOf("your-ngrok-url-here") === -1) {
+        var verifyLogUrl = activeBridgeUrl.replace("send-whatsapp", "verify-whatsapp-log");
+        try {
+          UrlFetchApp.fetch(verifyLogUrl, {
+            method: "post",
+            contentType: "application/json",
+            payload: JSON.stringify({ phone: clientData.phone }),
+            muteHttpExceptions: true,
+          });
+        } catch (err) {
+          Logger.log("Failed to notify verify log: " + err.toString());
+        }
+      }
+    }
+
     // Clear pending OTP row if exists
     if (otpRowIndex !== -1) {
       otpSheet.deleteRow(otpRowIndex);
     }
-    logsSheet.appendRow([enrollmentId, new Date(), clientBrowser, clientDevice, clientIP, statusLabel]);
-    return { 
-      status: "success", 
-      message: "Access Granted.", 
-      session: clientData 
+    logsSheet.appendRow([
+      enrollmentId,
+      new Date(),
+      clientBrowser,
+      clientDevice,
+      clientIP,
+      statusLabel,
+    ]);
+    return {
+      status: "success",
+      message: "Access Granted.",
+      session: clientData,
     };
   } else {
     // Increment failed attempts
     var newAttempts = dbAttempts + 1;
     if (otpRowIndex === -1) {
       // Append a fresh OTP rate limit tracking row if none exists
-      otpSheet.appendRow([enrollmentId, "", new Date(), new Date(nowTime + 5*60*1000), "false", newAttempts, new Date()]);
+      otpSheet.appendRow([
+        enrollmentId,
+        "",
+        new Date(),
+        new Date(nowTime + 5 * 60 * 1000),
+        "false",
+        newAttempts,
+        new Date(),
+        0,
+      ]);
     } else {
       otpSheet.getRange(otpRowIndex, 6).setValue(newAttempts);
       otpSheet.getRange(otpRowIndex, 7).setValue(new Date());
     }
 
-    logsSheet.appendRow([enrollmentId, new Date(), clientBrowser, clientDevice, clientIP, statusLabel]);
+    logsSheet.appendRow([
+      enrollmentId,
+      new Date(),
+      clientBrowser,
+      clientDevice,
+      clientIP,
+      statusLabel,
+    ]);
 
     if (newAttempts >= 5) {
-      return { 
-        status: "error", 
-        message: "Too many attempts. Please wait 15 minutes." 
+      return {
+        status: "error",
+        code: "TOO_MANY_ATTEMPTS",
+        message: "Too many attempts. Please wait 15 minutes.",
       };
     }
-    return { 
-      status: "error", 
-      message: "Invalid OTP.", 
-      attemptsRemaining: 5 - newAttempts 
+    return {
+      status: "error",
+      code: "INVALID_OTP",
+      message: "Invalid OTP",
+      attemptsRemaining: 5 - newAttempts,
     };
   }
 }
@@ -699,7 +1004,9 @@ function verifyOTP(data) {
 // 4. Update Security Preference & Bind TOTP Secret
 function updateSecurityPreference(data) {
   var enrollmentId = String(data.enrollmentId || "").trim();
-  var preferredMethod = String(data.preferredMethod || "").trim().toLowerCase();
+  var preferredMethod = String(data.preferredMethod || "")
+    .trim()
+    .toLowerCase();
   var totpSecret = String(data.totpSecret || "").trim();
   var verificationCode = String(data.verificationCode || "").trim(); // used during binding check
 
@@ -717,7 +1024,10 @@ function updateSecurityPreference(data) {
   if (preferredMethod === "totp" && totpSecret) {
     var valid = verifyTOTP(totpSecret, verificationCode, 1);
     if (!valid) {
-      return { status: "error", message: "Verification code incorrect. Authenticator binding aborted." };
+      return {
+        status: "error",
+        message: "Verification code incorrect. Authenticator binding aborted.",
+      };
     }
   }
 
@@ -728,9 +1038,9 @@ function updateSecurityPreference(data) {
       if (preferredMethod === "totp" && totpSecret) {
         clientsSheet.getRange(i + 1, 8).setValue(totpSecret); // TOTP Secret
       }
-      return { 
-        status: "success", 
-        message: "Security preferences updated successfully." 
+      return {
+        status: "success",
+        message: "Security preferences updated successfully.",
       };
     }
   }
@@ -759,7 +1069,9 @@ function redeemReward(data) {
   // Find the client in Program Enrollments
   var enrollRows = enrollSheet.getDataRange().getValues();
   var enrollHeaders = enrollRows[0];
-  var idColIdx = -1, pointsColIdx = -1, nameColIdx = -1;
+  var idColIdx = -1,
+    pointsColIdx = -1,
+    nameColIdx = -1;
 
   for (var c = 0; c < enrollHeaders.length; c++) {
     var h = String(enrollHeaders[c]).trim().toLowerCase();
@@ -841,10 +1153,10 @@ function redeemReward(data) {
   ledgerSheet.appendRow(ledgerRow);
   SpreadsheetApp.flush();
 
-  return { 
-    status: "success", 
-    message: "Reward redeemed successfully.", 
-    newPoints: newPoints 
+  return {
+    status: "success",
+    message: "Reward redeemed successfully.",
+    newPoints: newPoints,
   };
 }
 
@@ -859,7 +1171,7 @@ function base32tohex(base32) {
   for (var i = 0; i < base32.length; i++) {
     var val = base32chars.indexOf(base32.charAt(i).toUpperCase());
     if (val === -1) continue;
-    bits += leftpad(val.toString(2), 5, '0');
+    bits += leftpad(val.toString(2), 5, "0");
   }
   for (var j = 0; j + 4 <= bits.length; j += 4) {
     var chunk = bits.substr(j, 4);
@@ -888,24 +1200,29 @@ function verifyTOTP(secretBase32, code, windowSize) {
   if (!windowSize) windowSize = 1;
   var keyHex = base32tohex(secretBase32);
   var epoch = Math.round(new Date().getTime() / 1000.0);
-  
+
   for (var i = -windowSize; i <= windowSize; i++) {
     var stepVal = Math.floor(epoch / 30) + i;
-    var t = leftpad(stepVal.toString(16), 16, '0');
-    
+    var t = leftpad(stepVal.toString(16), 16, "0");
+
     var msgBytes = hexToBytes(t);
     var keyBytes = hexToBytes(keyHex);
-    
-    var hmac = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_SHA_1, msgBytes, keyBytes);
-    
+
+    var hmac = Utilities.computeHmacSignature(
+      Utilities.MacAlgorithm.HMAC_SHA_1,
+      msgBytes,
+      keyBytes,
+    );
+
     var offset = hmac[hmac.length - 1] & 0xf;
-    var binary = ((hmac[offset] & 0x7f) << 24) |
-                 ((hmac[offset + 1] & 0xff) << 16) |
-                 ((hmac[offset + 2] & 0xff) << 8) |
-                 (hmac[offset + 3] & 0xff);
+    var binary =
+      ((hmac[offset] & 0x7f) << 24) |
+      ((hmac[offset + 1] & 0xff) << 16) |
+      ((hmac[offset + 2] & 0xff) << 8) |
+      (hmac[offset + 3] & 0xff);
     var otp = binary % 1000000;
-    var otpStr = leftpad(otp.toString(), 6, '0');
-    
+    var otpStr = leftpad(otp.toString(), 6, "0");
+
     if (otpStr === code) {
       return true;
     }
@@ -925,23 +1242,25 @@ function sendEmailViaProvider(to, subject, htmlBody) {
         method: "post",
         contentType: "application/json",
         headers: {
-          Authorization: "Bearer " + RESEND_API_KEY
+          Authorization: "Bearer " + RESEND_API_KEY,
         },
         payload: JSON.stringify({
           from: "Optivita Support <onboarding@resend.dev>", // Replace onboarding@resend.dev with your verified domain sender in production
           to: [to],
           subject: subject,
-          html: htmlBody
+          html: htmlBody,
         }),
-        muteHttpExceptions: true
+        muteHttpExceptions: true,
       };
-      
+
       var response = UrlFetchApp.fetch(url, options);
       var responseCode = response.getResponseCode();
       if (responseCode === 200 || responseCode === 201) {
         return; // Success, exit function
       } else {
-        Logger.log("Resend API returned status code " + responseCode + ": " + response.getContentText());
+        Logger.log(
+          "Resend API returned status code " + responseCode + ": " + response.getContentText(),
+        );
       }
     } catch (err) {
       Logger.log("Resend API error: " + err.toString());
@@ -953,7 +1272,7 @@ function sendEmailViaProvider(to, subject, htmlBody) {
   MailApp.sendEmail({
     to: to,
     subject: subject,
-    htmlBody: htmlBody
+    htmlBody: htmlBody,
   });
 }
 
@@ -988,7 +1307,8 @@ function handleWebhookSubmit(data) {
     var sheetName = data.sheetName || "Program Enrollments";
     var sheet = getSheetSafe(spreadsheet, sheetName);
     if (!sheet) {
-      sheet = getSheetSafe(spreadsheet, "Clients") || getSheetSafe(spreadsheet, "Program Enrollments");
+      sheet =
+        getSheetSafe(spreadsheet, "Clients") || getSheetSafe(spreadsheet, "Program Enrollments");
       if (!sheet) {
         return { status: "error", message: "Sheet not found: " + sheetName };
       }
@@ -996,9 +1316,9 @@ function handleWebhookSubmit(data) {
 
     // Generate unique sequential Enrollment ID server-side ONLY if not already provided by Firestore
     var enrollmentId = String(data["Enrollment ID"] || data["EnrollmentID"] || "").trim();
-    var isEnrollment = (sheet.getName() === "Program Enrollments" || sheet.getName() === "Clients");
+    var isEnrollment = sheet.getName() === "Program Enrollments" || sheet.getName() === "Clients";
     var allSheets = spreadsheet.getSheets();
-    
+
     // Check if the received enrollmentId already exists in any sheet in the spreadsheet
     if (isEnrollment && enrollmentId) {
       var idAlreadyExists = false;
@@ -1017,14 +1337,18 @@ function handleWebhookSubmit(data) {
         if (idAlreadyExists) break;
       }
       if (idAlreadyExists) {
-        Logger.log("Duplicate enrollment ID detected: " + enrollmentId + ". Discarding and regenerating server-side.");
+        Logger.log(
+          "Duplicate enrollment ID detected: " +
+            enrollmentId +
+            ". Discarding and regenerating server-side.",
+        );
         enrollmentId = ""; // Force regeneration
       }
     }
-    
+
     if (isEnrollment && !enrollmentId) {
       var maxId = 1000;
-      
+
       // Step A: Find the max ID number by scanning every single cell in all sheets
       for (var s = 0; s < allSheets.length; s++) {
         var scanSheet = allSheets[s];
@@ -1071,7 +1395,7 @@ function handleWebhookSubmit(data) {
     var timestampStr = formatTimestamp(now);
     var lastCol = sheet.getLastColumn();
     var headers = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
-    
+
     // Self-healing headers: dynamically append new fields submitted to the sheets headers row
     for (var key in data) {
       if (key === "action" || key === "sheetName") continue;
@@ -1084,20 +1408,22 @@ function handleWebhookSubmit(data) {
       }
       if (!foundHeader) {
         var nextColIdx = headers.length + 1;
-        sheet.getRange(1, nextColIdx).setValue(key)
-             .setFontWeight("bold")
-             .setBackground("#0f766e")
-             .setFontColor("#ffffff");
+        sheet
+          .getRange(1, nextColIdx)
+          .setValue(key)
+          .setFontWeight("bold")
+          .setBackground("#0f766e")
+          .setFontColor("#ffffff");
         headers.push(key);
       }
     }
-    
+
     var newRow = [];
-    
+
     for (var c = 0; c < headers.length; c++) {
       var header = String(headers[c]).trim();
       var val = "";
-      
+
       if (header === "Enrollment ID" || header === "EnrollmentID") {
         val = enrollmentId;
       } else if (header === "Timestamp") {
@@ -1111,7 +1437,9 @@ function handleWebhookSubmit(data) {
       } else if (header === "Loyalty Tier" || header === "LoyaltyTier") {
         val = "Silver";
       } else if (header === "Referral Code" || header === "ReferralCode") {
-        var namePart = String(data.fullName || "GUEST").split(" ")[0].toUpperCase();
+        var namePart = String(data.fullName || "GUEST")
+          .split(" ")[0]
+          .toUpperCase();
         val = "OPT-" + namePart + "-" + Math.floor(1000 + Math.random() * 9000);
       } else if (data.hasOwnProperty(header)) {
         val = data[header];
@@ -1133,12 +1461,13 @@ function handleWebhookSubmit(data) {
       var clientsSheet = getSheetSafe(spreadsheet, "Clients");
       if (clientsSheet) {
         var clientLastCol = clientsSheet.getLastColumn();
-        var clientHeaders = clientLastCol > 0 ? clientsSheet.getRange(1, 1, 1, clientLastCol).getValues()[0] : [];
+        var clientHeaders =
+          clientLastCol > 0 ? clientsSheet.getRange(1, 1, 1, clientLastCol).getValues()[0] : [];
         var clientRow = [];
         for (var cl = 0; cl < clientHeaders.length; cl++) {
           var ch = String(clientHeaders[cl]).trim();
           var chVal = "";
-          
+
           if (ch === "Enrollment ID" || ch === "EnrollmentID") {
             chVal = enrollmentId;
           } else if (ch === "Client Name" || ch === "ClientName" || ch === "fullName") {
@@ -1165,7 +1494,10 @@ function handleWebhookSubmit(data) {
       var loyaltySheet = getSheetSafe(spreadsheet, "Loyalty Ledger");
       if (loyaltySheet) {
         var loyaltyLastCol = loyaltySheet.getLastColumn();
-        var loyaltyHeaders = (loyaltyLastCol > 0 && loyaltySheet.getLastRow() > 0) ? loyaltySheet.getRange(1, 1, 1, loyaltyLastCol).getValues()[0] : [];
+        var loyaltyHeaders =
+          loyaltyLastCol > 0 && loyaltySheet.getLastRow() > 0
+            ? loyaltySheet.getRange(1, 1, 1, loyaltyLastCol).getValues()[0]
+            : [];
         var loyaltyRow = [];
         for (var l = 0; l < loyaltyHeaders.length; l++) {
           var lh = String(loyaltyHeaders[l]).trim();
@@ -1191,14 +1523,20 @@ function handleWebhookSubmit(data) {
       }
 
       // Add an unpaid invoice
-    var invoicesSheet = getSheetSafe(spreadsheet, "Invoices");
-    if (invoicesSheet) {
-      var invoiceLastCol = invoicesSheet.getLastColumn();
-      var invoiceHeaders = (invoiceLastCol > 0 && invoicesSheet.getLastRow() > 0) ? invoicesSheet.getRange(1, 1, 1, invoiceLastCol).getValues()[0] : [];
-      var invoiceRow = [];
-        var dateFormatted = leftpad(now.getDate().toString(), 2, "0") + "-" + 
-                            leftpad((now.getMonth() + 1).toString(), 2, "0") + "-" + 
-                            now.getFullYear();
+      var invoicesSheet = getSheetSafe(spreadsheet, "Invoices");
+      if (invoicesSheet) {
+        var invoiceLastCol = invoicesSheet.getLastColumn();
+        var invoiceHeaders =
+          invoiceLastCol > 0 && invoicesSheet.getLastRow() > 0
+            ? invoicesSheet.getRange(1, 1, 1, invoiceLastCol).getValues()[0]
+            : [];
+        var invoiceRow = [];
+        var dateFormatted =
+          leftpad(now.getDate().toString(), 2, "0") +
+          "-" +
+          leftpad((now.getMonth() + 1).toString(), 2, "0") +
+          "-" +
+          now.getFullYear();
         for (var iv = 0; iv < invoiceHeaders.length; iv++) {
           var ivh = String(invoiceHeaders[iv]).trim();
           var ivVal = "";
@@ -1229,7 +1567,7 @@ function handleWebhookSubmit(data) {
     return {
       status: "success",
       message: "Record appended successfully.",
-      enrollmentId: enrollmentId
+      enrollmentId: enrollmentId,
     };
   } finally {
     // Release the script lock
@@ -1239,12 +1577,12 @@ function handleWebhookSubmit(data) {
 
 // Helper: Format Timestamp to "DD-MM-YYYY | HH:MM:SS"
 function formatTimestamp(date) {
-  var day = leftpad(date.getDate().toString(), 2, '0');
-  var month = leftpad((date.getMonth() + 1).toString(), 2, '0');
+  var day = leftpad(date.getDate().toString(), 2, "0");
+  var month = leftpad((date.getMonth() + 1).toString(), 2, "0");
   var year = date.getFullYear();
-  var hours = leftpad(date.getHours().toString(), 2, '0');
-  var minutes = leftpad(date.getMinutes().toString(), 2, '0');
-  var seconds = leftpad(date.getSeconds().toString(), 2, '0');
+  var hours = leftpad(date.getHours().toString(), 2, "0");
+  var minutes = leftpad(date.getMinutes().toString(), 2, "0");
+  var seconds = leftpad(date.getSeconds().toString(), 2, "0");
   return day + "-" + month + "-" + year + " | " + hours + ":" + minutes + ":" + seconds;
 }
 
@@ -1252,7 +1590,7 @@ function formatTimestamp(date) {
 function testWhatsAppOTP() {
   var testResult = sendOTP({
     enrollmentId: "OPT-2026-001006",
-    method: "whatsapp"
+    method: "whatsapp",
   });
   Logger.log("=== TEST WHATSAPP OTP RESULT ===");
   Logger.log(JSON.stringify(testResult, null, 2));
@@ -1323,7 +1661,7 @@ function handleUpdateRecord(data) {
   }
 
   var headers = values[0];
-  
+
   // Find Enrollment ID column dynamically across all headers
   var idColIdx = -1;
   for (var c = 0; c < headers.length; c++) {
@@ -1379,7 +1717,10 @@ function handleUpdateRecord(data) {
     // If column doesn't exist in row 1, add it as a new header column!
     if (colIdx === -1) {
       colIdx = headers.length;
-      sheet.getRange(1, colIdx + 1).setValue(fieldKey).setFontWeight("bold");
+      sheet
+        .getRange(1, colIdx + 1)
+        .setValue(fieldKey)
+        .setFontWeight("bold");
       headers.push(fieldKey);
     }
 
@@ -1387,18 +1728,21 @@ function handleUpdateRecord(data) {
   }
 
   // Trigger Referral rewards routine if confirming joining on Program Enrollments sheet
-  if (sheetName === "Program Enrollments" && (fields["Joining Status"] === "Confirmed" || fields["Lead Status"] === "Enrolled")) {
+  if (
+    sheetName === "Program Enrollments" &&
+    (fields["Joining Status"] === "Confirmed" || fields["Lead Status"] === "Enrolled")
+  ) {
     try {
       // Reload values to get latest updates
       var latestValues = sheet.getDataRange().getValues();
       var latestHeaders = latestValues[0];
-      
+
       // Map column indexes case-insensitively
       var colMap = {};
       for (var col = 0; col < latestHeaders.length; col++) {
         colMap[String(latestHeaders[col]).trim().toLowerCase()] = col;
       }
-      
+
       var refByCodeIdx = colMap["referredbycode"];
       var refProcessedIdx = colMap["referral processed"] || colMap["referralprocessed"];
       var refCodeIdx = colMap["referral code"] || colMap["referralcode"];
@@ -1406,21 +1750,28 @@ function handleUpdateRecord(data) {
       var tierIdx = colMap["loyalty tier"] || colMap["loyaltytier"];
       var nameIdx = colMap["fullname"] || colMap["client name"] || colMap["customer name"];
       var idIdxVal = colMap["enrollment id"] || colMap["enrollmentid"] || 0;
-      
+
       // Ensure Referral Processed column exists in headers, if not, create it
       if (refProcessedIdx === undefined) {
         refProcessedIdx = latestHeaders.length;
-        sheet.getRange(1, refProcessedIdx + 1).setValue("Referral Processed").setFontWeight("bold")
-             .setBackground("#0f766e").setFontColor("#ffffff");
+        sheet
+          .getRange(1, refProcessedIdx + 1)
+          .setValue("Referral Processed")
+          .setFontWeight("bold")
+          .setBackground("#0f766e")
+          .setFontColor("#ffffff");
         latestHeaders.push("Referral Processed");
       }
-      
+
       var clientRow = latestValues[targetRowIdx];
       var refereeId = String(clientRow[idIdxVal]).trim();
-      var refereeName = nameIdx !== undefined ? String(clientRow[nameIdx]).trim() : "Referee Client";
-      var refereeReferredBy = refByCodeIdx !== undefined ? String(clientRow[refByCodeIdx]).trim() : "";
-      var isProcessed = refProcessedIdx !== undefined ? String(clientRow[refProcessedIdx]).trim() : "";
-      
+      var refereeName =
+        nameIdx !== undefined ? String(clientRow[nameIdx]).trim() : "Referee Client";
+      var refereeReferredBy =
+        refByCodeIdx !== undefined ? String(clientRow[refByCodeIdx]).trim() : "";
+      var isProcessed =
+        refProcessedIdx !== undefined ? String(clientRow[refProcessedIdx]).trim() : "";
+
       if (refereeReferredBy && isProcessed !== "true" && isProcessed !== "Confirmed") {
         // Find Referrer row
         var referrerRowIdx = -1;
@@ -1433,23 +1784,24 @@ function handleUpdateRecord(data) {
             }
           }
         }
-        
+
         if (referrerRowIdx !== -1) {
           var referrerRow = latestValues[referrerRowIdx];
           var referrerId = String(referrerRow[idIdxVal]).trim();
-          var referrerName = nameIdx !== undefined ? String(referrerRow[nameIdx]).trim() : "Referrer Client";
-          
+          var referrerName =
+            nameIdx !== undefined ? String(referrerRow[nameIdx]).trim() : "Referrer Client";
+
           var nowTimeStr = formatTimestamp(new Date());
-          
+
           // Function to determine Tier
-          var getPointsTierVal = function(ptsVal) {
+          var getPointsTierVal = function (ptsVal) {
             if (ptsVal >= 5000) return "Diamond";
             if (ptsVal >= 2000) return "Platinum";
             if (ptsVal >= 1000) return "Gold";
             if (ptsVal >= 500) return "Silver";
             return "Bronze";
           };
-          
+
           // 1. Award Referrer +300 points
           if (ptsIdx !== undefined) {
             var refOldPts = parseInt(referrerRow[ptsIdx] || 0, 10);
@@ -1458,7 +1810,7 @@ function handleUpdateRecord(data) {
             if (tierIdx !== undefined) {
               sheet.getRange(referrerRowIdx + 1, tierIdx + 1).setValue(getPointsTierVal(refNewPts));
             }
-            
+
             // Add Referrer Ledger row
             var ledgerSht = getSheetSafe(spreadsheet, "Loyalty Ledger");
             if (ledgerSht) {
@@ -1487,16 +1839,21 @@ function handleUpdateRecord(data) {
               ledgerSht.appendRow(ledgerRow);
             }
           }
-          
+
           // 2. Award Referee +100 points
           if (ptsIdx !== undefined) {
-            var currentRefereePts = parseInt(sheet.getRange(targetRowIdx + 1, ptsIdx + 1).getValue() || 500, 10);
+            var currentRefereePts = parseInt(
+              sheet.getRange(targetRowIdx + 1, ptsIdx + 1).getValue() || 500,
+              10,
+            );
             var refereeNewPts = currentRefereePts + 100;
             sheet.getRange(targetRowIdx + 1, ptsIdx + 1).setValue(refereeNewPts);
             if (tierIdx !== undefined) {
-              sheet.getRange(targetRowIdx + 1, tierIdx + 1).setValue(getPointsTierVal(refereeNewPts));
+              sheet
+                .getRange(targetRowIdx + 1, tierIdx + 1)
+                .setValue(getPointsTierVal(refereeNewPts));
             }
-            
+
             // Add Referee Ledger row
             var ledgerSht2 = getSheetSafe(spreadsheet, "Loyalty Ledger");
             if (ledgerSht2) {
@@ -1525,7 +1882,7 @@ function handleUpdateRecord(data) {
               ledgerSht2.appendRow(ledgerRow2);
             }
           }
-          
+
           // 3. Mark Referral Processed as true
           sheet.getRange(targetRowIdx + 1, refProcessedIdx + 1).setValue("true");
         }

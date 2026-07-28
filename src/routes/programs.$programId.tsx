@@ -4,7 +4,11 @@ import { SiteHeader, SiteFooter } from "@/components/SiteChrome";
 import { getProgram, type FormField, type Program } from "@/lib/programs";
 import { Printer, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { getNextEnrollmentId, saveEnrollmentToFirestore, markEnrollmentSynced } from "@/lib/firebase";
+import {
+  getNextEnrollmentId,
+  saveEnrollmentToFirestore,
+  markEnrollmentSynced,
+} from "@/lib/firebase";
 import { isWebhookOffline } from "@/lib/utils";
 
 export const Route = createFileRoute("/programs/$programId")({
@@ -28,7 +32,9 @@ export const Route = createFileRoute("/programs/$programId")({
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
         <h1 className="text-2xl font-bold">Program not found</h1>
-        <Link to="/" className="mt-4 inline-block text-accent underline">← Back to programs</Link>
+        <Link to="/" className="mt-4 inline-block text-accent underline">
+          ← Back to programs
+        </Link>
       </div>
     </div>
   ),
@@ -43,7 +49,10 @@ function ErrorView({ error, reset }: { error: Error; reset: () => void }) {
         <h1 className="text-xl font-semibold">Something went wrong</h1>
         <p className="text-sm text-muted-foreground mt-2">{error.message}</p>
         <button
-          onClick={() => { router.invalidate(); reset(); }}
+          onClick={() => {
+            router.invalidate();
+            reset();
+          }}
           className="mt-4 rounded-md bg-primary px-4 py-2 text-primary-foreground"
         >
           Try again
@@ -55,14 +64,14 @@ function ErrorView({ error, reset }: { error: Error; reset: () => void }) {
 
 const optionTooltips: Record<string, string> = {
   // Health Background conditions
-  "Diabetes": "A chronic condition affecting how your body processes blood sugar (glucose).",
-  "Hypertension": "High blood pressure, which can increase the risk of heart disease and stroke.",
-  "Thyroid": "Thyroid gland disorders affecting metabolism, energy levels, and hormonal balance.",
-  "PCOS": "Polycystic Ovary Syndrome, a hormonal disorder common in women of reproductive age.",
-  "Asthma": "A respiratory condition causing airway inflammation and breathing difficulties.",
-  "Arthritis": "Inflammation of the joints causing pain, swelling, and stiffness.",
-  "None": "Select if you do not have any of the listed conditions.",
-  "Other": "Select if you have a condition not listed here.",
+  Diabetes: "A chronic condition affecting how your body processes blood sugar (glucose).",
+  Hypertension: "High blood pressure, which can increase the risk of heart disease and stroke.",
+  Thyroid: "Thyroid gland disorders affecting metabolism, energy levels, and hormonal balance.",
+  PCOS: "Polycystic Ovary Syndrome, a hormonal disorder common in women of reproductive age.",
+  Asthma: "A respiratory condition causing airway inflammation and breathing difficulties.",
+  Arthritis: "Inflammation of the joints causing pain, swelling, and stiffness.",
+  None: "Select if you do not have any of the listed conditions.",
+  Other: "Select if you have a condition not listed here.",
 
   // Goals
   "Lose weight": "Reduce body weight through sustainable fat loss.",
@@ -74,42 +83,52 @@ const optionTooltips: Record<string, string> = {
   // Diabetes details
   "Type 1": "An autoimmune condition where the pancreas produces little or no insulin.",
   "Type 2": "A chronic condition where the body resists insulin or doesn't make enough.",
-  "Prediabetes": "Elevated blood sugar levels, indicating risk of developing Type 2 diabetes.",
-  "Gestational": "High blood sugar levels that develop during pregnancy.",
+  Prediabetes: "Elevated blood sugar levels, indicating risk of developing Type 2 diabetes.",
+  Gestational: "High blood sugar levels that develop during pregnancy.",
   "Not sure": "Diagnosed with diabetes but type is not officially confirmed.",
 
   // General options
-  "Yes": "Affirmative response.",
-  "No": "Negative response.",
+  Yes: "Affirmative response.",
+  No: "Negative response.",
   "Prefer not to say": "Choose this to keep this information private.",
-  "Female": "Female biological sex or gender identity.",
-  "Male": "Male biological sex or gender identity.",
-  
+  Female: "Female biological sex or gender identity.",
+  Male: "Male biological sex or gender identity.",
+
   // Sleep Quality
-  "Excellent": "Sleep soundly for 7-8 hours, waking up fully refreshed.",
-  "Good": "Generally good sleep with minimal disturbances.",
-  "Fair": "Restless sleep or waking up feeling partially rested.",
-  "Poor": "Frequent insomnia, waking up fatigued.",
-  
+  Excellent: "Sleep soundly for 7-8 hours, waking up fully refreshed.",
+  Good: "Generally good sleep with minimal disturbances.",
+  Fair: "Restless sleep or waking up feeling partially rested.",
+  Poor: "Frequent insomnia, waking up fatigued.",
+
   // Energy Levels
-  "Low": "Feeling sluggish or tired throughout most of the day.",
-  "Medium": "Standard energy levels, normal daily functioning.",
-  "High": "Feeling vibrant, active, and mentally alert.",
-  
+  Low: "Feeling sluggish or tired throughout most of the day.",
+  Medium: "Standard energy levels, normal daily functioning.",
+  High: "Feeling vibrant, active, and mentally alert.",
+
   // Stress Levels
   "Low Stress": "Calm state of mind, manageable daily demands.",
   "Medium Stress": "Occasions of pressure, normal coping capacity.",
   "High Stress": "Persistent overwhelm, affecting sleep or well-being.",
-  
+
   // Activity levels
-  "Sedentary": "Little to no exercise, desk-based routine.",
-  "Light": "Light exercise or walking 1-3 days per week.",
-  "Moderate": "Moderate exercise or active movement 3-5 days per week.",
-  "Active": "Intense exercise or sport 6-7 days per week.",
-  "Very active": "Highly physical job or dual daily training sessions."
+  Sedentary: "Little to no exercise, desk-based routine.",
+  Light: "Light exercise or walking 1-3 days per week.",
+  Moderate: "Moderate exercise or active movement 3-5 days per week.",
+  Active: "Intense exercise or sport 6-7 days per week.",
+  "Very active": "Highly physical job or dual daily training sessions.",
 };
 
-function DateField({ field, id, req, base }: { field: FormField; id: string; req?: boolean; base: string }) {
+function DateField({
+  field,
+  id,
+  req,
+  base,
+}: {
+  field: FormField;
+  id: string;
+  req?: boolean;
+  base: string;
+}) {
   const [calculatedAge, setCalculatedAge] = useState<number | null>(null);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,14 +149,17 @@ function DateField({ field, id, req, base }: { field: FormField; id: string; req
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="text-sm font-medium">{field.label}{req && <span className="text-destructive"> *</span>}</label>
-      <input 
-        id={id} 
-        name={field.name} 
-        type="date" 
-        required={req} 
+      <label htmlFor={id} className="text-sm font-medium">
+        {field.label}
+        {req && <span className="text-destructive"> *</span>}
+      </label>
+      <input
+        id={id}
+        name={field.name}
+        type="date"
+        required={req}
         onChange={handleDateChange}
-        className={`${base} text-foreground`} 
+        className={`${base} text-foreground`}
       />
       {calculatedAge !== null && (
         <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold animate-fade-in">
@@ -148,22 +170,41 @@ function DateField({ field, id, req, base }: { field: FormField; id: string; req
   );
 }
 
-function SelectField({ field, id, req, base }: { field: FormField; id: string; req?: boolean; base: string }) {
+function SelectField({
+  field,
+  id,
+  req,
+  base,
+}: {
+  field: FormField;
+  id: string;
+  req?: boolean;
+  base: string;
+}) {
   const [showOtherSpecify, setShowOtherSpecify] = useState(false);
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="text-sm font-medium">{field.label}{req && <span className="text-destructive"> *</span>}</label>
-      <select 
-        id={id} 
-        name={field.name} 
-        required={req} 
-        className={base} 
-        defaultValue="" 
+      <label htmlFor={id} className="text-sm font-medium">
+        {field.label}
+        {req && <span className="text-destructive"> *</span>}
+      </label>
+      <select
+        id={id}
+        name={field.name}
+        required={req}
+        className={base}
+        defaultValue=""
         onChange={(e) => setShowOtherSpecify(e.target.value === "Other")}
       >
-        <option value="" disabled>Select…</option>
-        {field.options?.map((o) => <option key={o} value={o}>{o}</option>)}
+        <option value="" disabled>
+          Select…
+        </option>
+        {field.options?.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
       </select>
       {showOtherSpecify && (
         <input
@@ -183,19 +224,25 @@ function RadioField({ field, req, base }: { field: FormField; req?: boolean; bas
 
   return (
     <fieldset className="space-y-2">
-      <legend className="text-sm font-medium">{field.label}{req && <span className="text-destructive"> *</span>}</legend>
+      <legend className="text-sm font-medium">
+        {field.label}
+        {req && <span className="text-destructive"> *</span>}
+      </legend>
       <div className="flex flex-wrap gap-2">
         {field.options?.map((o) => {
           const tooltipText = optionTooltips[o];
           return (
-            <label key={o} className="relative group inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm cursor-pointer hover:bg-secondary/60">
-              <input 
-                type="radio" 
-                name={field.name} 
-                value={o} 
-                required={req} 
-                className="accent-[var(--accent)]" 
-                onChange={(e) => setShowOtherSpecify(e.target.value === "Other")} 
+            <label
+              key={o}
+              className="relative group inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm cursor-pointer hover:bg-secondary/60"
+            >
+              <input
+                type="radio"
+                name={field.name}
+                value={o}
+                required={req}
+                className="accent-[var(--accent)]"
+                onChange={(e) => setShowOtherSpecify(e.target.value === "Other")}
               />
               {o}
               {tooltipText && (
@@ -245,8 +292,17 @@ function CheckboxGroupField({ field, base }: { field: FormField; base: string })
         {field.options?.map((o) => {
           const tooltipText = optionTooltips[o];
           return (
-            <label key={o} className="relative group inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm cursor-pointer hover:bg-secondary/60">
-              <input type="checkbox" name={field.name} value={o} className="accent-[var(--accent)]" onChange={handleCheckboxChange} />
+            <label
+              key={o}
+              className="relative group inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm cursor-pointer hover:bg-secondary/60"
+            >
+              <input
+                type="checkbox"
+                name={field.name}
+                value={o}
+                className="accent-[var(--accent)]"
+                onChange={handleCheckboxChange}
+              />
               {o}
               {tooltipText && (
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 text-xs text-white bg-primary rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 text-center shadow-glow border border-white/10 leading-normal">
@@ -274,7 +330,8 @@ function CheckboxGroupField({ field, base }: { field: FormField; base: string })
 function Field({ field }: { field: FormField }) {
   const id = `f-${field.name}`;
   const req = field.required;
-  const base = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
+  const base =
+    "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
 
   if (field.type === "date") {
     return <DateField field={field} id={id} req={req} base={base} />;
@@ -283,8 +340,18 @@ function Field({ field }: { field: FormField }) {
   if (field.type === "textarea") {
     return (
       <div className="space-y-1.5">
-        <label htmlFor={id} className="text-sm font-medium">{field.label}{req && <span className="text-destructive"> *</span>}</label>
-        <textarea id={id} name={field.name} required={req} placeholder={field.placeholder} rows={4} className={base} />
+        <label htmlFor={id} className="text-sm font-medium">
+          {field.label}
+          {req && <span className="text-destructive"> *</span>}
+        </label>
+        <textarea
+          id={id}
+          name={field.name}
+          required={req}
+          placeholder={field.placeholder}
+          rows={4}
+          className={base}
+        />
       </div>
     );
   }
@@ -304,8 +371,16 @@ function Field({ field }: { field: FormField }) {
   if (field.type === "checkbox") {
     return (
       <label className="flex items-start gap-3 text-sm">
-        <input type="checkbox" name={field.name} required={req} className="mt-1 accent-[var(--accent)]" />
-        <span>{field.label}{req && <span className="text-destructive"> *</span>}</span>
+        <input
+          type="checkbox"
+          name={field.name}
+          required={req}
+          className="mt-1 accent-[var(--accent)]"
+        />
+        <span>
+          {field.label}
+          {req && <span className="text-destructive"> *</span>}
+        </span>
       </label>
     );
   }
@@ -313,12 +388,15 @@ function Field({ field }: { field: FormField }) {
   if (field.type === "tel") {
     return (
       <div className="space-y-1.5">
-        <label htmlFor={id} className="text-sm font-medium">{field.label}{req && <span className="text-destructive"> *</span>}</label>
+        <label htmlFor={id} className="text-sm font-medium">
+          {field.label}
+          {req && <span className="text-destructive"> *</span>}
+        </label>
         <div className="flex gap-2">
-          <select 
-            name={`${field.name}_country_code`} 
-            required={req} 
-            defaultValue="+91" 
+          <select
+            name={`${field.name}_country_code`}
+            required={req}
+            defaultValue="+91"
             className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring w-28 text-foreground"
           >
             <option value="+91">🇮🇳 +91</option>
@@ -333,13 +411,13 @@ function Field({ field }: { field: FormField }) {
             <option value="+61">🇦🇺 +61</option>
             <option value="+65">🇸🇬 +65</option>
           </select>
-          <input 
-            id={id} 
-            name={field.name} 
-            type="tel" 
-            required={req} 
-            placeholder={field.placeholder || "Enter phone number"} 
-            className={`${base} flex-1`} 
+          <input
+            id={id}
+            name={field.name}
+            type="tel"
+            required={req}
+            placeholder={field.placeholder || "Enter phone number"}
+            className={`${base} flex-1`}
           />
         </div>
       </div>
@@ -348,8 +426,18 @@ function Field({ field }: { field: FormField }) {
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="text-sm font-medium">{field.label}{req && <span className="text-destructive"> *</span>}</label>
-      <input id={id} name={field.name} type={field.type} required={req} placeholder={field.placeholder} className={base} />
+      <label htmlFor={id} className="text-sm font-medium">
+        {field.label}
+        {req && <span className="text-destructive"> *</span>}
+      </label>
+      <input
+        id={id}
+        name={field.name}
+        type={field.type}
+        required={req}
+        placeholder={field.placeholder}
+        className={base}
+      />
     </div>
   );
 }
@@ -365,7 +453,7 @@ function ProgramPage() {
     if (!element) return;
     document.body.classList.add("printing-active");
     element.classList.add("print-section");
-    
+
     setTimeout(() => {
       window.print();
       const cleanup = () => {
@@ -391,7 +479,7 @@ function ProgramPage() {
       programId: program.id,
       programName: program.name,
     };
-    
+
     // Parse form values
     formData.forEach((value, key) => {
       if (data[key]) {
@@ -412,7 +500,7 @@ function ProgramPage() {
     }
 
     // Format array values as strings (e.g. joined by comma)
-    Object.keys(data).forEach(key => {
+    Object.keys(data).forEach((key) => {
       if (Array.isArray(data[key])) {
         data[key] = data[key].join(", ");
       }
@@ -460,7 +548,8 @@ function ProgramPage() {
     data["Lead Status"] = "New Lead";
     data["Loyalty Points"] = 500;
     data["Loyalty Tier"] = "Silver";
-    data["Referral Code"] = `OPT-${(data.fullName || "GUEST").split(" ")[0].toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    data["Referral Code"] =
+      `OPT-${(data.fullName || "GUEST").split(" ")[0].toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
     // 2. Save client record to Firestore for instant authentication portal (run in background)
     saveEnrollmentToFirestore(enrollmentId, data).catch((err) => {
@@ -476,37 +565,37 @@ function ProgramPage() {
           "Program Enrollments": [],
           "Health Assessments": [],
           "Loyalty Ledger": [],
-          "Invoices": [],
-          "Receipts": [],
+          Invoices: [],
+          Receipts: [],
           "Journal Ledger": [],
-          "Audit Logs": []
+          "Audit Logs": [],
         };
       }
-      
+
       if (!dbCache["Program Enrollments"]) dbCache["Program Enrollments"] = [];
       if (!dbCache["Loyalty Ledger"]) dbCache["Loyalty Ledger"] = [];
       if (!dbCache["Invoices"]) dbCache["Invoices"] = [];
 
       const newEnrollment = {
-        "Timestamp": data.Timestamp,
+        Timestamp: data.Timestamp,
         "Enrollment ID": enrollmentId,
-        "fullName": data.fullName,
-        "email": data.email,
-        "phone": data.phone,
-        "programName": data.programName,
-        "dob": data.dob,
-        "age": data.age,
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        programName: data.programName,
+        dob: data.dob,
+        age: data.age,
         "Lead Status": "New Lead",
         "Joining Status": "Pending Confirmation",
         "Assigned To": "None",
-        "Priority": "Medium",
+        Priority: "Medium",
         "Payment Status": "Unpaid",
         "Loyalty Points": 500,
         "Loyalty Tier": "Silver",
         "Referral Code": data["Referral Code"],
-        "referredByCode": data.referredByCode || "",
+        referredByCode: data.referredByCode || "",
         "Referral Processed": "",
-        "Action Notes": ""
+        "Action Notes": "",
       };
 
       dbCache["Program Enrollments"].unshift(newEnrollment);
@@ -518,7 +607,7 @@ function ProgramPage() {
         Activity: "Welcome & Program Enrollment Bonus",
         "Points Earned": 500,
         "Points Redeemed": 0,
-        "Current Balance": 500
+        "Current Balance": 500,
       });
 
       const formatDateStr = (d: Date) => {
@@ -535,7 +624,7 @@ function ProgramPage() {
         "Program Name": data.programName,
         Amount: 299,
         Date: formatDateStr(new Date()),
-        Status: "Unpaid"
+        Status: "Unpaid",
       });
 
       localStorage.setItem("optivita_crm_cache", JSON.stringify(dbCache));
@@ -547,7 +636,7 @@ function ProgramPage() {
     if (!isOffline) {
       try {
         console.log("Optivita Debug: Sending Webhook Payload:", data);
-        
+
         // Attempt standard JSON fetch first, fallback to no-cors on error or timeout
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -558,7 +647,7 @@ function ProgramPage() {
             mode: "no-cors",
             headers: { "Content-Type": "text/plain" },
             body: JSON.stringify(data),
-            signal: controller.signal
+            signal: controller.signal,
           });
           clearTimeout(timeoutId);
           console.log("Optivita Debug: Webhook submit complete (no-cors).", response);
@@ -585,32 +674,40 @@ function ProgramPage() {
     return (
       <div className="min-h-screen flex flex-col bg-background text-foreground">
         <SiteHeader />
-        
+
         <main className="flex-1 max-w-3xl mx-auto px-6 pt-32 pb-16 w-full space-y-6 no-print">
           <div className="rounded-[32px] bg-card p-10 text-center shadow-soft border border-border/80 w-full animate-scale-up space-y-6">
-            <div 
+            <div
               className="mx-auto h-14 w-14 rounded-full flex items-center justify-center text-white text-xl shadow-md"
-              style={{ background: "linear-gradient(135deg, #064e3b 0%, #0f766e 50%, #14b8a6 100%)" }}
+              style={{
+                background: "linear-gradient(135deg, #064e3b 0%, #0f766e 50%, #14b8a6 100%)",
+              }}
             >
               ✓
             </div>
-            <h2 className="font-display font-bold text-3xl text-[#032b27] dark:text-[#a7f3d0] tracking-tight">Application Received</h2>
+            <h2 className="font-display font-bold text-3xl text-[#032b27] dark:text-[#a7f3d0] tracking-tight">
+              Application Received
+            </h2>
             <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">
-              Thank you for enrolling in <strong>{program.name}</strong>. Your Optivita coach will contact you via WhatsApp or email within 24 hours.
+              Thank you for enrolling in <strong>{program.name}</strong>. Your Optivita coach will
+              contact you via WhatsApp or email within 24 hours.
             </p>
             <p className="text-xs text-slate-400 font-semibold font-mono">
-              Intake Reference: <span className="text-emerald-600 dark:text-emerald-400">{submittedData["Enrollment ID"]}</span>
+              Intake Reference:{" "}
+              <span className="text-emerald-600 dark:text-emerald-400">
+                {submittedData["Enrollment ID"]}
+              </span>
             </p>
 
             <div className="flex flex-wrap justify-center gap-3 pt-2">
-              <button 
-                onClick={() => handlePrintSection("intake-summary-sheet")} 
+              <button
+                onClick={() => handlePrintSection("intake-summary-sheet")}
                 className="px-5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-soft flex items-center gap-2 transition"
               >
                 <Printer className="h-4 w-4" /> Download/Print Filled Form
               </button>
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 className="px-5 py-2.5 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-350 text-xs font-bold flex items-center gap-1.5 transition"
               >
                 ← Back to home
@@ -620,65 +717,94 @@ function ProgramPage() {
 
           {/* Collapsible/Viewable summary in page itself */}
           <div className="bg-card border border-border rounded-[24px] p-6 shadow-soft space-y-4">
-            <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-300 border-b pb-2">Review Submitted Information</h3>
+            <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-300 border-b pb-2">
+              Review Submitted Information
+            </h3>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
               <div>
                 <p className="text-slate-400">Enrollment Number</p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">{submittedData["Enrollment ID"]}</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">
+                  {submittedData["Enrollment ID"]}
+                </p>
               </div>
               <div>
                 <p className="text-slate-400">Submission Date</p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">{submittedData["Timestamp"]}</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">
+                  {submittedData["Timestamp"]}
+                </p>
               </div>
               <div>
                 <p className="text-slate-400">Full Name</p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">{submittedData["fullName"]}</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">
+                  {submittedData["fullName"]}
+                </p>
               </div>
               <div>
                 <p className="text-slate-400">Date of Birth</p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">{submittedData["dob"]}</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">
+                  {submittedData["dob"]}
+                </p>
               </div>
               <div>
                 <p className="text-slate-400">Calculated Age</p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">{submittedData["age"]} years</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">
+                  {submittedData["age"]} years
+                </p>
               </div>
               <div>
                 <p className="text-slate-400">Phone / WhatsApp</p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">{submittedData["phone"]}</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">
+                  {submittedData["phone"]}
+                </p>
               </div>
               <div>
                 <p className="text-slate-400">Gender</p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">{submittedData["gender"]}</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">
+                  {submittedData["gender"]}
+                </p>
               </div>
               <div>
                 <p className="text-slate-400">City / Country</p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">{submittedData["city"] || "-"}</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">
+                  {submittedData["city"] || "-"}
+                </p>
               </div>
             </div>
           </div>
         </main>
 
         {/* Hidden A4 Print Sheet Container */}
-        <div id="intake-summary-sheet" className="hidden print:block bg-white text-black p-8 max-w-4xl mx-auto space-y-6 text-sm" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
-          
+        <div
+          id="intake-summary-sheet"
+          className="hidden print:block bg-white text-black p-8 max-w-4xl mx-auto space-y-6 text-sm"
+          style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+        >
           {/* Header */}
           <div className="flex justify-between items-start border-b-2 border-emerald-600 pb-4">
             <div className="flex items-center gap-3">
               <img src="/optivita-logo.png" alt="Optivita" className="h-10 w-10 object-contain" />
               <div>
-                <h2 className="font-black text-xl text-emerald-800 uppercase tracking-tight">Optivita Precision Health</h2>
-                <p className="text-xs text-slate-500 font-semibold tracking-widest uppercase">Client Intake Application</p>
+                <h2 className="font-black text-xl text-emerald-800 uppercase tracking-tight">
+                  Optivita Precision Health
+                </h2>
+                <p className="text-xs text-slate-500 font-semibold tracking-widest uppercase">
+                  Client Intake Application
+                </p>
               </div>
             </div>
             <div className="text-right">
               <p className="text-[10px] font-bold text-slate-400 uppercase">Enrollment Number</p>
-              <p className="font-mono font-black text-lg text-emerald-700 bg-emerald-50 px-3 py-1 rounded border border-emerald-200 inline-block">{submittedData["Enrollment ID"]}</p>
+              <p className="font-mono font-black text-lg text-emerald-700 bg-emerald-50 px-3 py-1 rounded border border-emerald-200 inline-block">
+                {submittedData["Enrollment ID"]}
+              </p>
             </div>
           </div>
 
           {/* Details Table */}
           <div className="space-y-4">
-            <h3 className="font-bold text-xs uppercase text-slate-500 border-b pb-1">Program Details</h3>
+            <h3 className="font-bold text-xs uppercase text-slate-500 border-b pb-1">
+              Program Details
+            </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="text-xs text-slate-400 font-medium block">Selected Program</span>
@@ -692,7 +818,9 @@ function ProgramPage() {
           </div>
 
           <div className="space-y-4 pt-2">
-            <h3 className="font-bold text-xs uppercase text-slate-500 border-b pb-1">Personal Details</h3>
+            <h3 className="font-bold text-xs uppercase text-slate-500 border-b pb-1">
+              Personal Details
+            </h3>
             <div className="grid grid-cols-3 gap-y-4 gap-x-6">
               <div>
                 <span className="text-xs text-slate-400 font-medium block">Full Name</span>
@@ -728,7 +856,9 @@ function ProgramPage() {
           {/* Measurements */}
           {(submittedData["height"] || submittedData["weight"]) && (
             <div className="space-y-4 pt-2">
-              <h3 className="font-bold text-xs uppercase text-slate-500 border-b pb-1">Vital Statistics</h3>
+              <h3 className="font-bold text-xs uppercase text-slate-500 border-b pb-1">
+                Vital Statistics
+              </h3>
               <div className="grid grid-cols-4 gap-4">
                 {submittedData["height"] && (
                   <div>
@@ -760,23 +890,47 @@ function ProgramPage() {
 
           {/* Lifestyle or other answers */}
           <div className="space-y-4 pt-2">
-            <h3 className="font-bold text-xs uppercase text-slate-500 border-b pb-1">Additional Intake Details</h3>
+            <h3 className="font-bold text-xs uppercase text-slate-500 border-b pb-1">
+              Additional Intake Details
+            </h3>
             <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-xs">
               {Object.keys(submittedData).map((key) => {
                 const skipKeys = [
-                  "action", "sheetName", "programId", "programName", "fullName", "email",
-                  "phone", "gender", "city", "height", "weight", "waist", "hip", "dob", "age",
-                  "Timestamp", "Enrollment ID", "Payment Status", "Lead Status", "Loyalty Points",
-                  "Loyalty Tier", "Referral Code"
+                  "action",
+                  "sheetName",
+                  "programId",
+                  "programName",
+                  "fullName",
+                  "email",
+                  "phone",
+                  "gender",
+                  "city",
+                  "height",
+                  "weight",
+                  "waist",
+                  "hip",
+                  "dob",
+                  "age",
+                  "Timestamp",
+                  "Enrollment ID",
+                  "Payment Status",
+                  "Lead Status",
+                  "Loyalty Points",
+                  "Loyalty Tier",
+                  "Referral Code",
                 ];
                 if (skipKeys.includes(key) || !submittedData[key]) return null;
-                
+
                 // Humanize key labels
-                const label = key.replace(/([A-Z])/g, " $1").replace(/^./, str => str.toUpperCase());
+                const label = key
+                  .replace(/([A-Z])/g, " $1")
+                  .replace(/^./, (str) => str.toUpperCase());
                 return (
                   <div key={key} className="border-b pb-2">
                     <span className="text-slate-400 font-medium block">{label}</span>
-                    <span className="font-semibold text-slate-900 block">{String(submittedData[key])}</span>
+                    <span className="font-semibold text-slate-900 block">
+                      {String(submittedData[key])}
+                    </span>
                   </div>
                 );
               })}
@@ -806,9 +960,15 @@ function ProgramPage() {
           aria-hidden
         />
         <div className="relative max-w-5xl mx-auto px-6">
-          <Link to="/" className="text-white/80 text-sm hover:text-white">← All Programs</Link>
-          <p className="mt-6 uppercase tracking-widest text-xs font-semibold text-white/80">{program.duration}</p>
-          <h1 className="mt-2 font-display font-extrabold text-4xl md:text-6xl leading-tight max-w-3xl">{program.name}</h1>
+          <Link to="/" className="text-white/80 text-sm hover:text-white">
+            ← All Programs
+          </Link>
+          <p className="mt-6 uppercase tracking-widest text-xs font-semibold text-white/80">
+            {program.duration}
+          </p>
+          <h1 className="mt-2 font-display font-extrabold text-4xl md:text-6xl leading-tight max-w-3xl">
+            {program.name}
+          </h1>
           <p className="mt-5 text-lg md:text-xl text-white/90 max-w-2xl">{program.tagline}</p>
         </div>
       </section>
@@ -818,9 +978,9 @@ function ProgramPage() {
           <div className="md:col-span-2">
             {program.image && (
               <div className="mb-10 overflow-hidden rounded-3xl border border-border shadow-glow hover:shadow-soft transition-shadow duration-300">
-                <img 
-                  src={program.image} 
-                  alt={`${program.name} Infographic`} 
+                <img
+                  src={program.image}
+                  alt={`${program.name} Infographic`}
                   className="w-full h-auto object-cover"
                 />
               </div>
@@ -831,7 +991,10 @@ function ProgramPage() {
             <ul className="mt-3 space-y-2">
               {program.includes.map((i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="mt-1.5 h-2 w-2 rounded-full" style={{ background: "var(--vital)" }} />
+                  <span
+                    className="mt-1.5 h-2 w-2 rounded-full"
+                    style={{ background: "var(--vital)" }}
+                  />
                   <span>{i}</span>
                 </li>
               ))}
@@ -840,7 +1003,10 @@ function ProgramPage() {
           <aside className="bg-secondary/60 rounded-2xl p-6 border border-border h-fit">
             <p className="text-sm text-muted-foreground">Investment</p>
             <p className="mt-1 font-display font-bold text-2xl">{program.price}</p>
-            <a href="#enroll" className="mt-5 block text-center rounded-full bg-brand-gradient text-white font-semibold py-3 shadow-soft hover:opacity-90 transition">
+            <a
+              href="#enroll"
+              className="mt-5 block text-center rounded-full bg-brand-gradient text-white font-semibold py-3 shadow-soft hover:opacity-90 transition"
+            >
               Enroll Now
             </a>
             <p className="mt-3 text-xs text-muted-foreground">
@@ -852,17 +1018,33 @@ function ProgramPage() {
 
       <section id="enroll" className="py-16 bg-secondary/40 border-t border-border">
         <div className="max-w-3xl mx-auto px-6">
-          <p className="text-accent font-semibold uppercase tracking-widest text-xs">Enrollment Form</p>
-          <h2 className="mt-3 font-display font-bold text-3xl">Tailored intake for {program.name}</h2>
-          <p className="mt-2 text-muted-foreground">This form is customized to the program you selected. It takes ~5 minutes.</p>
+          <p className="text-accent font-semibold uppercase tracking-widest text-xs">
+            Enrollment Form
+          </p>
+          <h2 className="mt-3 font-display font-bold text-3xl">
+            Tailored intake for {program.name}
+          </h2>
+          <p className="mt-2 text-muted-foreground">
+            This form is customized to the program you selected. It takes ~5 minutes.
+          </p>
 
           <form onSubmit={onSubmit} className="mt-10 space-y-10">
             {program.formSections.map((section) => (
-              <div key={section.title} className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-soft">
+              <div
+                key={section.title}
+                className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-soft"
+              >
                 <h3 className="font-display font-bold text-xl">{section.title}</h3>
                 <div className="mt-6 grid md:grid-cols-2 gap-5">
                   {section.fields.map((f) => (
-                    <div key={f.name} className={f.type === "textarea" || f.type === "checkbox" || f.type === "radio" ? "md:col-span-2" : ""}>
+                    <div
+                      key={f.name}
+                      className={
+                        f.type === "textarea" || f.type === "checkbox" || f.type === "radio"
+                          ? "md:col-span-2"
+                          : ""
+                      }
+                    >
                       <Field field={f} />
                     </div>
                   ))}

@@ -7,7 +7,7 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const hasFirebaseKeys = !!(
@@ -38,7 +38,7 @@ export async function getNextEnrollmentId(): Promise<string> {
   }
 
   const timeoutPromise = new Promise<string>((_, reject) =>
-    setTimeout(() => reject(new Error("Firestore transaction timeout")), 1500)
+    setTimeout(() => reject(new Error("Firestore transaction timeout")), 1500),
   );
 
   try {
@@ -79,9 +79,7 @@ export async function saveEnrollmentToFirestore(enrollmentId: string, data: any)
     return false;
   }
 
-  const timeoutPromise = new Promise<boolean>((resolve) =>
-    setTimeout(() => resolve(false), 1500)
-  );
+  const timeoutPromise = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 1500));
 
   try {
     const firestorePromise = (async () => {
@@ -89,7 +87,7 @@ export async function saveEnrollmentToFirestore(enrollmentId: string, data: any)
       await setDoc(docRef, {
         ...data,
         syncedToSheets: false,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
       return true;
     })();
@@ -109,10 +107,14 @@ export async function saveCRMDataToFirestore(dataset: any): Promise<boolean> {
   if (!db || !dataset) return false;
   try {
     const docRef = doc(db, "crm_cache", "master");
-    await setDoc(docRef, {
-      data: dataset,
-      updatedAt: new Date().toISOString()
-    }, { merge: true });
+    await setDoc(
+      docRef,
+      {
+        data: dataset,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true },
+    );
     return true;
   } catch (err) {
     console.warn("Firestore save master warning:", err);
@@ -134,7 +136,12 @@ export async function getCRMDataFromFirestore(): Promise<any | null> {
   return null;
 }
 
-export async function updateFirestoreRecord(sheetName: string, idKey: string, idValue: string, fields: any): Promise<boolean> {
+export async function updateFirestoreRecord(
+  sheetName: string,
+  idKey: string,
+  idValue: string,
+  fields: any,
+): Promise<boolean> {
   if (!db) return false;
   try {
     const docRef = doc(db, "crm_cache", "master");
@@ -146,7 +153,11 @@ export async function updateFirestoreRecord(sheetName: string, idKey: string, id
       if (idx !== -1) {
         list[idx] = { ...list[idx], ...fields };
         currentDataset[sheetName] = list;
-        await setDoc(docRef, { data: currentDataset, updatedAt: new Date().toISOString() }, { merge: true });
+        await setDoc(
+          docRef,
+          { data: currentDataset, updatedAt: new Date().toISOString() },
+          { merge: true },
+        );
         return true;
       }
     }

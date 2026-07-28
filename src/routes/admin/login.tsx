@@ -27,13 +27,16 @@ function AdminLogin() {
     }
 
     // Default Fallback Credentials for instant testing
-    if ((username === "admin" && password === "admin123") || (username === "SFD" && password === "42168511")) {
+    if (
+      (username === "admin" && password === "admin123") ||
+      (username === "SFD" && password === "42168511")
+    ) {
       const mockSession = {
         userId: "USR-1001",
         username: username,
         role: "Super Admin",
         branches: "All",
-        permissions: "Full System Access"
+        permissions: "Full System Access",
       };
       localStorage.setItem("optivita_admin_session", JSON.stringify(mockSession));
       toast.success("Welcome back to OPTIVITA!");
@@ -56,8 +59,8 @@ function AdminLogin() {
         body: JSON.stringify({
           action: "login",
           username,
-          password
-        })
+          password,
+        }),
       });
 
       const data = await res.json();
@@ -71,15 +74,18 @@ function AdminLogin() {
     } catch (err) {
       console.error("Login request error:", err);
       toast.error("Server connection failed. Attempting offline fallback...");
-      
+
       // Fallback
-      if ((username === "admin" && password === "admin123") || (username === "SFD" && password === "42168511")) {
+      if (
+        (username === "admin" && password === "admin123") ||
+        (username === "SFD" && password === "42168511")
+      ) {
         const mockSession = {
           userId: "USR-1001",
           username: username,
           role: "Super Admin",
           branches: "All",
-          permissions: "Full System Access"
+          permissions: "Full System Access",
         };
         localStorage.setItem("optivita_admin_session", JSON.stringify(mockSession));
         toast.success("Welcome (Offline Mode)");
@@ -98,7 +104,6 @@ function AdminLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 transition-colors duration-200">
-      
       {/* Visual background accents */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
         <div className="absolute top-1/4 left-1/4 h-80 w-80 rounded-full bg-emerald-500/10 blur-[100px]" />
@@ -106,7 +111,6 @@ function AdminLogin() {
       </div>
 
       <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-[32px] p-8 md:p-10 shadow-glow relative z-10 animate-scale-up">
-        
         {/* Brand Logo and Title */}
         <div className="text-center mb-8">
           <div className="mx-auto h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-4">
@@ -121,10 +125,11 @@ function AdminLogin() {
         </div>
 
         <form onSubmit={handleLoginSubmit} className="space-y-5">
-          
           {/* Username Input */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Username</label>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Username
+            </label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400" />
               <input
@@ -140,9 +145,11 @@ function AdminLogin() {
           {/* Password Input */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Password</label>
-              <button 
-                type="button" 
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Password
+              </label>
+              <button
+                type="button"
                 onClick={handleForgotPassword}
                 className="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
               >
@@ -163,7 +170,11 @@ function AdminLogin() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                {showPassword ? (
+                  <EyeOff className="h-4.5 w-4.5" />
+                ) : (
+                  <Eye className="h-4.5 w-4.5" />
+                )}
               </button>
             </div>
           </div>
@@ -177,7 +188,10 @@ function AdminLogin() {
               onChange={(e) => setRememberMe(e.target.checked)}
               className="rounded border-slate-300 accent-emerald-600 dark:border-slate-800 dark:bg-slate-900"
             />
-            <label htmlFor="remember" className="text-xs text-slate-500 dark:text-slate-400 cursor-pointer">
+            <label
+              htmlFor="remember"
+              className="text-xs text-slate-500 dark:text-slate-400 cursor-pointer"
+            >
               Remember my session
             </label>
           </div>
@@ -194,11 +208,13 @@ function AdminLogin() {
 
         {/* Return to Home link */}
         <div className="mt-6 text-center border-t border-slate-100 dark:border-slate-800/80 pt-4">
-          <Link to="/" className="text-xs font-semibold text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center justify-center gap-1.5 transition-colors">
+          <Link
+            to="/"
+            className="text-xs font-semibold text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center justify-center gap-1.5 transition-colors"
+          >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to Website Home
           </Link>
         </div>
-
       </div>
     </div>
   );

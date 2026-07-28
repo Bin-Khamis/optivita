@@ -18,6 +18,7 @@ import { Route as ProgramsProgramIdRouteImport } from './routes/programs.$progra
 import { Route as PortalSecurityRouteImport } from './routes/portal/security'
 import { Route as PortalProgressRouteImport } from './routes/portal/progress'
 import { Route as PortalProgramsRouteImport } from './routes/portal/programs'
+import { Route as PortalMessagesRouteImport } from './routes/portal/messages'
 import { Route as PortalLoyaltyRouteImport } from './routes/portal/loyalty'
 import { Route as PortalLoginRouteImport } from './routes/portal/login'
 import { Route as PortalInvoicesRouteImport } from './routes/portal/invoices'
@@ -32,6 +33,8 @@ import { Route as AdminLeadsRouteImport } from './routes/admin/leads'
 import { Route as AdminHrRouteImport } from './routes/admin/hr'
 import { Route as AdminFinanceRouteImport } from './routes/admin/finance'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminCommunicationRouteImport } from './routes/admin/communication'
+import { Route as AdminAppointmentsRouteImport } from './routes/admin/appointments'
 
 const PortalRoute = PortalRouteImport.update({
   id: '/portal',
@@ -76,6 +79,11 @@ const PortalProgressRoute = PortalProgressRouteImport.update({
 const PortalProgramsRoute = PortalProgramsRouteImport.update({
   id: '/programs',
   path: '/programs',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalMessagesRoute = PortalMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => PortalRoute,
 } as any)
 const PortalLoyaltyRoute = PortalLoyaltyRouteImport.update({
@@ -148,6 +156,16 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCommunicationRoute = AdminCommunicationRouteImport.update({
+  id: '/communication',
+  path: '/communication',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAppointmentsRoute = AdminAppointmentsRouteImport.update({
+  id: '/appointments',
+  path: '/appointments',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -155,6 +173,8 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/calculator': typeof CalculatorRoute
   '/portal': typeof PortalRouteWithChildren
+  '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/communication': typeof AdminCommunicationRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/finance': typeof AdminFinanceRoute
   '/admin/hr': typeof AdminHrRoute
@@ -169,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/portal/invoices': typeof PortalInvoicesRoute
   '/portal/login': typeof PortalLoginRoute
   '/portal/loyalty': typeof PortalLoyaltyRoute
+  '/portal/messages': typeof PortalMessagesRoute
   '/portal/programs': typeof PortalProgramsRoute
   '/portal/progress': typeof PortalProgressRoute
   '/portal/security': typeof PortalSecurityRoute
@@ -180,6 +201,8 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/calculator': typeof CalculatorRoute
   '/portal': typeof PortalRouteWithChildren
+  '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/communication': typeof AdminCommunicationRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/finance': typeof AdminFinanceRoute
   '/admin/hr': typeof AdminHrRoute
@@ -194,6 +217,7 @@ export interface FileRoutesByTo {
   '/portal/invoices': typeof PortalInvoicesRoute
   '/portal/login': typeof PortalLoginRoute
   '/portal/loyalty': typeof PortalLoyaltyRoute
+  '/portal/messages': typeof PortalMessagesRoute
   '/portal/programs': typeof PortalProgramsRoute
   '/portal/progress': typeof PortalProgressRoute
   '/portal/security': typeof PortalSecurityRoute
@@ -206,6 +230,8 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/calculator': typeof CalculatorRoute
   '/portal': typeof PortalRouteWithChildren
+  '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/communication': typeof AdminCommunicationRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/finance': typeof AdminFinanceRoute
   '/admin/hr': typeof AdminHrRoute
@@ -220,6 +246,7 @@ export interface FileRoutesById {
   '/portal/invoices': typeof PortalInvoicesRoute
   '/portal/login': typeof PortalLoginRoute
   '/portal/loyalty': typeof PortalLoyaltyRoute
+  '/portal/messages': typeof PortalMessagesRoute
   '/portal/programs': typeof PortalProgramsRoute
   '/portal/progress': typeof PortalProgressRoute
   '/portal/security': typeof PortalSecurityRoute
@@ -233,6 +260,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/calculator'
     | '/portal'
+    | '/admin/appointments'
+    | '/admin/communication'
     | '/admin/dashboard'
     | '/admin/finance'
     | '/admin/hr'
@@ -247,6 +276,7 @@ export interface FileRouteTypes {
     | '/portal/invoices'
     | '/portal/login'
     | '/portal/loyalty'
+    | '/portal/messages'
     | '/portal/programs'
     | '/portal/progress'
     | '/portal/security'
@@ -258,6 +288,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/calculator'
     | '/portal'
+    | '/admin/appointments'
+    | '/admin/communication'
     | '/admin/dashboard'
     | '/admin/finance'
     | '/admin/hr'
@@ -272,6 +304,7 @@ export interface FileRouteTypes {
     | '/portal/invoices'
     | '/portal/login'
     | '/portal/loyalty'
+    | '/portal/messages'
     | '/portal/programs'
     | '/portal/progress'
     | '/portal/security'
@@ -283,6 +316,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/calculator'
     | '/portal'
+    | '/admin/appointments'
+    | '/admin/communication'
     | '/admin/dashboard'
     | '/admin/finance'
     | '/admin/hr'
@@ -297,6 +332,7 @@ export interface FileRouteTypes {
     | '/portal/invoices'
     | '/portal/login'
     | '/portal/loyalty'
+    | '/portal/messages'
     | '/portal/programs'
     | '/portal/progress'
     | '/portal/security'
@@ -375,6 +411,13 @@ declare module '@tanstack/react-router' {
       path: '/programs'
       fullPath: '/portal/programs'
       preLoaderRoute: typeof PortalProgramsRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/messages': {
+      id: '/portal/messages'
+      path: '/messages'
+      fullPath: '/portal/messages'
+      preLoaderRoute: typeof PortalMessagesRouteImport
       parentRoute: typeof PortalRoute
     }
     '/portal/loyalty': {
@@ -475,10 +518,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDashboardRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/communication': {
+      id: '/admin/communication'
+      path: '/communication'
+      fullPath: '/admin/communication'
+      preLoaderRoute: typeof AdminCommunicationRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/appointments': {
+      id: '/admin/appointments'
+      path: '/appointments'
+      fullPath: '/admin/appointments'
+      preLoaderRoute: typeof AdminAppointmentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminAppointmentsRoute: typeof AdminAppointmentsRoute
+  AdminCommunicationRoute: typeof AdminCommunicationRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminFinanceRoute: typeof AdminFinanceRoute
   AdminHrRoute: typeof AdminHrRoute
@@ -491,6 +550,8 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAppointmentsRoute: AdminAppointmentsRoute,
+  AdminCommunicationRoute: AdminCommunicationRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminFinanceRoute: AdminFinanceRoute,
   AdminHrRoute: AdminHrRoute,
@@ -510,6 +571,7 @@ interface PortalRouteChildren {
   PortalInvoicesRoute: typeof PortalInvoicesRoute
   PortalLoginRoute: typeof PortalLoginRoute
   PortalLoyaltyRoute: typeof PortalLoyaltyRoute
+  PortalMessagesRoute: typeof PortalMessagesRoute
   PortalProgramsRoute: typeof PortalProgramsRoute
   PortalProgressRoute: typeof PortalProgressRoute
   PortalSecurityRoute: typeof PortalSecurityRoute
@@ -521,6 +583,7 @@ const PortalRouteChildren: PortalRouteChildren = {
   PortalInvoicesRoute: PortalInvoicesRoute,
   PortalLoginRoute: PortalLoginRoute,
   PortalLoyaltyRoute: PortalLoyaltyRoute,
+  PortalMessagesRoute: PortalMessagesRoute,
   PortalProgramsRoute: PortalProgramsRoute,
   PortalProgressRoute: PortalProgressRoute,
   PortalSecurityRoute: PortalSecurityRoute,
@@ -540,13 +603,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

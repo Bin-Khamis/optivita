@@ -1,8 +1,23 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState, useEffect, createContext, useContext } from "react";
-import { 
-  Users, BarChart3, Settings, LogOut, Menu, Bell, Sun, Moon, Search, 
-  Award, Calendar, DollarSign, Activity, FileText, CheckSquare, Shield
+import {
+  Users,
+  BarChart3,
+  Settings,
+  LogOut,
+  Menu,
+  Bell,
+  Sun,
+  Moon,
+  Search,
+  Award,
+  Calendar,
+  DollarSign,
+  Activity,
+  FileText,
+  CheckSquare,
+  Shield,
+  MessageSquare,
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
@@ -17,6 +32,7 @@ export const Route = createFileRoute("/admin")({
 function AdminLayout() {
   const navigate = useNavigate();
   const router = useRouter();
+  const isLoginPage = router.state.location.pathname === "/admin/login";
   const [user, setUser] = useState<UserSession | null>(null);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -25,9 +41,11 @@ function AdminLayout() {
   const [notifications, setNotifications] = useState<string[]>([
     "New lead sufaid Hussain registered",
     "Clinical check scheduling request received",
-    "Referral bonus assigned to Ahmed"
+    "Referral bonus assigned to Ahmed",
   ]);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  const [lastMsgCount, setLastMsgCount] = useState<number | null>(null);
 
   // 1. Auth Guard and Dark Mode initializer
   useEffect(() => {
@@ -42,15 +60,63 @@ function AdminLayout() {
     const isDark = localStorage.getItem("admin_dark_mode") === "true";
     setDarkMode(isDark);
     if (isDark) document.documentElement.classList.add("dark");
-    
+
     // Fetch dashboard dataset
     fetchCRMData();
   }, [navigate]);
 
+  // Poll Google Sheets/Firestore updates in the background every 10 seconds (silent refresh)
+  useEffect(() => {
+    if (isLoginPage) return;
+    const interval = setInterval(() => {
+      fetchCRMData(false);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [isLoginPage]);
+
+  // Monitor for incoming client messages and alert the admin with a custom toast
+  useEffect(() => {
+    const currentMessages = data?.["Messages"] || [];
+    if (currentMessages.length > 0) {
+      if (lastMsgCount !== null && currentMessages.length > lastMsgCount) {
+        // Find new messages sent by clients
+        const newMsgs = currentMessages.slice(lastMsgCount).filter((m: any) => {
+          const senderType = String(m["Sender Type"] || m.SenderType || "")
+            .trim()
+            .toLowerCase();
+          const senderId = String(m["Sender ID"] || m.SenderID || "").trim();
+          return senderType === "client" || senderId !== "admin";
+        });
+
+        newMsgs.forEach((m: any) => {
+          const clientName =
+            data?.["Program Enrollments"]?.find(
+              (e: any) =>
+                e["Enrollment ID"] === m["Sender ID"] || e["Enrollment ID"] === m.SenderID,
+            )?.fullName || "A client";
+
+          toast.info(`New Message from ${clientName}`, {
+            description: m.Message || m.message || "",
+            action: {
+              label: "Open Chat",
+              onClick: () => {
+                navigate({ to: "/admin/communication" });
+              },
+            },
+            duration: 8000,
+          });
+        });
+      }
+      setLastMsgCount(currentMessages.length);
+    } else if (currentMessages.length === 0 && lastMsgCount === null) {
+      setLastMsgCount(0);
+    }
+  }, [data?.["Messages"]]);
+
   // 2. Fetch dataset from Google Sheets (Permanent Master) & Firestore (Realtime Cache)
   const fetchCRMData = async (forceSpinner = false) => {
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    
+
     // Check local cache, but purge if it contains outdated mock data (OPT-2026-001002)
     const cached = localStorage.getItem("optivita_crm_cache");
     if (cached) {
@@ -89,7 +155,7 @@ function AdminLayout() {
           method: "POST",
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "getData" }),
-          signal: controller.signal
+          signal: controller.signal,
         });
         clearTimeout(timeoutId);
 
@@ -150,8 +216,6 @@ function AdminLayout() {
     }
   };
 
-  const isLoginPage = router.state.location.pathname === "/admin/login";
-
   if (isLoginPage) {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -161,7 +225,8 @@ function AdminLayout() {
   }
 
   // Synchronous Guard: Block child rendering if there is no active session
-  const session = typeof window !== "undefined" ? localStorage.getItem("optivita_admin_session") : null;
+  const session =
+    typeof window !== "undefined" ? localStorage.getItem("optivita_admin_session") : null;
   if (!session) {
     return null;
   }
@@ -169,29 +234,40 @@ function AdminLayout() {
   const navItems = [
     { label: "Dashboard", icon: BarChart3, path: "/admin/dashboard" },
     { label: "Lead Management", icon: Users, path: "/admin/leads" },
+    { label: "Appointments", icon: Calendar, path: "/admin/appointments" },
     { label: "Loyalty Program", icon: Award, path: "/admin/loyalty" },
     { label: "Financial Console", icon: DollarSign, path: "/admin/finance" },
     { label: "HR & Payroll", icon: Users, path: "/admin/hr" },
+    { label: "Communication Center", icon: MessageSquare, path: "/admin/communication" },
     { label: "User Management", icon: Shield, path: "/admin/users", restricted: true },
     { label: "Reports & Analytics", icon: FileText, path: "/admin/reports" },
-    { label: "System Settings", icon: Settings, path: "/admin/settings" }
+    { label: "System Settings", icon: Settings, path: "/admin/settings" },
   ];
 
   return (
     <CRMContext.Provider value={{ data, loading, refreshData: fetchCRMData, user, logout }}>
-      <div className={`min-h-screen flex transition-colors duration-200 ${darkMode ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"}`}>
-        
+      <div
+        className={`min-h-screen flex transition-colors duration-200 ${darkMode ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"}`}
+      >
         {/* Left Sidebar Layout */}
-        <aside className={`fixed inset-y-0 left-0 z-30 flex flex-col border-r shadow-soft transition-all duration-300 ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"} ${sidebarOpen ? "w-64" : "w-20"}`}>
-          
+        <aside
+          className={`fixed inset-y-0 left-0 z-30 flex flex-col border-r shadow-soft transition-all duration-300 ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"} ${sidebarOpen ? "w-64" : "w-20"}`}
+        >
           {/* Brand Header */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-inherit">
             {sidebarOpen ? (
-              <span className="font-display font-extrabold text-lg text-emerald-600 dark:text-emerald-400 tracking-wider">OPTIVITA CRM</span>
+              <span className="font-display font-extrabold text-lg text-emerald-600 dark:text-emerald-400 tracking-wider">
+                OPTIVITA CRM
+              </span>
             ) : (
-              <span className="font-display font-black text-xl text-emerald-600 dark:text-emerald-400">O</span>
+              <span className="font-display font-black text-xl text-emerald-600 dark:text-emerald-400">
+                O
+              </span>
             )}
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+            >
               <Menu className="h-5 w-5" />
             </button>
           </div>
@@ -204,8 +280,14 @@ function AdminLayout() {
                 <Link
                   key={item.label}
                   to={item.path}
-                  activeProps={{ className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400" }}
-                  inactiveProps={{ className: "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/60" }}
+                  activeProps={{
+                    className:
+                      "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
+                  }}
+                  inactiveProps={{
+                    className:
+                      "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/60",
+                  }}
                   className="flex items-center gap-3.5 px-4.5 py-3.5 rounded-xl font-medium text-sm transition-all duration-200"
                 >
                   <item.icon className="h-5 w-5 shrink-0" />
@@ -228,7 +310,11 @@ function AdminLayout() {
                 </div>
               )}
               {sidebarOpen && (
-                <button onClick={logout} className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 transition-colors" title="Log Out">
+                <button
+                  onClick={logout}
+                  className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-500 transition-colors"
+                  title="Log Out"
+                >
                   <LogOut className="h-4 w-4" />
                 </button>
               )}
@@ -237,17 +323,19 @@ function AdminLayout() {
         </aside>
 
         {/* Content Wrapper */}
-        <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? "pl-64" : "pl-20"}`}>
-          
+        <div
+          className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? "pl-64" : "pl-20"}`}
+        >
           {/* Top Navigation */}
-          <header className={`h-16 border-b flex items-center justify-between px-8 sticky top-0 z-20 backdrop-blur-md ${darkMode ? "bg-slate-950/80 border-slate-800" : "bg-white/80 border-slate-200"}`}>
-            
+          <header
+            className={`h-16 border-b flex items-center justify-between px-8 sticky top-0 z-20 backdrop-blur-md ${darkMode ? "bg-slate-950/80 border-slate-800" : "bg-white/80 border-slate-200"}`}
+          >
             {/* Search Bar */}
             <div className="relative w-72 max-w-md hidden md:block">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input 
-                type="text" 
-                placeholder="Search leads, invoices, cards..." 
+              <input
+                type="text"
+                placeholder="Search leads, invoices, cards..."
                 className="w-full pl-10 pr-4 py-2 border rounded-full text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"
               />
             </div>
@@ -255,9 +343,8 @@ function AdminLayout() {
 
             {/* Quick Actions (Theme, notifications, profile) */}
             <div className="flex items-center gap-4">
-              
               {/* Dark mode switcher */}
-              <button 
+              <button
                 onClick={toggleDarkMode}
                 className="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-all duration-200"
               >
@@ -266,7 +353,7 @@ function AdminLayout() {
 
               {/* Notification badge */}
               <div className="relative">
-                <button 
+                <button
                   onClick={() => setShowNotifications(!showNotifications)}
                   className="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 relative"
                 >
@@ -278,11 +365,18 @@ function AdminLayout() {
 
                 {/* Notifications dropdown menu */}
                 {showNotifications && (
-                  <div className={`absolute right-0 mt-3 w-80 rounded-2xl shadow-glow border p-4 z-50 animate-scale-up ${darkMode ? "bg-slate-900 border-slate-800 text-slate-200" : "bg-white border-slate-200 text-slate-800"}`}>
-                    <h4 className="font-bold text-sm mb-3">Notifications ({notifications.length})</h4>
+                  <div
+                    className={`absolute right-0 mt-3 w-80 rounded-2xl shadow-glow border p-4 z-50 animate-scale-up ${darkMode ? "bg-slate-900 border-slate-800 text-slate-200" : "bg-white border-slate-200 text-slate-800"}`}
+                  >
+                    <h4 className="font-bold text-sm mb-3">
+                      Notifications ({notifications.length})
+                    </h4>
                     <div className="space-y-2">
                       {notifications.map((notif, idx) => (
-                        <div key={idx} className="p-2.5 rounded-lg text-xs hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-slate-100 dark:border-slate-800 leading-normal">
+                        <div
+                          key={idx}
+                          className="p-2.5 rounded-lg text-xs hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-slate-100 dark:border-slate-800 leading-normal"
+                        >
                           {notif}
                         </div>
                       ))}
@@ -296,9 +390,7 @@ function AdminLayout() {
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 Branch: {user?.branches === "All" ? "Main Office" : user?.branches}
               </div>
-
             </div>
-
           </header>
 
           {/* Main Module Content */}
@@ -306,16 +398,15 @@ function AdminLayout() {
             {loading ? (
               <div className="h-96 flex flex-col items-center justify-center gap-4">
                 <div className="h-10 w-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-sm font-semibold text-slate-400 animate-pulse">Syncing with Google Sheets...</p>
+                <p className="text-sm font-semibold text-slate-400 animate-pulse">
+                  Syncing with Google Sheets...
+                </p>
               </div>
             ) : (
               <Outlet />
             )}
           </main>
-
         </div>
-
-        
       </div>
     </CRMContext.Provider>
   );
@@ -325,34 +416,56 @@ function getMockCRMDataset() {
   return {
     "Program Enrollments": [],
     "Health Assessments": [],
-    "Users": [
+    Users: [
       {
-        "UserId": "USR-1001",
-        "Username": "admin",
-        "Role": "Super Admin",
-        "Active": true,
-        "Branches": "All",
-        "Permissions": "Full System Access",
-        "LastLogin": ""
-      }
+        UserId: "USR-1001",
+        Username: "admin",
+        Role: "Super Admin",
+        Active: true,
+        Branches: "All",
+        Permissions: "Full System Access",
+        LastLogin: "",
+      },
     ],
     "Loyalty Ledger": [],
     "Rewards Catalog": [
-      { "RewardId": "RW-101", "RewardName": "Free BMI Assessment", "PointsRequired": 250, "Active": true, "Description": "Standard consultation BMI analysis" },
-      { "RewardId": "RW-102", "RewardName": "Nutrition Consultation", "PointsRequired": 400, "Active": true, "Description": "1-on-1 private dietary planner review" },
-      { "RewardId": "RW-103", "RewardName": "Diet Plan Upgrade", "PointsRequired": 500, "Active": true, "Description": "Upgrade to personalized premium meals schedule" },
-      { "RewardId": "RW-104", "RewardName": "1 Week Program Extension", "PointsRequired": 750, "Active": true, "Description": "Extension of core nutrition tracking support" }
+      {
+        RewardId: "RW-101",
+        RewardName: "Free BMI Assessment",
+        PointsRequired: 250,
+        Active: true,
+        Description: "Standard consultation BMI analysis",
+      },
+      {
+        RewardId: "RW-102",
+        RewardName: "Nutrition Consultation",
+        PointsRequired: 400,
+        Active: true,
+        Description: "1-on-1 private dietary planner review",
+      },
+      {
+        RewardId: "RW-103",
+        RewardName: "Diet Plan Upgrade",
+        PointsRequired: 500,
+        Active: true,
+        Description: "Upgrade to personalized premium meals schedule",
+      },
+      {
+        RewardId: "RW-104",
+        RewardName: "1 Week Program Extension",
+        PointsRequired: 750,
+        Active: true,
+        Description: "Extension of core nutrition tracking support",
+      },
     ],
-    "Appointments": [],
-    "Invoices": [],
-    "Receipts": [],
-    "Refunds": [],
+    Appointments: [],
+    Invoices: [],
+    Receipts: [],
+    Refunds: [],
     "Cash Treasury": [],
-    "Expenses": [],
-    "Staff": [],
+    Expenses: [],
+    Staff: [],
     "Journal Ledger": [],
-    "Audit Logs": []
+    "Audit Logs": [],
   };
 }
-
-

@@ -43,29 +43,39 @@
 
   /* Optivita brand palette */
   --background: oklch(1 0 0);
-  --foreground: oklch(0.28 0.06 250);          /* Deep Navy #1B3A5C */
+  --foreground: oklch(0.28 0.06 250); /* Deep Navy #1B3A5C */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.28 0.06 250);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.28 0.06 250);
-  --primary: oklch(0.28 0.06 250);             /* Deep Navy */
+  --primary: oklch(0.28 0.06 250); /* Deep Navy */
   --primary-foreground: oklch(0.98 0.01 200);
   --secondary: oklch(0.96 0.015 200);
   --secondary-foreground: oklch(0.28 0.06 250);
   --muted: oklch(0.96 0.012 220);
-  --muted-foreground: oklch(0.48 0.03 250);    /* Soft Grey */
-  --accent: oklch(0.55 0.09 210);              /* Teal #1B7A8A */
+  --muted-foreground: oklch(0.48 0.03 250); /* Soft Grey */
+  --accent: oklch(0.55 0.09 210); /* Teal #1B7A8A */
   --accent-foreground: oklch(0.98 0.01 200);
-  --teal: oklch(0.55 0.09 210);                /* #1B7A8A */
-  --vital: oklch(0.66 0.16 145);               /* Vital Green #3AA655 */
+  --teal: oklch(0.55 0.09 210); /* #1B7A8A */
+  --vital: oklch(0.66 0.16 145); /* Vital Green #3AA655 */
   --destructive: oklch(0.6 0.22 27);
   --destructive-foreground: oklch(0.98 0.01 200);
   --border: oklch(0.9 0.015 220);
   --input: oklch(0.92 0.015 220);
   --ring: oklch(0.55 0.09 210);
 
-  --gradient-brand: linear-gradient(135deg, oklch(0.28 0.06 250) 0%, oklch(0.55 0.09 210) 55%, oklch(0.66 0.16 145) 100%);
-  --gradient-hero-overlay: linear-gradient(120deg, oklch(0.2 0.06 250 / 0.78) 0%, oklch(0.28 0.08 240 / 0.55) 50%, oklch(0.4 0.1 190 / 0.35) 100%);
+  --gradient-brand: linear-gradient(
+    135deg,
+    oklch(0.28 0.06 250) 0%,
+    oklch(0.55 0.09 210) 55%,
+    oklch(0.66 0.16 145) 100%
+  );
+  --gradient-hero-overlay: linear-gradient(
+    120deg,
+    oklch(0.2 0.06 250 / 0.78) 0%,
+    oklch(0.28 0.08 240 / 0.55) 50%,
+    oklch(0.4 0.1 190 / 0.35) 100%
+  );
   --shadow-soft: 0 10px 40px -12px oklch(0.28 0.06 250 / 0.25);
   --shadow-glow: 0 0 60px -10px oklch(0.55 0.09 210 / 0.5);
 }
@@ -91,35 +101,64 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html { scroll-behavior: smooth; }
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4, h5 { font-family: var(--font-display); letter-spacing: -0.02em; }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
 }
 
-@utility bg-brand-gradient { background: var(--gradient-brand); }
+@utility bg-brand-gradient {
+  background: var(--gradient-brand);
+}
 @utility text-brand-gradient {
   background: var(--gradient-brand);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
-@utility shadow-soft { box-shadow: var(--shadow-soft); }
-@utility shadow-glow { box-shadow: var(--shadow-glow); }
+@utility shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+@utility shadow-glow {
+  box-shadow: var(--shadow-glow);
+}
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes scaleUp {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @utility animate-fade-in {
@@ -141,13 +180,13 @@
   body.printing-active * {
     visibility: hidden !important;
   }
-  
+
   /* Make target print sections visible */
   body.printing-active .print-section,
   body.printing-active .print-section * {
     visibility: visible !important;
   }
-  
+
   /* Reset and cover page for default print sections (e.g. Account Statement Ledger) */
   body.printing-active .print-section {
     position: fixed !important;
@@ -186,8 +225,8 @@
     margin: 0 !important;
     background: linear-gradient(135deg, #064e3b 0%, #0f766e 100%) !important;
     color: white !important;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
-    border: 1px solid rgba(255,255,255,0.2) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     display: flex !important;

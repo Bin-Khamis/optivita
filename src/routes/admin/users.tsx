@@ -1,9 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useCRM } from "@/lib/crmContext";
-import { 
-  Shield, UserCheck, ShieldAlert, Plus, Edit, Trash2, ShieldCheck, 
-  MapPin, Clock, X, Lock, KeyRound
+import {
+  Shield,
+  UserCheck,
+  ShieldAlert,
+  Plus,
+  Edit,
+  Trash2,
+  ShieldCheck,
+  MapPin,
+  Clock,
+  X,
+  Lock,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { isWebhookOffline } from "@/lib/utils";
@@ -57,7 +67,7 @@ function AdminUsers() {
           Active: true,
           Branches: branches,
           Permissions: permissions,
-          LastLogin: ""
+          LastLogin: "",
         });
         toast.success("Staff profile created (Offline Simulation)!");
         setShowAddModal(false);
@@ -78,8 +88,8 @@ function AdminUsers() {
           password,
           role,
           branches,
-          permissions
-        })
+          permissions,
+        }),
       });
       const result = await res.json();
       if (result.status === "success") {
@@ -100,7 +110,7 @@ function AdminUsers() {
 
   const handleDeactivateToggle = async (targetUser: any) => {
     const nextActive = !targetUser.Active;
-    
+
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
     if (isWebhookOffline(webhookUrl)) {
       targetUser.Active = nextActive;
@@ -119,9 +129,9 @@ function AdminUsers() {
           idColumn: "UserId",
           id: targetUser.UserId,
           fields: {
-            "Active": nextActive
-          }
-        })
+            Active: nextActive,
+          },
+        }),
       });
       const result = await res.json();
       if (result.status === "success") {
@@ -157,8 +167,8 @@ function AdminUsers() {
         body: JSON.stringify({
           action: "manageUser",
           subAction: "delete",
-          userId
-        })
+          userId,
+        }),
       });
       const result = await res.json();
       if (result.status === "success") {
@@ -183,14 +193,15 @@ function AdminUsers() {
 
   return (
     <div className="space-y-6">
-      
       {/* Module Title */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="font-display font-extrabold text-3xl tracking-tight">Staff Credentials</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Add, edit, deactivate, or assign clinical access roles to administrative staff.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Add, edit, deactivate, or assign clinical access roles to administrative staff.
+          </p>
         </div>
-        <button 
+        <button
           onClick={() => setShowAddModal(true)}
           className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 text-xs shadow-soft flex items-center gap-1.5"
         >
@@ -216,8 +227,13 @@ function AdminUsers() {
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800/40">
               {users.map((usr: any) => (
-                <tr key={usr.UserId} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
-                  <td className="py-4.5 px-5 font-mono font-bold text-slate-400 dark:text-slate-500">{usr.UserId}</td>
+                <tr
+                  key={usr.UserId}
+                  className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors"
+                >
+                  <td className="py-4.5 px-5 font-mono font-bold text-slate-400 dark:text-slate-500">
+                    {usr.UserId}
+                  </td>
                   <td className="py-4.5 px-5 font-semibold text-sm">{usr.Username}</td>
                   <td className="py-4.5 px-5">
                     <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium">
@@ -229,13 +245,15 @@ function AdminUsers() {
                       <MapPin className="h-3.5 w-3.5" /> {usr.Branches || "Main"}
                     </span>
                   </td>
-                  <td className="py-4.5 px-5 font-medium text-slate-600 dark:text-slate-400">{usr.Permissions || "Full"}</td>
+                  <td className="py-4.5 px-5 font-medium text-slate-600 dark:text-slate-400">
+                    {usr.Permissions || "Full"}
+                  </td>
                   <td className="py-4.5 px-5">
-                    <button 
+                    <button
                       onClick={() => handleDeactivateToggle(usr)}
                       className={`px-3 py-1 rounded-full text-[9px] font-black tracking-wider border cursor-pointer transition-all duration-200 ${
-                        usr.Active 
-                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-200" 
+                        usr.Active
+                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-200"
                           : "bg-red-500/10 text-red-600 border-red-200"
                       }`}
                     >
@@ -249,14 +267,14 @@ function AdminUsers() {
                   </td>
                   <td className="py-4.5 px-5">
                     <div className="flex items-center justify-center gap-2">
-                      <button 
+                      <button
                         onClick={() => setSelectedLogsUser(usr)}
                         className="px-2.5 py-1.5 rounded-lg border text-[10px] font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
                         title="View Login Logs"
                       >
                         Logs
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDeleteUser(usr.UserId)}
                         className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-slate-400 hover:text-red-500"
                         title="Delete Staff"
@@ -275,10 +293,15 @@ function AdminUsers() {
       {/* Add Staff Modal popup dialog */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-xs" onClick={() => setShowAddModal(false)} />
-          <form onSubmit={handleCreateUser} className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-glow z-10 animate-scale-up">
-            
-            <button 
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-xs"
+            onClick={() => setShowAddModal(false)}
+          />
+          <form
+            onSubmit={handleCreateUser}
+            className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-glow z-10 animate-scale-up"
+          >
+            <button
               type="button"
               onClick={() => setShowAddModal(false)}
               className="absolute top-4 right-4 h-8 w-8 rounded-full border hover:bg-slate-100 dark:hover:bg-slate-850 flex items-center justify-center text-slate-400"
@@ -287,15 +310,18 @@ function AdminUsers() {
             </button>
 
             <h3 className="font-display font-extrabold text-xl mb-1">Add Staff Account</h3>
-            <p className="text-xs text-slate-400 mb-5">Assign unique security permissions to this account.</p>
+            <p className="text-xs text-slate-400 mb-5">
+              Assign unique security permissions to this account.
+            </p>
 
             <div className="space-y-4">
-              
               {/* Username Input */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Username</label>
-                <input 
-                  type="text" 
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Username
+                </label>
+                <input
+                  type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="e.g. counselor_ahmed"
@@ -306,9 +332,11 @@ function AdminUsers() {
 
               {/* Password Input */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Access Password</label>
-                <input 
-                  type="password" 
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Access Password
+                </label>
+                <input
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter temp password"
@@ -319,8 +347,10 @@ function AdminUsers() {
 
               {/* Role Dropdown */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CRM Staff Role</label>
-                <select 
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  CRM Staff Role
+                </label>
+                <select
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   className="w-full p-3 text-xs border rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-850 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 dark:text-slate-100"
@@ -336,8 +366,10 @@ function AdminUsers() {
 
               {/* Branches dropdown */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assigned Branch Location</label>
-                <select 
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Assigned Branch Location
+                </label>
+                <select
                   value={branches}
                   onChange={(e) => setBranches(e.target.value)}
                   className="w-full p-3 text-xs border rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-850 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 dark:text-slate-100"
@@ -350,14 +382,13 @@ function AdminUsers() {
               </div>
 
               {/* Submit Buttons */}
-              <button 
+              <button
                 type="submit"
                 disabled={saving}
                 className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-soft transition-all duration-200 mt-2"
               >
                 {saving ? "Writing User..." : "Create Admin Account"}
               </button>
-
             </div>
           </form>
         </div>
@@ -366,10 +397,12 @@ function AdminUsers() {
       {/* Security Logs Modal popup dialog */}
       {selectedLogsUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-xs" onClick={() => setSelectedLogsUser(null)} />
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-xs"
+            onClick={() => setSelectedLogsUser(null)}
+          />
           <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-glow z-10 animate-scale-up">
-            
-            <button 
+            <button
               onClick={() => setSelectedLogsUser(null)}
               className="absolute top-4 right-4 h-8 w-8 rounded-full border hover:bg-slate-100 dark:hover:bg-slate-850 flex items-center justify-center text-slate-400"
             >
@@ -379,13 +412,21 @@ function AdminUsers() {
             <h3 className="font-display font-extrabold text-xl mb-1 flex items-center gap-2">
               <KeyRound className="h-5 w-5 text-emerald-500" /> Security Login History
             </h3>
-            <p className="text-xs text-slate-400 mb-5">Showing details for user: {selectedLogsUser.Username}</p>
+            <p className="text-xs text-slate-400 mb-5">
+              Showing details for user: {selectedLogsUser.Username}
+            </p>
 
             <div className="space-y-3.5 max-h-60 overflow-y-auto pr-1">
-              {selectedLogsUser.LoginHistory && JSON.parse(selectedLogsUser.LoginHistory).length > 0 ? (
+              {selectedLogsUser.LoginHistory &&
+              JSON.parse(selectedLogsUser.LoginHistory).length > 0 ? (
                 JSON.parse(selectedLogsUser.LoginHistory).map((log: any, idx: number) => (
-                  <div key={idx} className="p-3 border border-slate-100 dark:border-slate-800 rounded-xl leading-normal text-xs flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/20">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">{log.timestamp}</span>
+                  <div
+                    key={idx}
+                    className="p-3 border border-slate-100 dark:border-slate-800 rounded-xl leading-normal text-xs flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/20"
+                  >
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">
+                      {log.timestamp}
+                    </span>
                     <span className="font-mono text-[10px] text-slate-400">IP: {log.ip}</span>
                   </div>
                 ))
@@ -395,11 +436,9 @@ function AdminUsers() {
                 </div>
               )}
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }

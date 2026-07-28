@@ -1,7 +1,26 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Phone, Sparkles, KeyRound, ArrowLeft, ArrowRight, Loader2, ShieldCheck, ShieldAlert, Mail, Smartphone, Key, AlertTriangle, Copy } from "lucide-react";
+import {
+  Phone,
+  Sparkles,
+  KeyRound,
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+  ShieldCheck,
+  ShieldAlert,
+  Mail,
+  Smartphone,
+  Key,
+  AlertTriangle,
+  Copy,
+  ChevronDown,
+  Search,
+  Check,
+} from "lucide-react";
 import { toast } from "sonner";
+import { COUNTRIES, normalizeE164, validatePhone } from "@/lib/countries";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const Route = createFileRoute("/portal/login")({
   component: CustomerLogin,
@@ -47,22 +66,19 @@ async function generateTOTP(secretBase32: string, timeStep: number): Promise<str
       new Uint8Array(keyBytes),
       { name: "HMAC", hash: { name: "SHA-1" } },
       false,
-      ["sign"]
+      ["sign"],
     );
-    
-    const signature = await window.crypto.subtle.sign(
-      "HMAC",
-      key,
-      new Uint8Array(timeBytes)
-    );
-    
+
+    const signature = await window.crypto.subtle.sign("HMAC", key, new Uint8Array(timeBytes));
+
     const hmac = new Uint8Array(signature);
     const offset = hmac[hmac.length - 1] & 0xf;
-    const binary = ((hmac[offset] & 0x7f) << 24) |
-                   ((hmac[offset + 1] & 0xff) << 16) |
-                   ((hmac[offset + 2] & 0xff) << 8) |
-                   (hmac[offset + 3] & 0xff);
-    
+    const binary =
+      ((hmac[offset] & 0x7f) << 24) |
+      ((hmac[offset + 1] & 0xff) << 16) |
+      ((hmac[offset + 2] & 0xff) << 8) |
+      (hmac[offset + 3] & 0xff);
+
     const otp = binary % 1000000;
     return otp.toString().padStart(6, "0");
   } catch (err) {
@@ -74,7 +90,7 @@ async function generateTOTP(secretBase32: string, timeStep: number): Promise<str
 async function verifyTOTP(secretBase32: string, code: string): Promise<boolean> {
   const epoch = Math.round(Date.now() / 1000.0);
   const currentStep = Math.floor(epoch / 30);
-  
+
   // Drift window check
   for (let i = -1; i <= 1; i++) {
     const calculatedCode = await generateTOTP(secretBase32, currentStep + i);
@@ -85,15 +101,19 @@ async function verifyTOTP(secretBase32: string, code: string): Promise<boolean> 
 
 function CustomerLogin() {
   const navigate = useNavigate();
-  
+
   // Auth navigation step
-  const [step, setStep] = useState<"credentials" | "select-method" | "otp" | "totp-setup" | "totp-entry">("credentials");
-  
+  const [step, setStep] = useState<
+    "credentials" | "select-method" | "otp" | "totp-setup" | "totp-entry"
+  >("credentials");
+
   // Credentials States
   const [enrollmentId, setEnrollmentId] = useState("");
   const [phone, setPhone] = useState("");
   const [phoneCountryCode, setPhoneCountryCode] = useState("+966");
   const [loading, setLoading] = useState(false);
+  const [countrySearch, setCountrySearch] = useState("");
+  const [openCountryPopover, setOpenCountryPopover] = useState(false);
 
   // Multi-Channel Selection States
   const [selectedMethod, setSelectedMethod] = useState<"email" | "whatsapp" | "totp">("email");
@@ -104,7 +124,7 @@ function CustomerLogin() {
   // OTP Verification States
   const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
   const [countdown, setCountdown] = useState(300); // 5 minutes resend timer
-  
+
   // Authenticator App setup states
   const [tempSecret, setTempSecret] = useState("");
   const [totpCode, setTotpCode] = useState("");
@@ -187,15 +207,20 @@ function CustomerLogin() {
       return;
     }
 
-    const fullPhone = `${phoneCountryCode}${phone.replace(/[^0-9]/g, "")}`;
+    const fullPhone = normalizeE164(phone, phoneCountryCode);
+    if (!validatePhone(fullPhone)) {
+      toast.error("Invalid Number");
+      return;
+    }
     setLoading(true);
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || 
-                      webhookUrl.includes("placeholder") || 
-                      webhookUrl === "undefined" || 
-                      webhookUrl === "null" || 
-                      webhookUrl.trim() === "";
+    const isOffline =
+      !webhookUrl ||
+      webhookUrl.includes("placeholder") ||
+      webhookUrl === "undefined" ||
+      webhookUrl === "null" ||
+      webhookUrl.trim() === "";
 
     if (isOffline) {
       // Simulated Offline credentials lookup
@@ -232,9 +257,12 @@ function CustomerLogin() {
         setMaskedEmail(maskEmail(clientData.email || "client@gmail.com"));
         setMaskedPhone(maskPhone(fullPhone));
         setTotpConfigured(!!clientData.totpSecret);
-        
+
         // Retrieve preferred method if remembered
-        const pref = localStorage.getItem(`optivita_pref_${enrollmentId}`) || clientData.preferredAuthMethod || "email";
+        const pref =
+          localStorage.getItem(`optivita_pref_${enrollmentId}`) ||
+          clientData.preferredAuthMethod ||
+          "email";
         setSelectedMethod(pref as any);
 
         setLoading(false);
@@ -249,8 +277,8 @@ function CustomerLogin() {
           body: JSON.stringify({
             action: "verify-client",
             enrollmentId: enrollmentId.trim(),
-            phone: fullPhone
-          })
+            phone: fullPhone,
+          }),
         });
 
         const result = await res.json();
@@ -258,8 +286,11 @@ function CustomerLogin() {
           setMaskedEmail(result.emailMasked);
           setMaskedPhone(maskPhone(fullPhone));
           setTotpConfigured(result.totpConfigured);
-          
-          const pref = localStorage.getItem(`optivita_pref_${enrollmentId}`) || result.preferredMethod || "email";
+
+          const pref =
+            localStorage.getItem(`optivita_pref_${enrollmentId}`) ||
+            result.preferredMethod ||
+            "email";
           setSelectedMethod(pref as any);
 
           setStep("select-method");
@@ -274,39 +305,8 @@ function CustomerLogin() {
     }
   };
 
-  // Step 2: Proceed from Verification Method Selection
-  const handleProceedMethod = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    // Save preference to local storage
-    localStorage.setItem(`optivita_pref_${enrollmentId}`, selectedMethod);
-
-    const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || 
-                      webhookUrl.includes("placeholder") || 
-                      webhookUrl === "undefined" || 
-                      webhookUrl === "null" || 
-                      webhookUrl.trim() === "";
-
-    if (selectedMethod === "totp") {
-      setLoading(false);
-      if (!totpConfigured) {
-        // Generate random Base32 secret for setup
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-        const secret = Array.from({ length: 16 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-        setTempSecret(secret);
-        setTotpCode("");
-        setStep("totp-setup");
-      } else {
-        setOtpDigits(["", "", "", "", "", ""]);
-        setStep("totp-entry");
-      }
-      return;
-    }
-
   const dispatchWhatsAppBridgeMessage = async (targetPhone: string, code: string) => {
-    const fullPhone = `${phoneCountryCode}${targetPhone.replace(/[^0-9]/g, "")}`;
+    const fullPhone = normalizeE164(targetPhone, phoneCountryCode);
     const configuredBridgeUrl = import.meta.env.VITE_WHATSAPP_BRIDGE_URL;
     const defaultBridgeUrl = "http://localhost:3000/send-whatsapp";
     const bridgeUrl = configuredBridgeUrl || defaultBridgeUrl;
@@ -317,27 +317,72 @@ function CustomerLogin() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: fullPhone,
-          message: `Your Optivita Client Hub verification code is: ${code}\n\nValid for 5 minutes. Do not share this code with anyone.`
-        })
+          message: `Your Optivita Client Hub verification code is: ${code}\n\nValid for 5 minutes. Do not share this code with anyone.`,
+        }),
       });
       const data = await res.json();
       if (data.status === "success") {
         toast.success(`WhatsApp message sent to ${fullPhone}!`);
       } else {
-        toast.warning(data.message || "Could not deliver message via WhatsApp bridge.");
+        if (data.code === "INVALID_NUMBER") {
+          toast.error("Invalid Number");
+        } else if (data.code === "WHATSAPP_NOT_REGISTERED") {
+          toast.error("WhatsApp Not Registered");
+        } else if (data.code === "FAILED_SEND") {
+          toast.error("Failed to Send OTP");
+        } else {
+          toast.warning(data.message || "Could not deliver message via WhatsApp bridge.");
+        }
       }
     } catch (err) {
       console.warn("WhatsApp bridge connection error:", err);
       if (window.location.protocol === "https:" && bridgeUrl.startsWith("http://localhost")) {
         toast.error(
           "Could not connect to the WhatsApp automation bridge. Since this site is hosted on a secure connection (HTTPS), the browser blocks insecure requests to localhost (Mixed Content). To test WhatsApp OTP, please run the site locally on http://localhost:8080/ or configure a secure WhatsApp Bridge URL.",
-          { duration: 10000 }
+          { duration: 10000 },
         );
       } else {
-        toast.error("Failed to connect to the WhatsApp automation bridge. Please ensure the local bridge is running on port 3000.");
+        toast.error(
+          "Failed to connect to the WhatsApp automation bridge. Please ensure the local bridge is running on port 3000.",
+        );
       }
     }
   };
+
+  // Step 2: Proceed from Verification Method Selection
+  const handleProceedMethod = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    // Save preference to local storage
+    localStorage.setItem(`optivita_pref_${enrollmentId}`, selectedMethod);
+
+    const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
+    const isOffline =
+      !webhookUrl ||
+      webhookUrl.includes("placeholder") ||
+      webhookUrl === "undefined" ||
+      webhookUrl === "null" ||
+      webhookUrl.trim() === "";
+
+    if (selectedMethod === "totp") {
+      setLoading(false);
+      if (!totpConfigured) {
+        // Generate random Base32 secret for setup
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+        const secret = Array.from(
+          { length: 16 },
+          () => chars[Math.floor(Math.random() * chars.length)],
+        ).join("");
+        setTempSecret(secret);
+        setTotpCode("");
+        setStep("totp-setup");
+      } else {
+        setOtpDigits(["", "", "", "", "", ""]);
+        setStep("totp-entry");
+      }
+      return;
+    }
 
     // Handle WhatsApp OTP
     if (selectedMethod === "whatsapp") {
@@ -357,8 +402,8 @@ function CustomerLogin() {
             body: JSON.stringify({
               action: "send-otp",
               enrollmentId: enrollmentId.trim(),
-              method: "whatsapp"
-            })
+              method: "whatsapp",
+            }),
           });
 
           const result = await res.json();
@@ -368,7 +413,17 @@ function CustomerLogin() {
             setStep("otp");
             toast.success("Verification code sent successfully via WhatsApp.");
           } else {
-            toast.error(result.message || "Failed to deliver WhatsApp OTP.");
+            if (result.code === "RESEND_LIMIT_EXCEEDED") {
+              toast.error(result.message || "Too many resend attempts. Please wait 15 minutes.");
+            } else if (result.code === "INVALID_NUMBER") {
+              toast.error("Invalid Number");
+            } else if (result.code === "WHATSAPP_NOT_REGISTERED") {
+              toast.error("WhatsApp Not Registered");
+            } else if (result.code === "FAILED_SEND") {
+              toast.error("Failed to Send OTP");
+            } else {
+              toast.error(result.message || "Failed to deliver WhatsApp OTP.");
+            }
           }
         } catch (err) {
           toast.error("Failed to connect to authentication server.");
@@ -398,8 +453,8 @@ function CustomerLogin() {
           body: JSON.stringify({
             action: "send-otp",
             enrollmentId: enrollmentId.trim(),
-            method: selectedMethod
-          })
+            method: selectedMethod,
+          }),
         });
 
         const result = await res.json();
@@ -430,11 +485,12 @@ function CustomerLogin() {
 
     setLoading(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || 
-                      webhookUrl.includes("placeholder") || 
-                      webhookUrl === "undefined" || 
-                      webhookUrl === "null" || 
-                      webhookUrl.trim() === "";
+    const isOffline =
+      !webhookUrl ||
+      webhookUrl.includes("placeholder") ||
+      webhookUrl === "undefined" ||
+      webhookUrl === "null" ||
+      webhookUrl.trim() === "";
     const meta = getClientMetadata();
 
     // Fast check: verify against local active OTP first
@@ -442,6 +498,26 @@ function CustomerLogin() {
     if (storedOtp && storedOtp === enteredOtp) {
       localStorage.removeItem("optivita_portal_simulated_otp");
       localStorage.removeItem("optivita_portal_failed_attempts");
+      localStorage.removeItem(`optivita_resends_${enrollmentId}`);
+
+      if (selectedMethod === "whatsapp") {
+        const configuredBridgeUrl = import.meta.env.VITE_WHATSAPP_BRIDGE_URL;
+        const defaultBridgeUrl = "http://localhost:3000/verify-whatsapp-log";
+        const verifyLogUrl = configuredBridgeUrl
+          ? configuredBridgeUrl.replace("/send-whatsapp", "/verify-whatsapp-log")
+          : defaultBridgeUrl;
+        try {
+          const fullPhone = normalizeE164(phone, phoneCountryCode);
+          fetch(verifyLogUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone: fullPhone }),
+          });
+        } catch (e) {
+          console.warn("Could not log verification to WhatsApp bridge:", e);
+        }
+      }
+
       finalizeOfflineSession();
       return;
     }
@@ -449,7 +525,10 @@ function CustomerLogin() {
     if (isOffline) {
       // Offline Simulated OTP Verification
       setTimeout(() => {
-        const failedCount = parseInt(localStorage.getItem("optivita_portal_failed_attempts") || "0", 10);
+        const failedCount = parseInt(
+          localStorage.getItem("optivita_portal_failed_attempts") || "0",
+          10,
+        );
 
         if (storedOtp !== enteredOtp) {
           const nextFailed = failedCount + 1;
@@ -471,6 +550,26 @@ function CustomerLogin() {
         // Correct OTP
         localStorage.removeItem("optivita_portal_simulated_otp");
         localStorage.removeItem("optivita_portal_failed_attempts");
+        localStorage.removeItem(`optivita_resends_${enrollmentId}`);
+
+        if (selectedMethod === "whatsapp") {
+          const configuredBridgeUrl = import.meta.env.VITE_WHATSAPP_BRIDGE_URL;
+          const defaultBridgeUrl = "http://localhost:3000/verify-whatsapp-log";
+          const verifyLogUrl = configuredBridgeUrl
+            ? configuredBridgeUrl.replace("/send-whatsapp", "/verify-whatsapp-log")
+            : defaultBridgeUrl;
+          try {
+            const fullPhone = normalizeE164(phone, phoneCountryCode);
+            fetch(verifyLogUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ phone: fullPhone }),
+            });
+          } catch (e) {
+            console.warn("Could not log verification to WhatsApp bridge:", e);
+          }
+        }
+
         finalizeOfflineSession();
       }, 700);
     } else {
@@ -485,18 +584,29 @@ function CustomerLogin() {
             otp: enteredOtp,
             browser: meta.browser,
             device: `${meta.os} (${meta.device})`,
-            ip: "Client Session"
-          })
+            ip: "Client Session",
+          }),
         });
 
         const result = await res.json();
         if (result.status === "success") {
+          localStorage.removeItem(`optivita_resends_${enrollmentId}`);
           localStorage.setItem("optivita_customer_session", JSON.stringify(result.session));
           toast.success("Successfully authenticated!");
           navigate({ to: "/portal/dashboard" });
         } else {
-          toast.error(result.message || "Invalid OTP.");
-          if (result.message && result.message.includes("lock")) {
+          if (result.code === "OTP_EXPIRED") {
+            toast.error("OTP Expired");
+          } else if (result.code === "INVALID_OTP") {
+            toast.error("Invalid OTP");
+          } else {
+            toast.error(result.message || "Invalid OTP.");
+          }
+
+          if (
+            result.message &&
+            (result.message.includes("lock") || result.code === "TOO_MANY_ATTEMPTS")
+          ) {
             setStep("credentials");
             localStorage.setItem("optivita_portal_lock_until", String(Date.now() + 15 * 60 * 1000));
           }
@@ -519,11 +629,12 @@ function CustomerLogin() {
 
     setLoading(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || 
-                      webhookUrl.includes("placeholder") || 
-                      webhookUrl === "undefined" || 
-                      webhookUrl === "null" || 
-                      webhookUrl.trim() === "";
+    const isOffline =
+      !webhookUrl ||
+      webhookUrl.includes("placeholder") ||
+      webhookUrl === "undefined" ||
+      webhookUrl === "null" ||
+      webhookUrl.trim() === "";
 
     if (isOffline) {
       const valid = await verifyTOTP(tempSecret, totpCode);
@@ -539,7 +650,9 @@ function CustomerLogin() {
         if (cached) {
           try {
             const db = JSON.parse(cached);
-            const index = db["Program Enrollments"].findIndex((x: any) => x["Enrollment ID"] === enrollmentId.trim());
+            const index = db["Program Enrollments"].findIndex(
+              (x: any) => x["Enrollment ID"] === enrollmentId.trim(),
+            );
             if (index !== -1) {
               db["Program Enrollments"][index].totpSecret = tempSecret;
               db["Program Enrollments"][index].preferredAuthMethod = "totp";
@@ -563,8 +676,8 @@ function CustomerLogin() {
             enrollmentId: enrollmentId.trim(),
             preferredMethod: "totp",
             totpSecret: tempSecret,
-            verificationCode: totpCode
-          })
+            verificationCode: totpCode,
+          }),
         });
 
         const result = await res.json();
@@ -579,8 +692,8 @@ function CustomerLogin() {
               otp: totpCode,
               browser: "Verify Setup",
               device: "Desktop",
-              ip: "Client Setup"
-            })
+              ip: "Client Setup",
+            }),
           });
           const loginResult = await loginRes.json();
           if (loginResult.status === "success") {
@@ -612,11 +725,12 @@ function CustomerLogin() {
 
     setLoading(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || 
-                      webhookUrl.includes("placeholder") || 
-                      webhookUrl === "undefined" || 
-                      webhookUrl === "null" || 
-                      webhookUrl.trim() === "";
+    const isOffline =
+      !webhookUrl ||
+      webhookUrl.includes("placeholder") ||
+      webhookUrl === "undefined" ||
+      webhookUrl === "null" ||
+      webhookUrl.trim() === "";
     const meta = getClientMetadata();
 
     if (isOffline) {
@@ -626,7 +740,9 @@ function CustomerLogin() {
       if (cached) {
         try {
           const db = JSON.parse(cached);
-          const match = db["Program Enrollments"].find((x: any) => x["Enrollment ID"] === enrollmentId.trim());
+          const match = db["Program Enrollments"].find(
+            (x: any) => x["Enrollment ID"] === enrollmentId.trim(),
+          );
           secret = match?.totpSecret || "";
         } catch (e) {
           console.error(e);
@@ -635,7 +751,8 @@ function CustomerLogin() {
 
       const valid = await verifyTOTP(secret, code);
       if (!valid) {
-        const failedCount = parseInt(localStorage.getItem("optivita_portal_failed_attempts") || "0", 10) + 1;
+        const failedCount =
+          parseInt(localStorage.getItem("optivita_portal_failed_attempts") || "0", 10) + 1;
         localStorage.setItem("optivita_portal_failed_attempts", String(failedCount));
         setLoading(false);
 
@@ -665,8 +782,8 @@ function CustomerLogin() {
             otp: code,
             browser: meta.browser,
             device: `${meta.os} (${meta.device})`,
-            ip: "Client Session"
-          })
+            ip: "Client Session",
+          }),
         });
 
         const result = await res.json();
@@ -690,22 +807,37 @@ function CustomerLogin() {
   };
 
   const handleResendOTP = async () => {
-    if (countdown > 0) return;
+    if (countdown > 0 || loading) return;
+
+    // Check resend limits locally first to prevent server spam
+    const localResends = parseInt(
+      localStorage.getItem(`optivita_resends_${enrollmentId}`) || "0",
+      10,
+    );
+    if (localResends >= 3) {
+      toast.error("Too many resend attempts. Please wait 15 minutes.");
+      return;
+    }
+
     setLoading(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = !webhookUrl || 
-                      webhookUrl.includes("placeholder") || 
-                      webhookUrl === "undefined" || 
-                      webhookUrl === "null" || 
-                      webhookUrl.trim() === "";
+    const isOffline =
+      !webhookUrl ||
+      webhookUrl.includes("placeholder") ||
+      webhookUrl === "undefined" ||
+      webhookUrl === "null" ||
+      webhookUrl.trim() === "";
 
     if (selectedMethod === "whatsapp") {
       if (isOffline) {
         const otpCode = String(Math.floor(100000 + Math.random() * 900000));
         localStorage.setItem("optivita_portal_simulated_otp", otpCode);
+        localStorage.setItem(`optivita_resends_${enrollmentId}`, String(localResends + 1));
         setCountdown(300);
+        setOtpDigits(["", "", "", "", "", ""]);
         setLoading(false);
-        dispatchWhatsAppBridgeMessage(phone, otpCode);
+        const fullPhone = normalizeE164(phone, phoneCountryCode);
+        dispatchWhatsAppBridgeMessage(fullPhone, otpCode);
       } else {
         try {
           const res = await fetch(webhookUrl, {
@@ -714,16 +846,29 @@ function CustomerLogin() {
             body: JSON.stringify({
               action: "send-otp",
               enrollmentId: enrollmentId.trim(),
-              method: "whatsapp"
-            })
+              method: "whatsapp",
+            }),
           });
 
           const result = await res.json();
           if (result.status === "success") {
+            localStorage.setItem(`optivita_resends_${enrollmentId}`, String(localResends + 1));
             setCountdown(300);
-            toast.success("Verification code resent successfully via WhatsApp.");
+            setOtpDigits(["", "", "", "", "", ""]);
+            toast.success("Verification code sent successfully via WhatsApp.");
           } else {
-            toast.error(result.message || "Failed to resend WhatsApp OTP.");
+            if (result.code === "RESEND_LIMIT_EXCEEDED") {
+              localStorage.setItem(`optivita_resends_${enrollmentId}`, "3");
+              toast.error(result.message || "Too many resend attempts. Please wait 15 minutes.");
+            } else if (result.code === "INVALID_NUMBER") {
+              toast.error("Invalid Number");
+            } else if (result.code === "WHATSAPP_NOT_REGISTERED") {
+              toast.error("WhatsApp Not Registered");
+            } else if (result.code === "FAILED_SEND") {
+              toast.error("Failed to Send OTP");
+            } else {
+              toast.error(result.message || "Failed to deliver WhatsApp OTP.");
+            }
           }
         } catch (err) {
           toast.error("Failed to connect to authentication server.");
@@ -734,14 +879,15 @@ function CustomerLogin() {
       return;
     }
 
+    // Email OTP resend logic
     if (isOffline) {
-      setTimeout(() => {
-        const otp = String(Math.floor(100000 + Math.random() * 900000));
-        localStorage.setItem("optivita_portal_simulated_otp", otp);
-        setCountdown(300);
-        setLoading(false);
-        toast.success(`New simulated code: ${otp}`);
-      }, 600);
+      const otpCode = String(Math.floor(100000 + Math.random() * 900000));
+      localStorage.setItem("optivita_portal_simulated_otp", otpCode);
+      localStorage.setItem(`optivita_resends_${enrollmentId}`, String(localResends + 1));
+      setCountdown(300);
+      setOtpDigits(["", "", "", "", "", ""]);
+      setLoading(false);
+      toast.success(`Verification code dispatched! simulated EMAIL OTP: ${otpCode}`);
     } else {
       try {
         const res = await fetch(webhookUrl, {
@@ -750,15 +896,22 @@ function CustomerLogin() {
           body: JSON.stringify({
             action: "send-otp",
             enrollmentId: enrollmentId.trim(),
-            method: selectedMethod
-          })
+            method: "email",
+          }),
         });
         const result = await res.json();
         if (result.status === "success") {
+          localStorage.setItem(`optivita_resends_${enrollmentId}`, String(localResends + 1));
           setCountdown(300);
+          setOtpDigits(["", "", "", "", "", ""]);
           toast.success("New verification code sent successfully.");
         } else {
-          toast.error(result.message || "Resend failed.");
+          if (result.code === "RESEND_LIMIT_EXCEEDED") {
+            localStorage.setItem(`optivita_resends_${enrollmentId}`, "3");
+            toast.error(result.message || "Too many resend attempts. Please wait 15 minutes.");
+          } else {
+            toast.error(result.message || "Resend failed.");
+          }
         }
       } catch (err) {
         toast.error("Communication failure.");
@@ -775,20 +928,22 @@ function CustomerLogin() {
       fullName: "Guest Client",
       phone: phone,
       email: "guest@gmail.com",
-      programName: "30-Day Weight Loss Challenge"
+      programName: "30-Day Weight Loss Challenge",
     };
 
     if (cached) {
       try {
         const db = JSON.parse(cached);
-        const match = db["Program Enrollments"].find((e: any) => e["Enrollment ID"] === enrollmentId.trim());
+        const match = db["Program Enrollments"].find(
+          (e: any) => e["Enrollment ID"] === enrollmentId.trim(),
+        );
         if (match) {
           clientProfile = {
             enrollmentId: match["Enrollment ID"],
             fullName: match.fullName,
             phone: match.phone,
             email: match.email,
-            programName: match.programName
+            programName: match.programName,
           };
         }
       } catch (e) {
@@ -848,7 +1003,6 @@ function CustomerLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white text-slate-900 px-4 relative transition-colors duration-200">
-      
       {/* Background shape */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
         <div className="absolute top-12 right-12 h-96 w-96 rounded-full bg-emerald-300/10 blur-[120px]" />
@@ -856,7 +1010,6 @@ function CustomerLogin() {
       </div>
 
       <div className="w-full max-w-md bg-white border border-slate-100/85 rounded-[32px] p-8 md:p-10 shadow-soft relative z-10 animate-scale-up">
-        
         {/* Header */}
         <div className="text-center mb-8">
           <div className="mx-auto h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
@@ -879,7 +1032,8 @@ function CustomerLogin() {
             <div className="space-y-2">
               <h3 className="font-bold text-[#173B63] text-lg">Too Many Attempts</h3>
               <p className="text-slate-500 text-xs leading-relaxed max-w-xs mx-auto">
-                For security reasons, your login has been temporarily locked due to repeated verification failures.
+                For security reasons, your login has been temporarily locked due to repeated
+                verification failures.
               </p>
             </div>
             <div className="bg-red-50 border border-red-100 rounded-2xl py-3 text-red-600 font-bold text-sm">
@@ -892,7 +1046,9 @@ function CustomerLogin() {
               /* Step 1: Credentials Entry */
               <form onSubmit={handleVerifyCredentials} className="space-y-5">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Enrollment ID</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Enrollment ID
+                  </label>
                   <input
                     type="text"
                     value={enrollmentId}
@@ -904,21 +1060,79 @@ function CustomerLogin() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Registered Mobile Number</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Registered Mobile Number
+                  </label>
                   <div className="flex gap-2">
-                    <select
-                      value={phoneCountryCode}
-                      onChange={(e) => setPhoneCountryCode(e.target.value)}
-                      className="px-2 py-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-850 font-semibold"
-                    >
-                      <option value="+965">🇰🇼 +965</option>
-                      <option value="+966">🇸🇦 +966</option>
-                      <option value="+971">🇦🇪 +971</option>
-                      <option value="+91">🇮🇳 +91</option>
-                      <option value="+973">🇧🇭 +973</option>
-                      <option value="+968">🇴🇲 +968</option>
-                      <option value="+1">🇺🇸 +1</option>
-                    </select>
+                    <Popover open={openCountryPopover} onOpenChange={setOpenCountryPopover}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex items-center gap-1 px-3 py-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-850 font-semibold cursor-pointer hover:bg-slate-100 transition-all shrink-0 min-w-[90px]"
+                        >
+                          <span className="text-base">
+                            {(() => {
+                              const c =
+                                COUNTRIES.find((x) => x.dial_code === phoneCountryCode) ||
+                                COUNTRIES[0];
+                              return c.flag;
+                            })()}
+                          </span>
+                          <span>{phoneCountryCode}</span>
+                          <ChevronDown className="h-3 w-3 text-slate-400 shrink-0 ml-auto" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-64 p-0 bg-white border border-slate-200 shadow-lg rounded-xl overflow-hidden z-[100]"
+                        align="start"
+                      >
+                        <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 bg-slate-50">
+                          <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          <input
+                            type="text"
+                            placeholder="Search country..."
+                            value={countrySearch}
+                            onChange={(e) => setCountrySearch(e.target.value)}
+                            className="w-full bg-transparent border-none text-xs focus:outline-none text-slate-800"
+                          />
+                        </div>
+                        <div className="max-h-56 overflow-y-auto py-1">
+                          {COUNTRIES.filter(
+                            (c) =>
+                              c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                              c.dial_code.includes(countrySearch),
+                          ).map((c) => (
+                            <button
+                              key={`${c.code}-${c.dial_code}`}
+                              type="button"
+                              onClick={() => {
+                                setPhoneCountryCode(c.dial_code);
+                                setOpenCountryPopover(false);
+                                setCountrySearch("");
+                              }}
+                              className="w-full flex items-center justify-between px-3 py-2.5 text-left text-xs hover:bg-slate-50 transition-colors text-slate-700 hover:text-slate-900"
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <span className="text-base shrink-0">{c.flag}</span>
+                                <span className="font-medium truncate">{c.name}</span>
+                              </div>
+                              <span className="font-semibold text-slate-400 shrink-0">
+                                {c.dial_code}
+                              </span>
+                            </button>
+                          ))}
+                          {COUNTRIES.filter(
+                            (c) =>
+                              c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                              c.dial_code.includes(countrySearch),
+                          ).length === 0 && (
+                            <div className="text-center py-4 text-xs text-slate-400 font-medium">
+                              No countries found
+                            </div>
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                     <input
                       type="tel"
                       value={phone}
@@ -960,9 +1174,13 @@ function CustomerLogin() {
 
                 <div className="space-y-4">
                   {/* Email option */}
-                  <label className={`flex items-start gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
-                    selectedMethod === "email" ? "border-emerald-500 bg-emerald-50/10" : "border-slate-100 hover:bg-slate-50"
-                  }`}>
+                  <label
+                    className={`flex items-start gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
+                      selectedMethod === "email"
+                        ? "border-emerald-500 bg-emerald-50/10"
+                        : "border-slate-100 hover:bg-slate-50"
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="method"
@@ -975,15 +1193,20 @@ function CustomerLogin() {
                         <Mail className="h-3.5 w-3.5 text-[#173B63]" /> Email OTP (Recommended)
                       </span>
                       <p className="text-[10px] text-slate-400 leading-normal">
-                        Fast and secure. Verification code will be sent to registered email: <strong className="text-slate-600">{maskedEmail}</strong>
+                        Fast and secure. Verification code will be sent to registered email:{" "}
+                        <strong className="text-slate-600">{maskedEmail}</strong>
                       </p>
                     </div>
                   </label>
 
                   {/* WhatsApp option */}
-                  <label className={`flex items-start gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
-                    selectedMethod === "whatsapp" ? "border-emerald-500 bg-emerald-50/10" : "border-slate-100 hover:bg-slate-50"
-                  }`}>
+                  <label
+                    className={`flex items-start gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
+                      selectedMethod === "whatsapp"
+                        ? "border-emerald-500 bg-emerald-50/10"
+                        : "border-slate-100 hover:bg-slate-50"
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="method"
@@ -996,15 +1219,20 @@ function CustomerLogin() {
                         <Smartphone className="h-3.5 w-3.5 text-[#173B63]" /> WhatsApp OTP
                       </span>
                       <p className="text-[10px] text-slate-400 leading-normal">
-                        Receive code via WhatsApp message at registered number: <strong className="text-slate-600">{maskedPhone}</strong>
+                        Receive code via WhatsApp message at registered number:{" "}
+                        <strong className="text-slate-600">{maskedPhone}</strong>
                       </p>
                     </div>
                   </label>
 
                   {/* Authenticator App option */}
-                  <label className={`flex items-start gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
-                    selectedMethod === "totp" ? "border-emerald-500 bg-emerald-50/10" : "border-slate-100 hover:bg-slate-50"
-                  }`}>
+                  <label
+                    className={`flex items-start gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
+                      selectedMethod === "totp"
+                        ? "border-emerald-500 bg-emerald-50/10"
+                        : "border-slate-100 hover:bg-slate-50"
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="method"
@@ -1017,7 +1245,8 @@ function CustomerLogin() {
                         <Key className="h-3.5 w-3.5 text-[#173B63]" /> Authenticator App
                       </span>
                       <p className="text-[10px] text-slate-400 leading-normal">
-                        Use Google Authenticator, Microsoft Authenticator, or Authy to generate a secure code offline instantly.
+                        Use Google Authenticator, Microsoft Authenticator, or Authy to generate a
+                        secure code offline instantly.
                       </p>
                     </div>
                   </label>
@@ -1047,9 +1276,11 @@ function CustomerLogin() {
               <form onSubmit={handleVerifyOTP} className="space-y-6 animate-fade-in">
                 <div className="text-center space-y-1.5">
                   <div className="flex justify-between items-center mb-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Verification Code</label>
-                    <button 
-                      type="button" 
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Verification Code
+                    </label>
+                    <button
+                      type="button"
                       onClick={() => setStep("select-method")}
                       className="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-0.5"
                     >
@@ -1057,8 +1288,15 @@ function CustomerLogin() {
                     </button>
                   </div>
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    Verification code has been dispatched via <strong className="text-slate-850 font-bold">{selectedMethod === "email" ? "email" : "WhatsApp"}</strong> to:<br/>
-                    <strong className="text-slate-800 font-bold">{selectedMethod === "email" ? maskedEmail : maskedPhone}</strong>
+                    Verification code has been dispatched via{" "}
+                    <strong className="text-slate-850 font-bold">
+                      {selectedMethod === "email" ? "email" : "WhatsApp"}
+                    </strong>{" "}
+                    to:
+                    <br />
+                    <strong className="text-slate-800 font-bold">
+                      {selectedMethod === "email" ? maskedEmail : maskedPhone}
+                    </strong>
                   </p>
                 </div>
 
@@ -1082,11 +1320,13 @@ function CustomerLogin() {
                 <div className="flex justify-between items-center text-xs border-t pt-3">
                   <div className="flex items-center gap-1.5 text-slate-400">
                     <span>Code Expiry:</span>
-                    <span className={`font-mono font-bold ${countdown < 60 ? "text-red-500 font-extrabold" : "text-slate-600"}`}>
+                    <span
+                      className={`font-mono font-bold ${countdown < 60 ? "text-red-500 font-extrabold" : "text-slate-600"}`}
+                    >
                       {formatCountdown()}
                     </span>
                   </div>
-                  
+
                   <button
                     type="button"
                     onClick={handleResendOTP}
@@ -1115,17 +1355,26 @@ function CustomerLogin() {
                 <div className="space-y-1">
                   <h3 className="font-bold text-sm text-[#173B63]">Authenticator App Setup</h3>
                   <p className="text-xs text-slate-500 leading-normal">
-                    Link your Optivita Client profile to your Authenticator app. Scan the QR code or enter the key.
+                    Link your Optivita Client profile to your Authenticator app. Scan the QR code or
+                    enter the key.
                   </p>
                 </div>
 
                 <div className="flex flex-col items-center gap-2 p-3 bg-slate-50 rounded-2xl border">
-                  <img src={totpQrCodeUrl} alt="Setup QR Code" className="h-40 w-40 object-contain rounded-lg border bg-white p-1" />
-                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Scan code in Google Authenticator</span>
+                  <img
+                    src={totpQrCodeUrl}
+                    alt="Setup QR Code"
+                    className="h-40 w-40 object-contain rounded-lg border bg-white p-1"
+                  />
+                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                    Scan code in Google Authenticator
+                  </span>
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Secret key key</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                    Secret key key
+                  </span>
                   <div className="flex gap-2">
                     <code className="flex-1 px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 text-slate-700 select-all border flex items-center justify-center font-mono">
                       {tempSecret}
@@ -1144,7 +1393,9 @@ function CustomerLogin() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Enter Verification Code</label>
+                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                    Enter Verification Code
+                  </label>
                   <input
                     type="text"
                     maxLength={6}
@@ -1180,9 +1431,11 @@ function CustomerLogin() {
               <form onSubmit={handleVerifyTOTPCode} className="space-y-6 animate-fade-in">
                 <div className="text-center space-y-1.5">
                   <div className="flex justify-between items-center mb-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Authenticator Code</label>
-                    <button 
-                      type="button" 
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Authenticator Code
+                    </label>
+                    <button
+                      type="button"
                       onClick={() => setStep("select-method")}
                       className="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-0.5"
                     >
@@ -1190,7 +1443,8 @@ function CustomerLogin() {
                     </button>
                   </div>
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    Open your Google Authenticator, Microsoft Authenticator, or Authy application and enter the active 6-digit code.
+                    Open your Google Authenticator, Microsoft Authenticator, or Authy application
+                    and enter the active 6-digit code.
                   </p>
                 </div>
 
@@ -1215,7 +1469,11 @@ function CustomerLogin() {
                   disabled={loading}
                   className="w-full rounded-xl bg-gradient-to-r from-[#064e3b] to-[#0f766e] text-white font-bold py-3.5 shadow-md hover:opacity-95 transition-all text-xs flex items-center justify-center gap-2 animate-pulse"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify Authenticator Code"}
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Verify Authenticator Code"
+                  )}
                 </button>
               </form>
             )}
@@ -1224,11 +1482,13 @@ function CustomerLogin() {
 
         {/* Home link */}
         <div className="mt-8 text-center border-t border-slate-100 pt-4">
-          <Link to="/" className="text-xs font-semibold text-slate-400 hover:text-emerald-600 flex items-center justify-center gap-1.5 transition-colors">
+          <Link
+            to="/"
+            className="text-xs font-semibold text-slate-400 hover:text-emerald-600 flex items-center justify-center gap-1.5 transition-colors"
+          >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to Website Home
           </Link>
         </div>
-
       </div>
     </div>
   );

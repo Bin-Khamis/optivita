@@ -19,11 +19,24 @@ export function SiteHeader() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-          <a href="/#programs" className="hover:text-accent transition-colors">Programs</a>
-          <Link to="/calculator" className="hover:text-accent transition-colors">Health Calculator</Link>
-          <Link to="/about" className="hover:text-accent transition-colors">About</Link>
-          <Link to="/portal/login" className="hover:text-accent transition-colors text-emerald-600 dark:text-emerald-400 font-bold">Client Portal</Link>
-          <Link to="/admin/login" className="hover:text-accent transition-colors text-slate-500">Admin Login</Link>
+          <a href="/#programs" className="hover:text-accent transition-colors">
+            Programs
+          </a>
+          <Link to="/calculator" className="hover:text-accent transition-colors">
+            Health Calculator
+          </Link>
+          <Link to="/about" className="hover:text-accent transition-colors">
+            About
+          </Link>
+          <Link
+            to="/portal/login"
+            className="hover:text-accent transition-colors text-emerald-600 dark:text-emerald-400 font-bold"
+          >
+            Client Portal
+          </Link>
+          <Link to="/admin/login" className="hover:text-accent transition-colors text-slate-500">
+            Admin Login
+          </Link>
         </nav>
 
         <div className="flex items-center gap-4">
@@ -50,15 +63,57 @@ export function SiteHeader() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border/60 bg-background/95 backdrop-blur-lg absolute top-24 inset-x-0 p-6 flex flex-col gap-5 shadow-glow animate-fade-in z-40">
           <nav className="flex flex-col gap-4 text-base font-semibold text-foreground">
-            <a href="/#programs" className="hover:text-accent py-2 transition-colors border-b border-border/30" onClick={closeMenu}>Programs</a>
-            <Link to="/calculator" className="hover:text-accent py-2 transition-colors border-b border-border/30" onClick={closeMenu}>Health Calculator</Link>
-            <Link to="/about" className="hover:text-accent py-2 transition-colors border-b border-border/30" onClick={closeMenu}>About</Link>
-            <Link to="/portal/login" className="hover:text-accent py-2 transition-colors border-b border-border/30 font-bold text-emerald-600 dark:text-emerald-400" onClick={closeMenu}>Client Portal</Link>
-            <Link to="/admin/login" className="hover:text-accent py-2 transition-colors border-b border-border/30 text-slate-500" onClick={closeMenu}>Admin Login</Link>
-            <a href="/#approach" className="hover:text-accent py-2 transition-colors border-b border-border/30" onClick={closeMenu}>Approach</a>
-            <a href="/#contact" className="hover:text-accent py-2 transition-colors" onClick={closeMenu}>Contact</a>
+            <a
+              href="/#programs"
+              className="hover:text-accent py-2 transition-colors border-b border-border/30"
+              onClick={closeMenu}
+            >
+              Programs
+            </a>
+            <Link
+              to="/calculator"
+              className="hover:text-accent py-2 transition-colors border-b border-border/30"
+              onClick={closeMenu}
+            >
+              Health Calculator
+            </Link>
+            <Link
+              to="/about"
+              className="hover:text-accent py-2 transition-colors border-b border-border/30"
+              onClick={closeMenu}
+            >
+              About
+            </Link>
+            <Link
+              to="/portal/login"
+              className="hover:text-accent py-2 transition-colors border-b border-border/30 font-bold text-emerald-600 dark:text-emerald-400"
+              onClick={closeMenu}
+            >
+              Client Portal
+            </Link>
+            <Link
+              to="/admin/login"
+              className="hover:text-accent py-2 transition-colors border-b border-border/30 text-slate-500"
+              onClick={closeMenu}
+            >
+              Admin Login
+            </Link>
+            <a
+              href="/#approach"
+              className="hover:text-accent py-2 transition-colors border-b border-border/30"
+              onClick={closeMenu}
+            >
+              Approach
+            </a>
+            <a
+              href="/#contact"
+              className="hover:text-accent py-2 transition-colors"
+              onClick={closeMenu}
+            >
+              Contact
+            </a>
           </nav>
-          
+
           <a
             href="/#programs"
             onClick={closeMenu}
@@ -83,17 +138,38 @@ export function SiteFooter() {
             </div>
           </Link>
           <p className="mt-3 text-sm opacity-80 max-w-xs">
-            Your precision health partner. Precision nutrition, sustainable results, lifelong wellness.
+            Your precision health partner. Precision nutrition, sustainable results, lifelong
+            wellness.
           </p>
         </div>
         <div>
           <h4 className="font-display font-semibold mb-3">Programs</h4>
           <ul className="space-y-2 text-sm opacity-90">
-            <li><Link to="/programs/$programId" params={{ programId: "30-day-weight-loss" }}>30-Day Weight Loss</Link></li>
-            <li><Link to="/programs/$programId" params={{ programId: "diabetes-nutrition" }}>Diabetes Nutrition</Link></li>
-            <li><Link to="/programs/$programId" params={{ programId: "pcos-nutrition" }}>PCOS Program</Link></li>
-            <li><Link to="/programs/$programId" params={{ programId: "fat-loss-premium" }}>Fat Loss Premium</Link></li>
-            <li><Link to="/calculator" className="font-semibold text-accent">Free Health Calculator</Link></li>
+            <li>
+              <Link to="/programs/$programId" params={{ programId: "30-day-weight-loss" }}>
+                30-Day Weight Loss
+              </Link>
+            </li>
+            <li>
+              <Link to="/programs/$programId" params={{ programId: "diabetes-nutrition" }}>
+                Diabetes Nutrition
+              </Link>
+            </li>
+            <li>
+              <Link to="/programs/$programId" params={{ programId: "pcos-nutrition" }}>
+                PCOS Program
+              </Link>
+            </li>
+            <li>
+              <Link to="/programs/$programId" params={{ programId: "fat-loss-premium" }}>
+                Fat Loss Premium
+              </Link>
+            </li>
+            <li>
+              <Link to="/calculator" className="font-semibold text-accent">
+                Free Health Calculator
+              </Link>
+            </li>
           </ul>
         </div>
         <div>

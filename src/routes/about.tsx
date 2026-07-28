@@ -1,51 +1,58 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/SiteChrome";
-import { 
-  Target, 
-  Sparkles, 
-  ShieldCheck, 
-  Heart, 
-  Cpu, 
-  Check, 
+import {
+  Target,
+  Sparkles,
+  ShieldCheck,
+  Heart,
+  Cpu,
+  Check,
   ChevronRight,
-  TrendingUp, 
+  TrendingUp,
   Users,
-  Compass
+  Compass,
 } from "lucide-react";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
       { title: "About Us — Optivita" },
-      { name: "description", content: "Learn about Optivita, your precision health partner. Guided by science, tailored to the individual." },
+      {
+        name: "description",
+        content:
+          "Learn about Optivita, your precision health partner. Guided by science, tailored to the individual.",
+      },
       { property: "og:title", content: "About Us — Optivita" },
-      { property: "og:description", content: "Learn about Optivita, your precision health partner." },
+      {
+        property: "og:description",
+        content: "Learn about Optivita, your precision health partner.",
+      },
     ],
   }),
   component: About,
 });
 
 const values = [
-  { 
-    title: "Precision", 
+  {
+    title: "Precision",
     desc: "Every nutrition plan is personalized based on your unique health profile, goals, and lifestyle.",
-    image: "/value-precision.png"
+    image: "/value-precision.png",
   },
-  { 
-    title: "Science", 
+  {
+    title: "Science",
     desc: "Our recommendations are grounded in current nutrition science and evidence-based practices.",
-    image: "/value-science.png"
+    image: "/value-science.png",
   },
-  { 
-    title: "Compassion", 
+  {
+    title: "Compassion",
     desc: "We believe lasting change happens through encouragement, understanding, and continuous support.",
-    image: "/value-compassion.png"
+    image: "/value-compassion.png",
   },
-  { 
-    title: "Accountability", 
+  {
+    title: "Accountability",
     desc: "Structured guidance, daily check-ins, and clear progress monitoring to keep you on track.",
-    image: "/value-accountability.png"
-  }
+    image: "/value-accountability.png",
+  },
 ];
 
 const offerings = [
@@ -59,16 +66,31 @@ const offerings = [
   "Pregnancy and Postpartum Nutrition",
   "Child and Family Nutrition",
   "Corporate Wellness Programs",
-  "Ongoing Health Coaching & Progress Tracking"
+  "Ongoing Health Coaching & Progress Tracking",
 ];
 
 const chooseUsPoints = [
-  { title: "Tailored to You", desc: "Personalized nutrition plans centered entirely around your unique needs." },
-  { title: "Science-Backed", desc: "Evidence-based, practical recommendations that deliver results." },
-  { title: "Sustainable Focus", desc: "Coaching built for long-term lifestyle changes — not quick fixes." },
-  { title: "Always Connected", desc: "Convenient online consultations from the comfort of your home." },
+  {
+    title: "Tailored to You",
+    desc: "Personalized nutrition plans centered entirely around your unique needs.",
+  },
+  {
+    title: "Science-Backed",
+    desc: "Evidence-based, practical recommendations that deliver results.",
+  },
+  {
+    title: "Sustainable Focus",
+    desc: "Coaching built for long-term lifestyle changes — not quick fixes.",
+  },
+  {
+    title: "Always Connected",
+    desc: "Convenient online consultations from the comfort of your home.",
+  },
   { title: "Real Accountability", desc: "Continuous progress monitoring and proactive check-ins." },
-  { title: "Client-Centered", desc: "Professional, outcome-driven care focused on your wellness success." }
+  {
+    title: "Client-Centered",
+    desc: "Professional, outcome-driven care focused on your wellness success.",
+  },
 ];
 
 function About() {
@@ -91,7 +113,8 @@ function About() {
             About Optivita
           </h1>
           <p className="mt-4 text-lg md:text-xl text-white/95 max-w-2xl font-light">
-            Empowering individuals to achieve lasting health through personalized nutrition, evidence-based science, and sustainable habit changes.
+            Empowering individuals to achieve lasting health through personalized nutrition,
+            evidence-based science, and sustainable habit changes.
           </p>
         </div>
       </section>
@@ -101,19 +124,33 @@ function About() {
         <div className="max-w-5xl mx-auto px-6">
           <div className="grid md:grid-cols-12 gap-10 items-center">
             <div className="md:col-span-7">
-              <p className="text-accent font-semibold uppercase tracking-wider text-xs">Our Core Belief</p>
+              <p className="text-accent font-semibold uppercase tracking-wider text-xs">
+                Our Core Belief
+              </p>
               <h2 className="mt-3 font-display font-bold text-2xl md:text-4xl leading-tight">
-                Health is unique.<br />Your nutrition should be too.
+                Health is unique.
+                <br />
+                Your nutrition should be too.
               </h2>
               <div className="mt-6 space-y-4 text-muted-foreground text-base md:text-lg leading-relaxed">
                 <p>
-                  At <strong className="text-foreground">Optivita</strong>, we believe that good health begins with the right nutrition, guided by science and tailored to the individual. Our mission is to empower people to achieve lasting health through personalized nutrition, evidence-based education, and sustainable lifestyle changes.
+                  At <strong className="text-foreground">Optivita</strong>, we believe that good
+                  health begins with the right nutrition, guided by science and tailored to the
+                  individual. Our mission is to empower people to achieve lasting health through
+                  personalized nutrition, evidence-based education, and sustainable lifestyle
+                  changes.
                 </p>
                 <p>
-                  We understand that every individual is unique. Age, lifestyle, health conditions, goals, culture, and daily routines all influence nutritional needs. That's why we don't believe in one-size-fits-all diets. Instead, we provide personalized nutrition strategies designed to help you build healthier habits and achieve long-term success.
+                  We understand that every individual is unique. Age, lifestyle, health conditions,
+                  goals, culture, and daily routines all influence nutritional needs. That's why we
+                  don't believe in one-size-fits-all diets. Instead, we provide personalized
+                  nutrition strategies designed to help you build healthier habits and achieve
+                  long-term success.
                 </p>
                 <p>
-                  Whether your goal is to lose weight, manage a medical condition, improve energy levels, enhance athletic performance, or simply adopt a healthier lifestyle, Optivita is committed to supporting you every step of the way.
+                  Whether your goal is to lose weight, manage a medical condition, improve energy
+                  levels, enhance athletic performance, or simply adopt a healthier lifestyle,
+                  Optivita is committed to supporting you every step of the way.
                 </p>
               </div>
             </div>
@@ -127,7 +164,9 @@ function About() {
                 </div>
                 <h3 className="font-display font-bold text-lg text-foreground">Our Mission</h3>
                 <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                  To improve lives through personalized nutrition, scientific guidance, and sustainable lifestyle coaching, helping individuals achieve lifelong health and wellness.
+                  To improve lives through personalized nutrition, scientific guidance, and
+                  sustainable lifestyle coaching, helping individuals achieve lifelong health and
+                  wellness.
                 </p>
               </div>
 
@@ -139,7 +178,9 @@ function About() {
                 </div>
                 <h3 className="font-display font-bold text-lg text-foreground">Our Vision</h3>
                 <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                  To become one of the world's most trusted digital health and nutrition platforms, making expert nutritional care accessible, personalized, and affordable for everyone.
+                  To become one of the world's most trusted digital health and nutrition platforms,
+                  making expert nutritional care accessible, personalized, and affordable for
+                  everyone.
                 </p>
               </div>
             </div>
@@ -151,25 +192,32 @@ function About() {
       <section className="py-20 bg-secondary/35 border-y border-border/60">
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center max-w-xl mx-auto mb-14">
-            <p className="text-accent font-semibold uppercase tracking-wider text-xs">Optivita Culture</p>
+            <p className="text-accent font-semibold uppercase tracking-wider text-xs">
+              Optivita Culture
+            </p>
             <h2 className="mt-3 font-display font-bold text-3xl md:text-4xl">Our Core Values</h2>
             <p className="text-muted-foreground mt-3 text-sm md:text-base">
-              The fundamental principles that guide our interactions, coaching philosophies, and clinical methods.
+              The fundamental principles that guide our interactions, coaching philosophies, and
+              clinical methods.
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {values.map((val) => {
               return (
-                <div 
-                  key={val.title} 
+                <div
+                  key={val.title}
                   className="group bg-card rounded-2xl p-6 shadow-soft border border-border/50 hover:shadow-glow hover:-translate-y-1 transition-all duration-300"
                 >
-                  <div 
+                  <div
                     className="h-24 w-24 rounded-full flex items-center justify-center mb-5 shadow-soft overflow-hidden p-2 bg-cover bg-center bg-no-repeat"
                     style={{ backgroundImage: "url('/icon-bg.png')" }}
                   >
-                    <img src={val.image} alt={val.title} className="h-full w-full object-contain transition-transform duration-1000 ease-in-out group-hover:rotate-[360deg]" />
+                    <img
+                      src={val.image}
+                      alt={val.title}
+                      className="h-full w-full object-contain transition-transform duration-1000 ease-in-out group-hover:rotate-[360deg]"
+                    />
                   </div>
                   <h3 className="font-display font-bold text-lg text-foreground">{val.title}</h3>
                   <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{val.desc}</p>
@@ -184,14 +232,18 @@ function About() {
       <section className="py-20 bg-background">
         <div className="max-w-5xl mx-auto px-6">
           <div className="grid md:grid-cols-12 gap-12">
-            
             {/* What We Offer (Left Column) */}
             <div className="md:col-span-5">
-              <p className="text-accent font-semibold uppercase tracking-wider text-xs">Comprehensive Services</p>
+              <p className="text-accent font-semibold uppercase tracking-wider text-xs">
+                Comprehensive Services
+              </p>
               <h2 className="mt-3 font-display font-bold text-3xl mb-6">What We Offer</h2>
               <div className="space-y-3.5">
                 {offerings.map((offer) => (
-                  <div key={offer} className="flex items-start gap-3 bg-secondary/30 border border-border/40 rounded-xl p-3">
+                  <div
+                    key={offer}
+                    className="flex items-start gap-3 bg-secondary/30 border border-border/40 rounded-xl p-3"
+                  >
                     <div className="mt-0.5 h-5 w-5 rounded-full bg-vital/15 flex items-center justify-center text-vital shrink-0">
                       <Check className="h-3 w-3" strokeWidth={3} />
                     </div>
@@ -203,34 +255,49 @@ function About() {
 
             {/* Why Choose Optivita (Right Column) */}
             <div className="md:col-span-7">
-              <p className="text-accent font-semibold uppercase tracking-wider text-xs">Our Advantage</p>
+              <p className="text-accent font-semibold uppercase tracking-wider text-xs">
+                Our Advantage
+              </p>
               <h2 className="mt-3 font-display font-bold text-3xl mb-6">Why Choose Optivita?</h2>
-              
+
               <div className="grid sm:grid-cols-2 gap-5">
                 {chooseUsPoints.map((point) => (
-                  <div key={point.title} className="bg-card border border-border/70 rounded-2xl p-5 shadow-soft hover:border-accent/40 transition-colors duration-300">
+                  <div
+                    key={point.title}
+                    className="bg-card border border-border/70 rounded-2xl p-5 shadow-soft hover:border-accent/40 transition-colors duration-300"
+                  >
                     <h3 className="font-display font-bold text-base text-foreground flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-accent" />
                       {point.title}
                     </h3>
-                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{point.desc}</p>
+                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                      {point.desc}
+                    </p>
                   </div>
                 ))}
               </div>
 
               {/* Our Commitment Banner inside Right Column */}
               <div className="mt-8 bg-brand-gradient text-white rounded-2xl p-6 md:p-8 shadow-soft relative overflow-hidden">
-                <div className="absolute inset-0 opacity-10" style={{ background: "radial-gradient(circle at 100% 100%, white 0%, transparent 50%)" }} />
+                <div
+                  className="absolute inset-0 opacity-10"
+                  style={{
+                    background: "radial-gradient(circle at 100% 100%, white 0%, transparent 50%)",
+                  }}
+                />
                 <h3 className="font-display font-bold text-xl mb-3">Our Commitment</h3>
                 <p className="text-sm text-white/90 leading-relaxed font-light">
-                  At Optivita, we measure success by the positive impact we make on our clients' lives. We are committed to providing trusted nutritional guidance, continuous support, and practical solutions that help people build healthier habits with confidence.
+                  At Optivita, we measure success by the positive impact we make on our clients'
+                  lives. We are committed to providing trusted nutritional guidance, continuous
+                  support, and practical solutions that help people build healthier habits with
+                  confidence.
                 </p>
                 <p className="mt-4 text-xs font-semibold tracking-wider text-white/80 uppercase">
-                  Your health journey is unique, and we're honored to be your trusted partner every step of the way.
+                  Your health journey is unique, and we're honored to be your trusted partner every
+                  step of the way.
                 </p>
               </div>
             </div>
-
           </div>
         </div>
       </section>
