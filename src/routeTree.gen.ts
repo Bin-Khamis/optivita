@@ -27,6 +27,7 @@ import { Route as PortalAppointmentsRouteImport } from './routes/portal/appointm
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
+import { Route as AdminMobileRouteImport } from './routes/admin/mobile'
 import { Route as AdminLoyaltyRouteImport } from './routes/admin/loyalty'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminLeadsRouteImport } from './routes/admin/leads'
@@ -126,6 +127,11 @@ const AdminReportsRoute = AdminReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminMobileRoute = AdminMobileRouteImport.update({
+  id: '/mobile',
+  path: '/mobile',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLoyaltyRoute = AdminLoyaltyRouteImport.update({
   id: '/loyalty',
   path: '/loyalty',
@@ -181,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/loyalty': typeof AdminLoyaltyRoute
+  '/admin/mobile': typeof AdminMobileRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -209,6 +216,7 @@ export interface FileRoutesByTo {
   '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/loyalty': typeof AdminLoyaltyRoute
+  '/admin/mobile': typeof AdminMobileRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -238,6 +246,7 @@ export interface FileRoutesById {
   '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/loyalty': typeof AdminLoyaltyRoute
+  '/admin/mobile': typeof AdminMobileRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -268,6 +277,7 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/login'
     | '/admin/loyalty'
+    | '/admin/mobile'
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/users'
@@ -296,6 +306,7 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/login'
     | '/admin/loyalty'
+    | '/admin/mobile'
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/users'
@@ -324,6 +335,7 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/login'
     | '/admin/loyalty'
+    | '/admin/mobile'
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/users'
@@ -476,6 +488,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReportsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/mobile': {
+      id: '/admin/mobile'
+      path: '/mobile'
+      fullPath: '/admin/mobile'
+      preLoaderRoute: typeof AdminMobileRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/loyalty': {
       id: '/admin/loyalty'
       path: '/loyalty'
@@ -544,6 +563,7 @@ interface AdminRouteChildren {
   AdminLeadsRoute: typeof AdminLeadsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminLoyaltyRoute: typeof AdminLoyaltyRoute
+  AdminMobileRoute: typeof AdminMobileRoute
   AdminReportsRoute: typeof AdminReportsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -558,6 +578,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLeadsRoute: AdminLeadsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminLoyaltyRoute: AdminLoyaltyRoute,
+  AdminMobileRoute: AdminMobileRoute,
   AdminReportsRoute: AdminReportsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,

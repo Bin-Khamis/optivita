@@ -21,7 +21,13 @@ export const PortalContext = createContext<PortalContextType | null>(null);
 export function usePortal() {
   const context = useContext(PortalContext);
   if (!context) {
-    throw new Error("usePortal must be used within PortalProvider");
+    return {
+      data: null,
+      loading: true,
+      refreshData: async () => {},
+      customer: null,
+      logout: () => {},
+    };
   }
   return context;
 }

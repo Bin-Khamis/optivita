@@ -21,7 +21,13 @@ export const CRMContext = createContext<CRMContextType | null>(null);
 export function useCRM() {
   const context = useContext(CRMContext);
   if (!context) {
-    throw new Error("useCRM must be used within CRMProvider");
+    return {
+      data: null,
+      loading: true,
+      refreshData: async () => {},
+      user: null,
+      logout: () => {},
+    };
   }
   return context;
 }

@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Search,
   Check,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { COUNTRIES, normalizeE164, validatePhone } from "@/lib/countries";
@@ -116,10 +117,15 @@ function CustomerLogin() {
   const [openCountryPopover, setOpenCountryPopover] = useState(false);
 
   // Multi-Channel Selection States
-  const [selectedMethod, setSelectedMethod] = useState<"email" | "whatsapp" | "totp">("email");
+  const [selectedMethod, setSelectedMethod] = useState<"email" | "whatsapp" | "totp" | "telegram">(
+    "email",
+  );
   const [totpConfigured, setTotpConfigured] = useState(false);
   const [maskedEmail, setMaskedEmail] = useState("");
   const [maskedPhone, setMaskedPhone] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState("");
+  const [telegramBotUsername, setTelegramBotUsername] = useState("OptiVitaOTPBot");
+  const [newTelegramChatId, setNewTelegramChatId] = useState("");
 
   // OTP Verification States
   const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
@@ -257,6 +263,8 @@ function CustomerLogin() {
         setMaskedEmail(maskEmail(clientData.email || "client@gmail.com"));
         setMaskedPhone(maskPhone(fullPhone));
         setTotpConfigured(!!clientData.totpSecret);
+        setTelegramChatId(clientData.telegramChatId || "");
+        setTelegramBotUsername(clientData.telegramBotUsername || "OptiVitaOTPBot");
 
         // Retrieve preferred method if remembered
         const pref =
@@ -286,6 +294,8 @@ function CustomerLogin() {
           setMaskedEmail(result.emailMasked);
           setMaskedPhone(maskPhone(fullPhone));
           setTotpConfigured(result.totpConfigured);
+          setTelegramChatId(result.telegramChatId || "");
+          setTelegramBotUsername(result.telegramBotUsername || "OptiVitaOTPBot");
 
           const pref =
             localStorage.getItem(`optivita_pref_${enrollmentId}`) ||
@@ -411,7 +421,11 @@ function CustomerLogin() {
             setCountdown(300);
             setOtpDigits(["", "", "", "", "", ""]);
             setStep("otp");
-            toast.success("Verification code sent successfully via WhatsApp.");
+            if (result.fallbackDispatch || result.otp) {
+              // Dispatch directly from browser to local WhatsApp Bridge!
+              dispatchWhatsAppBridgeMessage(phone, result.otp);
+            }
+            toast.success(result.message || "Verification code sent successfully via WhatsApp.");
           } else {
             if (result.code === "RESEND_LIMIT_EXCEEDED") {
               toast.error(result.message || "Too many resend attempts. Please wait 15 minutes.");
@@ -423,6 +437,101 @@ function CustomerLogin() {
               toast.error("Failed to Send OTP");
             } else {
               toast.error(result.message || "Failed to deliver WhatsApp OTP.");
+            }
+          }
+        } catch (err) {
+          toast.error("Failed to connect to authentication server.");
+        } finally {
+          setLoading(false);
+        }
+      }
+      return;
+    }
+
+    // Handle Telegram OTP
+    if (selectedMethod === "telegram") {
+      const activeChatId = telegramChatId.trim() || newTelegramChatId.trim();
+      if (!activeChatId) {
+        toast.error("Please enter a valid Telegram Chat ID to link your account.");
+        setLoading(false);
+        return;
+      }
+
+      if (isOffline) {
+        if (!telegramChatId.trim()) {
+          const cached = localStorage.getItem("optivita_crm_cache");
+          if (cached) {
+            try {
+              const db = JSON.parse(cached);
+              const index = db["Program Enrollments"].findIndex(
+                (e: any) => e["Enrollment ID"] === enrollmentId.trim(),
+              );
+              if (index !== -1) {
+                db["Program Enrollments"][index].telegramChatId = activeChatId;
+                localStorage.setItem("optivita_crm_cache", JSON.stringify(db));
+              }
+            } catch (e) {
+              console.error(e);
+            }
+          }
+          setTelegramChatId(activeChatId);
+          toast.success("Telegram Chat ID linked (offline simulation)!");
+        }
+
+        const otpCode = String(Math.floor(100000 + Math.random() * 900000));
+        localStorage.setItem("optivita_portal_simulated_otp", otpCode);
+        setCountdown(300);
+        setOtpDigits(["", "", "", "", "", ""]);
+        setLoading(false);
+        setStep("otp");
+        toast.success(`Verification code dispatched! simulated TELEGRAM OTP: ${otpCode}`);
+      } else {
+        try {
+          if (!telegramChatId.trim()) {
+            // Link it first via Sheets Webhook
+            const saveRes = await fetch(webhookUrl, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain" },
+              body: JSON.stringify({
+                action: "update-security-preference",
+                enrollmentId: enrollmentId.trim(),
+                preferredMethod: "telegram",
+                telegramChatId: activeChatId,
+              }),
+            });
+            const saveResult = await saveRes.json();
+            if (saveResult.status !== "success") {
+              toast.error(saveResult.message || "Failed to link Telegram Chat ID.");
+              setLoading(false);
+              return;
+            }
+            setTelegramChatId(activeChatId);
+            toast.success("Telegram Chat ID linked successfully!");
+          }
+
+          const res = await fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({
+              action: "send-otp",
+              enrollmentId: enrollmentId.trim(),
+              method: "telegram",
+            }),
+          });
+
+          const result = await res.json();
+          if (result.status === "success") {
+            setCountdown(300);
+            setOtpDigits(["", "", "", "", "", ""]);
+            setStep("otp");
+            toast.success("Verification code sent successfully via Telegram.");
+          } else {
+            if (result.code === "RESEND_LIMIT_EXCEEDED") {
+              toast.error(result.message || "Too many resend attempts. Please wait 15 minutes.");
+            } else if (result.code === "TELEGRAM_NOT_LINKED") {
+              toast.error(result.message || "Telegram Chat ID is not configured.");
+            } else {
+              toast.error(result.message || "Failed to deliver Telegram OTP.");
             }
           }
         } catch (err) {
@@ -879,6 +988,50 @@ function CustomerLogin() {
       return;
     }
 
+    if (selectedMethod === "telegram") {
+      if (isOffline) {
+        const otpCode = String(Math.floor(100000 + Math.random() * 900000));
+        localStorage.setItem("optivita_portal_simulated_otp", otpCode);
+        localStorage.setItem(`optivita_resends_${enrollmentId}`, String(localResends + 1));
+        setCountdown(300);
+        setOtpDigits(["", "", "", "", "", ""]);
+        setLoading(false);
+        toast.success(`Verification code dispatched! simulated TELEGRAM OTP: ${otpCode}`);
+      } else {
+        try {
+          const res = await fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({
+              action: "send-otp",
+              enrollmentId: enrollmentId.trim(),
+              method: "telegram",
+            }),
+          });
+
+          const result = await res.json();
+          if (result.status === "success") {
+            localStorage.setItem(`optivita_resends_${enrollmentId}`, String(localResends + 1));
+            setCountdown(300);
+            setOtpDigits(["", "", "", "", "", ""]);
+            toast.success("Verification code sent successfully via Telegram.");
+          } else {
+            if (result.code === "RESEND_LIMIT_EXCEEDED") {
+              localStorage.setItem(`optivita_resends_${enrollmentId}`, "3");
+              toast.error(result.message || "Too many resend attempts. Please wait 15 minutes.");
+            } else {
+              toast.error(result.message || "Failed to deliver Telegram OTP.");
+            }
+          }
+        } catch (err) {
+          toast.error("Failed to connect to authentication server.");
+        } finally {
+          setLoading(false);
+        }
+      }
+      return;
+    }
+
     // Email OTP resend logic
     if (isOffline) {
       const otpCode = String(Math.floor(100000 + Math.random() * 900000));
@@ -1225,6 +1378,56 @@ function CustomerLogin() {
                     </div>
                   </label>
 
+                  {/* Telegram option */}
+                  <label
+                    className={`flex items-start gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
+                      selectedMethod === "telegram"
+                        ? "border-emerald-500 bg-emerald-50/10"
+                        : "border-slate-100 hover:bg-slate-50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="method"
+                      checked={selectedMethod === "telegram"}
+                      onChange={() => setSelectedMethod("telegram")}
+                      className="mt-1 accent-emerald-500"
+                    />
+                    <div className="space-y-0.5 w-full">
+                      <span className="font-semibold text-xs flex items-center gap-1 text-slate-850">
+                        <Send className="h-3.5 w-3.5 text-[#173B63]" /> Telegram OTP
+                      </span>
+                      <div className="text-[10px] text-slate-400 leading-normal space-y-2 mt-1">
+                        {telegramChatId ? (
+                          <p>
+                            Receive code via Telegram message at Chat ID:{" "}
+                            <strong className="text-slate-600">
+                              {telegramChatId.slice(0, 3)}****{telegramChatId.slice(-3)}
+                            </strong>
+                          </p>
+                        ) : (
+                          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                            <p className="text-amber-600 font-medium">
+                              Not linked yet. Link your Telegram account:
+                            </p>
+                            <div className="p-2.5 bg-slate-50 rounded-xl border text-[9px] text-slate-500 leading-normal space-y-1">
+                              <p className="font-bold text-slate-700">How to get Chat ID:</p>
+                              <p>1. Open Telegram & search for <a href={`https://t.me/${telegramBotUsername}`} target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold hover:underline">@{telegramBotUsername}</a></p>
+                              <p>2. Send <strong>/start</strong> to get your Chat ID.</p>
+                            </div>
+                            <input
+                              type="text"
+                              value={newTelegramChatId}
+                              onChange={(e) => setNewTelegramChatId(e.target.value.replace(/[^0-9-]/g, ""))}
+                              placeholder="Enter Telegram Chat ID"
+                              className="w-full px-2.5 py-1.5 text-xs rounded-lg border bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </label>
+
                   {/* Authenticator App option */}
                   <label
                     className={`flex items-start gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
@@ -1290,12 +1493,20 @@ function CustomerLogin() {
                   <p className="text-xs text-slate-500 leading-relaxed">
                     Verification code has been dispatched via{" "}
                     <strong className="text-slate-850 font-bold">
-                      {selectedMethod === "email" ? "email" : "WhatsApp"}
+                      {selectedMethod === "email"
+                        ? "email"
+                        : selectedMethod === "whatsapp"
+                          ? "WhatsApp"
+                          : "Telegram"}
                     </strong>{" "}
                     to:
                     <br />
                     <strong className="text-slate-800 font-bold">
-                      {selectedMethod === "email" ? maskedEmail : maskedPhone}
+                      {selectedMethod === "email"
+                        ? maskedEmail
+                        : selectedMethod === "whatsapp"
+                          ? maskedPhone
+                          : "linked Telegram account"}
                     </strong>
                   </p>
                 </div>

@@ -18,6 +18,7 @@ import {
   CheckSquare,
   Shield,
   MessageSquare,
+  Smartphone,
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
@@ -240,6 +241,7 @@ function AdminLayout() {
     { label: "HR & Payroll", icon: Users, path: "/admin/hr" },
     { label: "Communication Center", icon: MessageSquare, path: "/admin/communication" },
     { label: "User Management", icon: Shield, path: "/admin/users", restricted: true },
+    { label: "Mobile Console", icon: Smartphone, path: "/admin/mobile" },
     { label: "Reports & Analytics", icon: FileText, path: "/admin/reports" },
     { label: "System Settings", icon: Settings, path: "/admin/settings" },
   ];

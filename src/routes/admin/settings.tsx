@@ -61,6 +61,7 @@ function AdminSettings() {
   const [providerPostalCode, setProviderPostalCode] = useState("");
   const [providerRegistration, setProviderRegistration] = useState("");
   const [providerSocials, setProviderSocials] = useState("");
+  const [telegramApiKey, setTelegramApiKey] = useState("");
   const [savingProvider, setSavingProvider] = useState(false);
 
   // Sync settings when data becomes available
@@ -86,6 +87,7 @@ function AdminSettings() {
       setProviderPostalCode(getSetting("Provider_PostalCode") || "13001");
       setProviderRegistration(getSetting("Provider_Registration") || "REG-99283");
       setProviderSocials(getSetting("Provider_Socials") || "@optivita_health");
+      setTelegramApiKey(getSetting("Telegram API Key") || "");
     }
   }, [data]);
 
@@ -105,6 +107,7 @@ function AdminSettings() {
       Provider_PostalCode: providerPostalCode,
       Provider_Registration: providerRegistration,
       Provider_Socials: providerSocials,
+      "Telegram API Key": telegramApiKey,
     };
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
@@ -640,6 +643,26 @@ function AdminSettings() {
                   placeholder="e.g. @optivita_health"
                   className="w-full p-3 text-xs border rounded-xl bg-slate-50 dark:bg-slate-955 border-slate-200 dark:border-slate-800/80 text-slate-850 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
+              </div>
+
+              <div className="space-y-1 md:col-span-2 border-t border-slate-100 dark:border-slate-800/80 pt-4 mt-2">
+                <h4 className="font-bold text-xs text-slate-700 dark:text-slate-250 uppercase tracking-wider mb-2">
+                  Telegram Bot Integration
+                </h4>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Telegram Bot API Token (Key)
+                </label>
+                <input
+                  type="password"
+                  value={telegramApiKey}
+                  onChange={(e) => setTelegramApiKey(e.target.value)}
+                  placeholder="e.g. 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
+                  className="w-full p-3 text-xs border rounded-xl bg-slate-50 dark:bg-slate-955 border-slate-200 dark:border-slate-800/80 text-slate-850 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+                />
+                <p className="text-[10px] text-slate-400 mt-1 leading-normal">
+                  Enter the API Bot Token for <strong>@OptiVitaOTPBot</strong> obtained from
+                  BotFather to enable Telegram OTP dispatches.
+                </p>
               </div>
             </div>
 
