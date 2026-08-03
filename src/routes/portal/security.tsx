@@ -515,7 +515,8 @@ function SecuritySettings() {
               </label>
 
               {/* Telegram Option */}
-              <label
+              <div
+                onClick={() => handleSavePreferences("telegram")}
                 className={`flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${
                   preferredMethod === "telegram"
                     ? "border-emerald-500 bg-emerald-50/10"
@@ -590,7 +591,7 @@ function SecuritySettings() {
                     </div>
                   )}
                 </div>
-              </label>
+              </div>
             </div>
 
             {/* Developers / Warning Notices for WhatsApp */}

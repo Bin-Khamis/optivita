@@ -1379,7 +1379,8 @@ function CustomerLogin() {
                   </label>
 
                   {/* Telegram option */}
-                  <label
+                  <div
+                    onClick={() => setSelectedMethod("telegram")}
                     className={`flex items-start gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
                       selectedMethod === "telegram"
                         ? "border-emerald-500 bg-emerald-50/10"
@@ -1426,7 +1427,7 @@ function CustomerLogin() {
                         )}
                       </div>
                     </div>
-                  </label>
+                  </div>
 
                   {/* Authenticator App option */}
                   <label
