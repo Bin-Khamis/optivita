@@ -118,26 +118,45 @@ function AdminLayout() {
   const fetchCRMData = async (forceSpinner = false) => {
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
 
-    // Check local cache, but purge if it contains outdated mock data (OPT-2026-001002)
+    if (forceSpinner) {
+      setLoading(true);
+    }
+
+    // 1. Read from localStorage cache immediately
     const cached = localStorage.getItem("optivita_crm_cache");
+    let hasLoaded = false;
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
         const hasMockData = JSON.stringify(parsed).includes("OPT-2026-001002");
         if (!hasMockData) {
           setData(parsed);
-          if (!forceSpinner) setLoading(false);
+          setLoading(false);
+          hasLoaded = true;
         } else {
           console.log("Purging old mock data from cache...");
           localStorage.removeItem("optivita_crm_cache");
-          setLoading(true);
         }
       } catch (e) {
         localStorage.removeItem("optivita_crm_cache");
-        setLoading(true);
       }
-    } else {
+    }
+
+    if (!hasLoaded && !forceSpinner) {
       setLoading(true);
+    }
+
+    // 2. High-speed Firestore read (Firebase mediator)
+    try {
+      const firestoreData = await getCRMDataFromFirestore();
+      if (firestoreData && !JSON.stringify(firestoreData).includes("OPT-2026-001002")) {
+        setData(firestoreData);
+        localStorage.setItem("optivita_crm_cache", JSON.stringify(firestoreData));
+        setLoading(false);
+        hasLoaded = true;
+      }
+    } catch (e) {
+      console.warn("Firestore admin read warning:", e);
     }
 
     if (isWebhookOffline(webhookUrl)) {
@@ -145,12 +164,12 @@ function AdminLayout() {
       return;
     }
 
+    // 3. Background fetch from Google Sheets to update Firebase cache
     try {
-      // Attempt 1: POST request to Apps Script
       let result: any = null;
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
 
         const res = await fetch(webhookUrl, {
           method: "POST",
@@ -186,12 +205,6 @@ function AdminLayout() {
         localStorage.setItem("optivita_crm_cache", JSON.stringify(result.data));
         // Mirror live Google Sheets Master into Firestore
         saveCRMDataToFirestore(result.data);
-      } else {
-        // Fallback to Firestore only if valid non-mock dataset exists
-        const firestoreData = await getCRMDataFromFirestore();
-        if (firestoreData && !JSON.stringify(firestoreData).includes("OPT-2026-001002")) {
-          setData(firestoreData);
-        }
       }
     } catch (err: any) {
       console.warn("Master Google Sheets fetch note:", err);
