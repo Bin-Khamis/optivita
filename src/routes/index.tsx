@@ -560,7 +560,7 @@ function Home() {
                 <span className="text-xs font-black">{heroScoreVal}</span>
               </div>
               <div className="min-w-0">
-                <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider truncate">SAMPLE HEALTH SCORE</p>
+                <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider truncate">HEALTH SCORE</p>
                 <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 truncate">Excellent Range</p>
               </div>
             </div>
@@ -584,7 +584,7 @@ function Home() {
                   style={{ width: `${heroHydrationVal}%` }}
                 />
               </div>
-              <p className="text-[8px] text-slate-400 font-semibold uppercase tracking-wider">Sample Progress</p>
+              <p className="text-[8px] text-slate-400 font-semibold uppercase tracking-wider">Progress</p>
             </div>
           </div>
         </div>
