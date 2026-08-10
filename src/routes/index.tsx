@@ -54,13 +54,9 @@ const trustBenefits = [
 type IntroState = "loading" | "video" | "logo" | "reveal" | "done";
 
 function Home() {
-  // Intro Sequence States
-  const [introState, setIntroState] = useState<IntroState>("loading");
-  const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
 
   // Hero Stagger Entrance States
   const [heroActive, setHeroActive] = useState(false);
@@ -91,7 +87,7 @@ function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
 
-  // Check first-visit / session state and prefers-reduced-motion
+  // Check session state, trigger count up, and set welcome modal on mount
   useEffect(() => {
     // Check client portal session
     const session = localStorage.getItem("optivita_crm_cache");
@@ -106,119 +102,51 @@ function Home() {
       } catch {}
     }
 
-    if (typeof window !== "undefined") {
-      const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-      const seen = sessionStorage.getItem("optivita_intro_seen");
+    // Instantly activate Hero entrance
+    setHeroActive(true);
 
-      if (mediaQuery.matches || seen === "true") {
-        setIntroState("done");
-        setHeroActive(true);
+    // Welcome modal triggers after a slight delay
+    const welcomeTimer = setTimeout(() => {
+      setShowWelcomeModal(true);
+    }, 1200);
+
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mediaQuery.matches) {
+      setHeroScoreVal(82);
+      setHeroHydrationVal(84);
+      return () => clearTimeout(welcomeTimer);
+    }
+
+    // Score count (0 to 82)
+    let curSc = 0;
+    const scoreTimer = setInterval(() => {
+      curSc += 2;
+      if (curSc >= 82) {
         setHeroScoreVal(82);
-        setHeroHydrationVal(84);
-        // Trigger welcome modal after a slight delay
-        const timer = setTimeout(() => {
-          setShowWelcomeModal(true);
-        }, 1200);
-        return () => clearTimeout(timer);
-      } else {
-        setIntroState("video");
-      }
-    }
-  }, []);
-
-  // Handle autoplay check once video enters DOM (plays unmuted, fallbacks to muted if blocked)
-  useEffect(() => {
-    if (introState === "video" && videoRef.current) {
-      videoRef.current.muted = false;
-      const playPromise = videoRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            setIsMuted(false);
-            setIsAutoplayBlocked(false);
-          })
-          .catch(() => {
-            // Unmuted autoplay blocked, try muted autoplay
-            console.log("Unmuted autoplay blocked, trying muted autoplay...");
-            if (videoRef.current) {
-              videoRef.current.muted = true;
-              setIsMuted(true);
-              videoRef.current.play()
-                .then(() => {
-                  setIsAutoplayBlocked(false);
-                })
-                .catch((err) => {
-                  console.log("Muted autoplay also blocked:", err);
-                  setIsAutoplayBlocked(true);
-                });
-            }
-          });
-      }
-    }
-  }, [introState]);
-
-  // Handle Logo Animation timeline (1.8 seconds)
-  useEffect(() => {
-    if (introState === "logo") {
-      const timer = setTimeout(() => {
-        setIntroState("reveal");
-        sessionStorage.setItem("optivita_intro_seen", "true");
-      }, 1800);
-      return () => clearTimeout(timer);
-    }
-  }, [introState]);
-
-  // Cycle active flowchart steps
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % 7);
-    }, 3200);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Trigger Hero entrance counts
-  useEffect(() => {
-    if (introState === "done" && !heroActive) {
-      const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-      if (mediaQuery.matches) {
-        setHeroActive(true);
-        setHeroScoreVal(82);
-        setHeroHydrationVal(84);
-        return;
-      }
-
-      setHeroActive(true);
-
-      // Score count (0 to 82)
-      let curSc = 0;
-      const scoreTimer = setInterval(() => {
-        curSc += 2;
-        if (curSc >= 82) {
-          setHeroScoreVal(82);
-          clearInterval(scoreTimer);
-        } else {
-          setHeroScoreVal(curSc);
-        }
-      }, 20);
-
-      // Hydration progress (0 to 84)
-      let curHyd = 0;
-      const hydTimer = setInterval(() => {
-        curHyd += 2;
-        if (curHyd >= 84) {
-          setHeroHydrationVal(84);
-          clearInterval(hydTimer);
-        } else {
-          setHeroHydrationVal(curHyd);
-        }
-      }, 20);
-
-      return () => {
         clearInterval(scoreTimer);
+      } else {
+        setHeroScoreVal(curSc);
+      }
+    }, 20);
+
+    // Hydration progress (0 to 84)
+    let curHyd = 0;
+    const hydTimer = setInterval(() => {
+      curHyd += 2;
+      if (curHyd >= 84) {
+        setHeroHydrationVal(84);
         clearInterval(hydTimer);
-      };
-    }
-  }, [introState]);
+      } else {
+        setHeroHydrationVal(curHyd);
+      }
+    }, 20);
+
+    return () => {
+      clearTimeout(welcomeTimer);
+      clearInterval(scoreTimer);
+      clearInterval(hydTimer);
+    };
+  }, []);
 
   // Scroll listeners for Parallax and Side Tracker with requestAnimationFrame Throttling
   useEffect(() => {
@@ -262,7 +190,7 @@ function Home() {
 
   // Global IntersectionObserver reveals
   useEffect(() => {
-    if (typeof window === "undefined" || introState !== "done") return;
+    if (typeof window === "undefined") return;
 
     const options = {
       root: null,
@@ -294,7 +222,7 @@ function Home() {
     return () => {
       revealElements.forEach((el) => observer.unobserve(el));
     };
-  }, [introState]);
+  }, []);
 
   // Section 5 widget count up once visible
   useEffect(() => {
@@ -375,31 +303,13 @@ function Home() {
     }
   }, [scoreWidgetActive]);
 
-  const skipIntro = () => {
-    setIntroState("logo");
-  };
-
-  const handleVideoEnded = () => {
-    setIntroState("logo");
-  };
-
-  const startPlaybackManual = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = false;
-      setIsMuted(false);
-      videoRef.current.play()
-        .then(() => setIsAutoplayBlocked(false))
-        .catch(() => {});
-    }
-  };
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      const nextMuted = !videoRef.current.muted;
-      videoRef.current.muted = nextMuted;
-      setIsMuted(nextMuted);
-    }
-  };
+  // Cycle active flowchart steps
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % 7);
+    }, 3200);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300 relative overflow-x-hidden">
@@ -448,144 +358,55 @@ function Home() {
         .delay-stagger-5 { transition-delay: 600ms; }
       `}</style>
 
-      {/* Intro Experience Overlay Shell */}
-      {introState !== "done" && (
-        <div
-          className={`fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center select-none transition-opacity duration-1000 ${
-            introState === "reveal" ? "opacity-0 pointer-events-none" : "opacity-100"
-          }`}
-          onTransitionEnd={() => {
-            if (introState === "reveal") {
-              setIntroState("done");
-              setTimeout(() => {
-                setShowWelcomeModal(true);
-              }, 1200);
-            }
-          }}
-        >
-          {/* State 1: Fullscreen Intro Video */}
-          {introState === "video" && (
-            <div className="relative w-full h-full bg-black">
-              <video
-                ref={videoRef}
-                src="/optivita-hero.mp4"
-                className="w-full h-full object-cover"
-                muted={isMuted}
-                playsInline
-                autoPlay
-                onEnded={handleVideoEnded}
-              />
-
-              {/* Speaker Control (Bottom Left) */}
-              <button
-                onClick={toggleMute}
-                className="absolute bottom-8 left-8 p-3 bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 rounded-full transition-all duration-300 hover:scale-105 cursor-pointer z-50 flex items-center justify-center"
-                title={isMuted ? "Unmute" : "Mute"}
-              >
-                {isMuted ? (
-                  <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6L4.5 9H1.5v6h3l4.5 3.75V5.25z" />
-                  </svg>
-                ) : (
-                  <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
-                  </svg>
-                )}
-              </button>
-
-              <button
-                onClick={skipIntro}
-                className="absolute bottom-8 right-8 px-5 py-2.5 bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-350 hover:scale-105 cursor-pointer z-50"
-              >
-                Skip Intro &rarr;
-              </button>
-
-              {isAutoplayBlocked && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in">
-                  <div className="text-center space-y-4 max-w-sm px-6">
-                    <p className="text-white/80 text-xs font-bold uppercase tracking-widest">Welcome to Optivita</p>
-                    <button
-                      onClick={startPlaybackManual}
-                      className="w-full py-4 bg-brand-gradient text-white rounded-full font-black uppercase text-xs tracking-widest shadow-glow hover:scale-105 transition-all duration-300 cursor-pointer"
-                    >
-                      Enter Experience
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* State 2: Optivita Brand Logo scale/fade animation */}
-          {introState === "logo" && (
-            <div className="flex flex-col items-center justify-center space-y-6 text-center">
-              <div className="p-4 bg-white rounded-[32px] shadow-glow border border-white/10 animate-logo-scale">
-                <img src={logoAsset.url} alt="Optivita" className="h-24 w-24 object-contain" />
-              </div>
-              <div className="space-y-2 animate-fade-in-up">
-                <h2 className="font-display font-black text-2xl tracking-widest text-white uppercase">
-                  OPTIVITA
-                </h2>
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
-                  YOUR PRECISION HEALTH PARTNER
+      {/* Side Scroll Progress Tracker (Timeline Sidebar, Desktop only) */}
+      <div className="fixed right-8 top-[35%] z-45 hidden xl:flex flex-col items-center gap-6 select-none pointer-events-none animate-fade-in">
+        <div className="relative w-[2px] bg-slate-200 dark:bg-slate-800 h-60 flex flex-col justify-between">
+          <div
+            className="absolute top-0 w-full bg-accent transition-all duration-700 ease-out"
+            style={{
+              height:
+                currentSection === "hero"
+                  ? "0%"
+                  : currentSection === "flowchart"
+                  ? "25%"
+                  : currentSection === "programs"
+                  ? "50%"
+                  : currentSection === "marketplace"
+                  ? "75%"
+                  : "100%",
+            }}
+          />
+          {[
+            { id: "hero", label: "Intro" },
+            { id: "flowchart", label: "Flow" },
+            { id: "programs", label: "Programs" },
+            { id: "marketplace", label: "Market" },
+            { id: "portal", label: "Portal" },
+          ].map((sectionItem) => {
+            const isActive = currentSection === sectionItem.id;
+            return (
+              <div key={sectionItem.id} className="relative flex items-center justify-center -mx-[5px]">
+                <div
+                  className={`h-3 w-3 rounded-full border-2 transition-all duration-500 ${
+                    isActive
+                      ? "bg-accent border-accent scale-125 shadow-glow"
+                      : "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700"
+                  }`}
+                />
+                <span
+                  className={`absolute right-6 text-[9px] font-black uppercase tracking-widest transition-all duration-500 ${
+                    isActive ? "text-accent translate-x-0 opacity-100" : "text-slate-400 translate-x-2 opacity-0"
+                  }`}
+                >
+                  {sectionItem.label}
                 </span>
               </div>
-            </div>
-          )}
+            );
+          })}
         </div>
-      )}
+      </div>
 
-      {/* Side Scroll Progress Tracker (Timeline Sidebar, Desktop only) */}
-      {introState === "done" && (
-        <div className="fixed right-8 top-[35%] z-45 hidden xl:flex flex-col items-center gap-6 select-none pointer-events-none animate-fade-in">
-          <div className="relative w-[2px] bg-slate-200 dark:bg-slate-800 h-60 flex flex-col justify-between">
-            <div
-              className="absolute top-0 w-full bg-accent transition-all duration-700 ease-out"
-              style={{
-                height:
-                  currentSection === "hero"
-                    ? "0%"
-                    : currentSection === "flowchart"
-                    ? "25%"
-                    : currentSection === "programs"
-                    ? "50%"
-                    : currentSection === "marketplace"
-                    ? "75%"
-                    : "100%",
-              }}
-            />
-            {[
-              { id: "hero", label: "Intro" },
-              { id: "flowchart", label: "Flow" },
-              { id: "programs", label: "Programs" },
-              { id: "marketplace", label: "Market" },
-              { id: "portal", label: "Portal" },
-            ].map((sectionItem) => {
-              const isActive = currentSection === sectionItem.id;
-              return (
-                <div key={sectionItem.id} className="relative flex items-center justify-center -mx-[5px]">
-                  <div
-                    className={`h-3 w-3 rounded-full border-2 transition-all duration-500 ${
-                      isActive
-                        ? "bg-accent border-accent scale-125 shadow-glow"
-                        : "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700"
-                    }`}
-                  />
-                  <span
-                    className={`absolute right-6 text-[9px] font-black uppercase tracking-widest transition-all duration-500 ${
-                      isActive ? "text-accent translate-x-0 opacity-100" : "text-slate-400 translate-x-2 opacity-0"
-                    }`}
-                  >
-                    {sectionItem.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {introState === "done" && <SiteHeader />}
+      <SiteHeader />
 
       {/* 1. HERO SECTION */}
       <section id="hero" className="relative min-h-[90vh] flex items-center pt-28 pb-16 overflow-hidden">
@@ -693,9 +514,7 @@ function Home() {
                 </Link>
               </div>
             </div>
-          </div>
-
-          {/* Right Column: Visual and overlapping widgets */}
+          </div>          {/* Right Column: Visual and overlapping widgets */}
           <div className="lg:col-span-6 flex justify-center items-center relative py-8">
             <div className="absolute inset-0 pointer-events-none opacity-30 select-none hidden sm:block">
               <svg className="w-full h-full" viewBox="0 0 400 400" fill="none">
@@ -706,22 +525,25 @@ function Home() {
               </svg>
             </div>
 
-            {/* Premium wellness photo container with zoom mask */}
+            {/* Premium video container with round mask and parallax */}
             <div
-              className={`relative w-full max-w-md aspect-[1.1] rounded-[48px] overflow-hidden shadow-glow border border-slate-200/50 dark:border-slate-800/80 bg-slate-100 dark:bg-slate-900 transition-all duration-1000 delay-300 ease-out transform ${
+              className={`relative w-full max-w-md aspect-[1.1] rounded-[28px] overflow-hidden shadow-glow border border-slate-200/50 dark:border-slate-800/80 bg-slate-100 dark:bg-slate-900 transition-all duration-1000 delay-300 ease-out transform ${
                 heroActive ? "opacity-100 scale-100" : "opacity-0 scale-95"
               }`}
+              style={{
+                transform: `translateY(${scrollY * 0.05}px)`,
+              }}
             >
-              <img
-                src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=800&fit=crop&q=80"
-                alt="Healthy modern wellness active posture"
-                className="h-full w-full object-cover select-none transition-transform duration-[20s] ease-out"
-                style={{
-                  transform: heroActive ? "scale(1.02)" : "scale(1.1)",
-                }}
-                loading="eager"
+              <video
+                ref={heroVideoRef}
+                src="/optivita-hero.mp4"
+                autoPlay
+                muted
+                playsInline
+                loop
+                className="h-full w-full object-cover select-none"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-black/5 pointer-events-none" />
             </div>
 
             {/* Overlap Card 1: Sample Health Score with Count up */}
@@ -729,14 +551,17 @@ function Home() {
               className={`absolute -top-4 -left-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4.5 py-3 rounded-2xl border border-border/80 shadow-glow flex items-center gap-3 max-w-[195px] text-left transition-all duration-800 delay-[1s] cubic-bezier(0.16, 1, 0.3, 1) transform ${
                 heroActive ? "opacity-100 translate-x-0 translate-y-0 scale-100" : "opacity-0 -translate-x-8 -translate-y-4 scale-90"
               }`}
+              style={{
+                transform: `translateY(${scrollY * 0.08}px)`,
+              }}
             >
               <div className="relative h-10 w-10 rounded-full border-[3px] border-emerald-500/25 flex items-center justify-center font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
                 <div className="absolute inset-0 rounded-full border-[3px] border-emerald-500 border-t-transparent animate-spin-slow" />
                 <span className="text-xs font-black">{heroScoreVal}</span>
               </div>
               <div className="min-w-0">
-                <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider truncate">Sample Health Score</p>
-                <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 truncate">Example Profile</p>
+                <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider truncate">SAMPLE HEALTH SCORE</p>
+                <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 truncate">Excellent Range</p>
               </div>
             </div>
 
@@ -745,12 +570,15 @@ function Home() {
               className={`absolute bottom-6 -right-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4.5 py-3.5 rounded-2xl border border-border/80 shadow-glow space-y-1.5 text-left w-44 transition-all duration-800 delay-[1.2s] cubic-bezier(0.16, 1, 0.3, 1) transform ${
                 heroActive ? "opacity-100 translate-x-0 translate-y-0 scale-100" : "opacity-0 translate-x-8 translate-y-4 scale-90"
               }`}
+              style={{
+                transform: `translateY(${scrollY * 0.03}px)`,
+              }}
             >
               <div className="flex items-center justify-between text-[10px] font-bold">
                 <span className="text-slate-800 dark:text-slate-200">DAILY HYDRATION</span>
                 <span className="font-black text-cyan-500">{heroHydrationVal}%</span>
               </div>
-              <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-100 dark:bg-slate-850 h-1.5 rounded-full overflow-hidden">
                 <div
                   className="bg-cyan-500 h-full rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${heroHydrationVal}%` }}
