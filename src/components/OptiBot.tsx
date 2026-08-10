@@ -41,6 +41,7 @@ export default function OptiBot() {
   const [inputText, setInputText] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const [showPulsingAlert, setShowPulsingAlert] = useState(true);
+  const [mascotMuted, setMascotMuted] = useState(true);
 
   // Lead Collection State
   const [leadStep, setLeadStep] = useState<number | null>(null); // null = not collecting, 1-5 = steps
@@ -526,6 +527,8 @@ export default function OptiBot() {
       {!isOpen && (
         <button
           onClick={handleOpenToggle}
+          onMouseEnter={() => setMascotMuted(false)}
+          onMouseLeave={() => setMascotMuted(true)}
           className="relative h-24 w-24 md:h-44 md:w-44 bg-transparent border-0 outline-none flex items-center justify-center overflow-visible hover:scale-105 transition-all duration-300 cursor-pointer pointer-events-auto"
           aria-label="Open OptiBot chatbot"
         >
@@ -534,7 +537,7 @@ export default function OptiBot() {
             src="/mascot.webm"
             autoPlay
             loop
-            muted
+            muted={mascotMuted}
             playsInline
             className="h-full w-full object-contain bg-transparent"
           />
@@ -556,12 +559,16 @@ export default function OptiBot() {
           <div className="relative bg-secondary/80 backdrop-blur-md border-b border-border/50 p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Mascot Video Header Circle */}
-              <div className="h-12 w-12 rounded-full border border-vital/50 overflow-hidden bg-white shrink-0">
+              <div 
+                className="h-12 w-12 rounded-full border border-vital/50 overflow-hidden bg-white shrink-0"
+                onMouseEnter={() => setMascotMuted(false)}
+                onMouseLeave={() => setMascotMuted(true)}
+              >
                 <video
                   src="/mascot.webm"
                   autoPlay
                   loop
-                  muted
+                  muted={mascotMuted}
                   playsInline
                   className="h-full w-full object-cover"
                 />
