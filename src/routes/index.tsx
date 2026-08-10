@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SiteHeader, SiteFooter } from "@/components/SiteChrome";
 import { programs } from "@/lib/programs";
 import { PROVIDERS } from "@/lib/marketplaceData";
@@ -51,14 +51,20 @@ const trustBenefits = [
   },
 ];
 
+type IntroState = "loading" | "video" | "logo" | "reveal" | "done";
+
 function Home() {
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [introState, setIntroState] = useState<IntroState>("loading");
+  const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Check if there is an active logged-in session
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
 
+  // Check first-visit / session state and prefers-reduced-motion
   useEffect(() => {
     // Check client portal session
     const session = localStorage.getItem("optivita_crm_cache");
@@ -73,12 +79,50 @@ function Home() {
       } catch {}
     }
 
-    // Delay welcome popup
-    const timer = setTimeout(() => {
-      setShowWelcomeModal(true);
-    }, 1200);
-    return () => clearTimeout(timer);
+    if (typeof window !== "undefined") {
+      const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const seen = sessionStorage.getItem("optivita_intro_seen");
+
+      if (mediaQuery.matches || seen === "true") {
+        setIntroState("done");
+        // Trigger welcome modal after a slight delay
+        const timer = setTimeout(() => {
+          setShowWelcomeModal(true);
+        }, 1200);
+        return () => clearTimeout(timer);
+      } else {
+        setIntroState("video");
+      }
+    }
   }, []);
+
+  // Handle autoplay check once video enters DOM
+  useEffect(() => {
+    if (introState === "video" && videoRef.current) {
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsAutoplayBlocked(false);
+          })
+          .catch((err) => {
+            console.log("Autoplay was prevented:", err);
+            setIsAutoplayBlocked(true);
+          });
+      }
+    }
+  }, [introState]);
+
+  // Handle Logo Animation timeline (1.8 seconds)
+  useEffect(() => {
+    if (introState === "logo") {
+      const timer = setTimeout(() => {
+        setIntroState("reveal");
+        sessionStorage.setItem("optivita_intro_seen", "true");
+      }, 1800);
+      return () => clearTimeout(timer);
+    }
+  }, [introState]);
 
   // Cycle active step in flowchart for subtle animation effect
   useEffect(() => {
@@ -88,9 +132,117 @@ function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  const skipIntro = () => {
+    setIntroState("logo");
+  };
+
+  const handleVideoEnded = () => {
+    setIntroState("logo");
+  };
+
+  const startPlaybackManual = () => {
+    if (videoRef.current) {
+      videoRef.current.play()
+        .then(() => setIsAutoplayBlocked(false))
+        .catch(() => {});
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300">
-      <SiteHeader />
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300 relative">
+      {/* Dynamic Keyframe style block for Logo Animation */}
+      <style>{`
+        @keyframes logoScale {
+          0% { transform: scale(0.92); opacity: 0; filter: blur(5px); }
+          100% { transform: scale(1); opacity: 1; filter: blur(0); }
+        }
+        @keyframes fadeInUp {
+          0% { transform: translateY(10px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+        .animate-logo-scale {
+          animation: logoScale 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-fade-in-up {
+          animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+        }
+      `}</style>
+
+      {/* Intro Experience Overlay Shell */}
+      {introState !== "done" && (
+        <div
+          className={`fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center select-none transition-opacity duration-1000 ${
+            introState === "reveal" ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
+          onTransitionEnd={() => {
+            if (introState === "reveal") {
+              setIntroState("done");
+              // Delay welcome modal after homepage reveal completes
+              setTimeout(() => {
+                setShowWelcomeModal(true);
+              }, 1200);
+            }
+          }}
+        >
+          {/* State 1: Fullscreen Intro Video */}
+          {introState === "video" && (
+            <div className="relative w-full h-full bg-black">
+              <video
+                ref={videoRef}
+                src="/optivita-hero.mp4"
+                className="w-full h-full object-cover"
+                muted
+                playsInline
+                autoPlay
+                onEnded={handleVideoEnded}
+              />
+
+              {/* Skip Intro CTA Button */}
+              <button
+                onClick={skipIntro}
+                className="absolute bottom-8 right-8 px-5 py-2.5 bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-350 hover:scale-105 hover:border-white/40 cursor-pointer"
+              >
+                Skip Intro &rarr;
+              </button>
+
+              {/* Autoplay blocked manual enter overlay */}
+              {isAutoplayBlocked && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in">
+                  <div className="text-center space-y-4 max-w-sm px-6">
+                    <p className="text-white/80 text-xs font-bold uppercase tracking-widest">Welcome to Optivita</p>
+                    <button
+                      onClick={startPlaybackManual}
+                      className="w-full py-4 bg-brand-gradient text-white rounded-full font-black uppercase text-xs tracking-widest shadow-glow hover:scale-105 transition-all duration-300 cursor-pointer"
+                    >
+                      Enter Experience
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* State 2: Optivita Brand Logo scale/fade animation */}
+          {introState === "logo" && (
+            <div className="flex flex-col items-center justify-center space-y-6 text-center">
+              <div className="p-4 bg-white rounded-[32px] shadow-glow border border-white/10 animate-logo-scale">
+                <img src={logoAsset.url} alt="Optivita" className="h-24 w-24 object-contain" />
+              </div>
+              <div className="space-y-2 animate-fade-in-up">
+                <h2 className="font-display font-black text-2xl tracking-widest text-white uppercase">
+                  OPTIVITA
+                </h2>
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
+                  YOUR PRECISION HEALTH PARTNER
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Render Global Header only after intro experience has fully completed */}
+      {introState === "done" && <SiteHeader />}
 
       {/* 1. HERO SECTION */}
       <section className="relative min-h-[90vh] flex items-center pt-28 pb-16 overflow-hidden">
@@ -794,7 +946,7 @@ function Home() {
         </div>
       )}
 
-      <SiteFooter />
+      {introState === "done" && <SiteFooter />}
     </div>
   );
 }
