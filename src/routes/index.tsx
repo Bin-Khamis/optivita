@@ -1365,7 +1365,7 @@ function Home() {
         </div>
       )}
 
-      {introState === "done" && <SiteFooter />}
+      <SiteFooter />
     </div>
   );
 }
