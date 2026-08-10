@@ -58,9 +58,9 @@ export function SiteHeader() {
         <nav className="hidden md:flex items-center gap-7 text-xs font-bold text-slate-600 dark:text-slate-350">
           {/* Programs Mega Menu Link */}
           <div className="relative group py-4">
-            <button className="flex items-center gap-1.5 hover:text-accent transition-colors font-bold uppercase tracking-wider text-xs cursor-pointer">
+            <button className="flex items-center gap-1.5 hover:text-accent transition-colors font-bold uppercase tracking-wider text-xs cursor-pointer select-none">
               Programs
-              <ChevronDown className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-180" />
+              <ChevronDown className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-180 group-hover:translate-y-0.5" />
             </button>
 
             {/* Mega Menu Dropdown */}
@@ -119,10 +119,10 @@ export function SiteHeader() {
                 <Link
                   key={idx}
                   to={item.path}
-                  className="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-805/50 transition-colors"
+                  className="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-805/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <div
-                    className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${item.color}`}
+                    className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 ${item.color}`}
                   >
                     <item.icon className="h-4.5 w-4.5" />
                   </div>
@@ -140,20 +140,20 @@ export function SiteHeader() {
               <Link
                 to="/"
                 hash="programs"
-                className="col-span-2 mt-2 pt-3 border-t border-border/40 text-center text-xs font-bold text-accent hover:underline flex items-center justify-center gap-1"
+                className="col-span-2 mt-2 pt-3 border-t border-border/40 text-center text-xs font-bold text-accent hover:underline flex items-center justify-center gap-1 group/btn"
               >
                 <span>View All Programs</span>
-                <ArrowRight className="h-3 w-3" />
+                <ArrowRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-1" />
               </Link>
             </div>
           </div>
 
           {/* Marketplace Mega Menu Link */}
           <div className="relative group py-4">
-            <button className="flex items-center gap-1.5 hover:text-accent transition-colors font-bold uppercase tracking-wider text-xs cursor-pointer">
-              <ShoppingBag className="h-3.5 w-3.5 shrink-0" />
+            <button className="flex items-center gap-1.5 hover:text-accent transition-colors font-bold uppercase tracking-wider text-xs cursor-pointer select-none">
+              <ShoppingBag className="h-3.5 w-3.5 shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-0.5" />
               Marketplace
-              <ChevronDown className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-180" />
+              <ChevronDown className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-180 group-hover:translate-y-0.5" />
             </button>
 
             {/* Mega Menu Dropdown */}
@@ -212,10 +212,10 @@ export function SiteHeader() {
                 <Link
                   key={idx}
                   to={item.path}
-                  className="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-805/50 transition-colors"
+                  className="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-805/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <div
-                    className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${item.color}`}
+                    className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 ${item.color}`}
                   >
                     <item.icon className="h-4.5 w-4.5" />
                   </div>
@@ -232,19 +232,21 @@ export function SiteHeader() {
 
               <Link
                 to="/marketplace"
-                className="col-span-2 mt-2 pt-3 border-t border-border/40 text-center text-xs font-bold text-accent hover:underline flex items-center justify-center gap-1"
+                className="col-span-2 mt-2 pt-3 border-t border-border/40 text-center text-xs font-bold text-accent hover:underline flex items-center justify-center gap-1 group/btn"
               >
                 <span>Explore Marketplace Directory</span>
-                <ArrowRight className="h-3 w-3" />
+                <ArrowRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-1" />
               </Link>
             </div>
           </div>
 
-          <Link to="/calculator" className="hover:text-accent transition-colors uppercase tracking-wider text-xs font-bold">
+          <Link to="/calculator" className="relative group py-2 uppercase tracking-wider text-xs font-bold hover:text-accent transition-colors">
             Health Calculator
+            <span className="absolute bottom-0 left-0 w-full h-[2px] bg-accent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
           </Link>
-          <Link to="/about" className="hover:text-accent transition-colors uppercase tracking-wider text-xs font-bold">
+          <Link to="/about" className="relative group py-2 uppercase tracking-wider text-xs font-bold hover:text-accent transition-colors">
             About
+            <span className="absolute bottom-0 left-0 w-full h-[2px] bg-accent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
           </Link>
         </nav>
 
@@ -252,16 +254,17 @@ export function SiteHeader() {
         <div className="flex items-center gap-4">
           <Link
             to="/portal/login"
-            className="hidden sm:inline-flex items-center rounded-full bg-brand-gradient px-5 py-2.5 text-xs font-black uppercase text-white shadow-soft hover:opacity-90 transition-all hover:scale-105 duration-300"
+            className="hidden sm:inline-flex items-center rounded-full bg-brand-gradient px-5 py-2.5 text-xs font-black uppercase text-white shadow-soft hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-350"
           >
             Client Portal
           </Link>
 
           <Link
             to="/admin/login"
-            className="hidden md:inline-flex text-[10px] font-bold uppercase text-slate-400 hover:text-accent transition-colors"
+            className="relative group hidden md:inline-flex py-1 text-[10px] font-bold uppercase text-slate-400 hover:text-accent transition-all duration-300 hover:scale-105 active:scale-95"
           >
             Admin Panel
+            <span className="absolute bottom-0 left-0 w-full h-[1.5px] bg-accent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
           </Link>
 
           {/* Mobile Hamburger Button */}
