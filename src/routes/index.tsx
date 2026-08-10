@@ -161,7 +161,7 @@ function Home() {
 
           // Sidebar indicators offsets
           const scrollPos = currentY + 280;
-          const flowchartEl = document.getElementById("flowchart");
+          const flowchartEl = document.getElementById("flowchart-section");
           const programsEl = document.getElementById("programs");
           const marketplaceEl = document.getElementById("marketplace");
           const clientPortalEl = document.getElementById("client-portal");
@@ -176,6 +176,22 @@ function Home() {
             setCurrentSection("flowchart");
           } else {
             setCurrentSection("hero");
+          }
+
+          // Scroll-driven flowchart step index calculation
+          if (flowchartEl) {
+            const rect = flowchartEl.getBoundingClientRect();
+            const elementHeight = rect.height;
+            const elementTop = rect.top;
+            const viewportHeight = window.innerHeight;
+
+            const startScroll = elementTop - viewportHeight;
+            const totalScrollRange = elementHeight + viewportHeight;
+            const rawProgress = -startScroll / totalScrollRange;
+            const progress = Math.max(0, Math.min(1, rawProgress));
+
+            const stepIndex = Math.min(6, Math.floor(progress * 7));
+            setActiveStep(stepIndex);
           }
 
           ticking = false;
@@ -303,13 +319,6 @@ function Home() {
     }
   }, [scoreWidgetActive]);
 
-  // Cycle active flowchart steps
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % 7);
-    }, 3200);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300 relative overflow-x-hidden">
@@ -356,6 +365,8 @@ function Home() {
         .delay-stagger-3 { transition-delay: 300ms; }
         .delay-stagger-4 { transition-delay: 450ms; }
         .delay-stagger-5 { transition-delay: 600ms; }
+        .delay-stagger-6 { transition-delay: 750ms; }
+        .delay-stagger-7 { transition-delay: 900ms; }
       `}</style>
 
       {/* Side Scroll Progress Tracker (Timeline Sidebar, Desktop only) */}
@@ -409,48 +420,55 @@ function Home() {
       <SiteHeader />
 
       {/* 1. HERO SECTION */}
-      <section id="hero" className="relative min-h-[90vh] flex items-center pt-28 pb-16 overflow-hidden">
+      <section id="hero" className="relative min-h-[95vh] flex items-center pt-32 pb-20 overflow-hidden">
         {/* Atmospheric background glow */}
         <div
           className={`absolute inset-0 overflow-hidden pointer-events-none transition-opacity duration-1000 ${
             heroActive ? "opacity-40" : "opacity-0"
           }`}
         >
-          <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-emerald-400/15 blur-[130px]" />
-          <div className="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-teal-400/15 blur-[130px]" />
+          <div className="absolute top-1/4 left-1/4 h-[420px] w-[420px] rounded-full bg-emerald-400/15 blur-[140px]" />
+          <div className="absolute bottom-1/4 right-1/4 h-[420px] w-[420px] rounded-full bg-teal-400/15 blur-[140px]" />
+          <div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full blur-[130px] animate-pulse-slow"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle, rgba(16,185,129,0.08) 0%, rgba(20,184,166,0.03) 60%, transparent 100%)",
+            }}
+          />
         </div>
 
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-12 items-center relative z-10 w-full">
           {/* Left Column: Copy staggered entries */}
-          <div className="lg:col-span-6 space-y-7 text-left">
+          <div className="lg:col-span-6 space-y-8 text-left">
             {/* Pill Badge */}
             <div
               className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest w-fit select-none transition-all duration-700 ease-out transform ${
                 heroActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               }`}
             >
-              <Sparkles className="h-3.5 w-3.5 shrink-0" />
+              <Sparkles className="h-3.5 w-3.5 shrink-0 animate-pulse-slow" />
               <span>YOUR PRECISION HEALTH PARTNER</span>
             </div>
 
             {/* Headline revealing line-by-line */}
-            <h1 className="font-display font-black text-4xl sm:text-6xl lg:text-7xl leading-[1.12] tracking-tight text-slate-900 dark:text-white select-none">
+            <h1 className="font-display font-black text-4xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[1.05] tracking-tight text-slate-900 dark:text-white select-none">
               <span
-                className={`block transition-all duration-700 delay-150 ease-out transform ${
+                className={`block transition-all duration-700 delay-100 ease-out transform ${
                   heroActive ? "opacity-100 translate-y-0 filter-none" : "opacity-0 translate-y-4 filter blur-[2px]"
                 }`}
               >
                 YOUR HEALTH.
               </span>
               <span
-                className={`block transition-all duration-700 delay-300 ease-out transform ${
+                className={`block transition-all duration-700 delay-200 ease-out transform ${
                   heroActive ? "opacity-100 translate-y-0 filter-none" : "opacity-0 translate-y-4 filter blur-[2px]"
                 }`}
               >
                 YOUR DATA.
               </span>
               <span
-                className={`block transition-all duration-700 delay-450 ease-out transform ${
+                className={`block transition-all duration-700 delay-300 ease-out transform ${
                   heroActive ? "opacity-100 translate-y-0 filter-none" : "opacity-0 translate-y-4 filter blur-[2px]"
                 }`}
               >
@@ -465,7 +483,7 @@ function Home() {
 
             {/* Supporting Copy */}
             <p
-              className={`text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-[540px] leading-relaxed transition-all duration-700 delay-600 ease-out transform ${
+              className={`text-sm sm:text-base md:text-[17px] text-slate-500 dark:text-slate-400 max-w-[540px] leading-relaxed transition-all duration-700 delay-400 ease-out transform ${
                 heroActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               }`}
             >
@@ -474,7 +492,7 @@ function Home() {
 
             {/* Tagline Concept */}
             <div
-              className={`text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-2 select-none transition-all duration-700 delay-700 ease-out transform ${
+              className={`text-xs font-black uppercase tracking-widest text-slate-450 dark:text-slate-500 flex items-center gap-2 select-none transition-all duration-700 delay-500 ease-out transform ${
                 heroActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               }`}
             >
@@ -527,7 +545,7 @@ function Home() {
 
             {/* Premium video container with round mask and parallax */}
             <div
-              className={`relative w-full max-w-md aspect-[1.1] rounded-[28px] overflow-hidden shadow-glow border border-slate-200/50 dark:border-slate-800/80 bg-slate-100 dark:bg-slate-900 transition-all duration-1000 delay-300 ease-out transform ${
+              className={`relative w-full max-w-lg aspect-[1.1] rounded-[32px] overflow-hidden shadow-glow border border-slate-200/50 dark:border-slate-800/85 bg-slate-100 dark:bg-slate-900 transition-all duration-1000 delay-[550ms] ease-out transform ${
                 heroActive ? "opacity-100 scale-100" : "opacity-0 scale-95"
               }`}
               style={{
@@ -778,6 +796,84 @@ function Home() {
                 </Link>
               );
             })}
+          </div>
+
+          {/* RECOMMENDED FOR YOU Product Catalog Placeholder */}
+          <div className="mt-16 space-y-6 text-left scroll-reveal delay-stagger-2">
+            <div>
+              <h3 className="font-display font-black text-xl text-slate-900 dark:text-white uppercase tracking-wider">
+                Recommended For You
+              </h3>
+              <p className="text-xs text-slate-450 dark:text-slate-400 font-semibold mt-1">
+                Polished metabolic hardware, clinical monitoring devices, and daily active supplement formulations:
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                {
+                  name: "Optivita Metabolic Tracker Band",
+                  category: "Wearables",
+                  price: "SAR 899",
+                  rating: "4.9 (240 reviews)",
+                  image: "https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=600&fit=crop&q=80",
+                },
+                {
+                  name: "Premium Bio-Max Omega-3 Pack",
+                  category: "Supplements",
+                  price: "SAR 189",
+                  rating: "4.8 (115 reviews)",
+                  image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&fit=crop&q=80",
+                },
+                {
+                  name: "Smart BMI & Body Composition Scale",
+                  category: "Health Devices",
+                  price: "SAR 349",
+                  rating: "4.9 (89 reviews)",
+                  image: "https://images.unsplash.com/photo-1551076805-e1869033e561?w=600&fit=crop&q=80",
+                },
+              ].map((prod, idx) => (
+                <div
+                  key={idx}
+                  className="group/prod flex flex-col justify-between overflow-hidden rounded-[28px] border border-slate-200/80 dark:border-slate-800 bg-card p-5.5 shadow-soft hover:shadow-glow hover:-translate-y-1 active:scale-[0.99] transition-all duration-300 scroll-reveal"
+                >
+                  <div className="space-y-4">
+                    <div className="relative aspect-[1.4] w-full overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-900 border border-border/40">
+                      <img
+                        src={prod.image}
+                        alt={prod.name}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover/prod:scale-105"
+                        loading="lazy"
+                      />
+                      <span className="absolute top-3 left-3 px-2.5 py-1 bg-white/90 dark:bg-slate-950/90 backdrop-blur border border-border/40 rounded-lg text-[9px] font-black uppercase text-accent tracking-widest">
+                        {prod.category}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1 text-left">
+                      <h4 className="font-display font-black text-base text-slate-850 dark:text-slate-100 leading-snug truncate">
+                        {prod.name}
+                      </h4>
+                      <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold">
+                        <span className="text-amber-500">⭐</span>
+                        <span>{prod.rating}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 pt-3 border-t border-border/40 flex items-center justify-between">
+                    <span className="text-sm font-black text-slate-800 dark:text-slate-100">{prod.price}</span>
+                    <Link
+                      to="/marketplace"
+                      className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-accent group-hover/prod:text-emerald-500 transition-colors duration-300"
+                    >
+                      <span>View Product</span>
+                      <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover/prod:translate-x-0.5" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Actual Database Providers Showcase */}
@@ -1186,17 +1282,17 @@ function Home() {
 
             {/* Layout simulation */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="p-3 bg-secondary/30 rounded-xl space-y-1.5 hover:scale-102 transition-transform duration-300">
+              <div className="p-3 bg-secondary/30 rounded-xl space-y-1.5 hover:scale-102 transition-transform duration-300 scroll-reveal delay-stagger-1">
                 <span className="text-[9px] font-bold text-slate-400">MEAL PLAN</span>
                 <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Day 14 Menu</p>
                 <span className="text-[9px] bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded">Balanced</span>
               </div>
-              <div className="p-3 bg-secondary/30 rounded-xl space-y-1.5 hover:scale-102 transition-transform duration-300">
+              <div className="p-3 bg-secondary/30 rounded-xl space-y-1.5 hover:scale-102 transition-transform duration-300 scroll-reveal delay-stagger-2">
                 <span className="text-[9px] font-bold text-slate-400">WORKOUT</span>
                 <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Core Training</p>
                 <span className="text-[9px] bg-teal-500/10 text-teal-600 px-2 py-0.5 rounded">Active</span>
               </div>
-              <div className="p-3 bg-secondary/30 rounded-xl space-y-1.5 hover:scale-102 transition-transform duration-300">
+              <div className="p-3 bg-secondary/30 rounded-xl space-y-1.5 hover:scale-102 transition-transform duration-300 scroll-reveal delay-stagger-3">
                 <span className="text-[9px] font-bold text-slate-400">APPOINTMENTS</span>
                 <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Thu 16:00</p>
                 <span className="text-[9px] bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded">Confirmed</span>
@@ -1204,7 +1300,7 @@ function Home() {
             </div>
 
             {/* Coach Chat mockup snippet */}
-            <div className="p-4 bg-slate-50 dark:bg-slate-900 border rounded-2xl space-y-2 hover:scale-[1.01] transition-transform duration-300">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900 border rounded-2xl space-y-2 hover:scale-[1.01] transition-transform duration-300 scroll-reveal delay-stagger-4">
               <p className="text-[9px] font-bold text-slate-400 uppercase">Latest Coach Message</p>
               <p className="text-xs italic text-slate-655 dark:text-slate-350 leading-relaxed">
                 "Keep up the great work on hydration targets. We will review your body weight index measurements on the Thursday sync!"
@@ -1243,7 +1339,7 @@ function Home() {
               <div
                 key={idx}
                 className={`flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-4.5 hover:bg-white/10 transition-colors duration-300 scroll-reveal delay-stagger-${
-                  (idx % 3) + 1
+                  idx + 1
                 }`}
               >
                 <div className="h-6 w-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">

@@ -58,13 +58,14 @@ export function SiteHeader() {
         <nav className="hidden md:flex items-center gap-7 text-xs font-bold text-slate-600 dark:text-slate-350">
           {/* Programs Mega Menu Link */}
           <div className="relative group py-4">
-            <button className="flex items-center gap-1.5 hover:text-accent transition-colors font-bold uppercase tracking-wider text-xs cursor-pointer select-none">
+            <button className="relative flex items-center gap-1.5 hover:text-accent transition-colors font-bold uppercase tracking-wider text-xs cursor-pointer select-none">
               Programs
               <ChevronDown className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-180 group-hover:translate-y-0.5" />
+              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-accent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
             </button>
 
             {/* Mega Menu Dropdown */}
-            <div className="absolute top-[100%] left-0 w-[580px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-glow opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 p-6 grid grid-cols-2 gap-4 translate-y-2 group-hover:translate-y-0 text-left z-50">
+            <div className="absolute top-[100%] left-0 w-[580px] backdrop-blur-md bg-white/95 dark:bg-slate-900/95 border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-glow opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 p-6 grid grid-cols-2 gap-4 translate-y-2 group-hover:translate-y-0 text-left z-50">
               <div className="col-span-2 pb-2.5 border-b border-border/40 flex justify-between items-center">
                 <span className="text-[10px] font-black uppercase text-accent tracking-widest">
                   Signature Health Programs
@@ -119,10 +120,10 @@ export function SiteHeader() {
                 <Link
                   key={idx}
                   to={item.path}
-                  className="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-805/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                  className="group/menuitem flex items-start gap-3.5 p-3 rounded-2xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <div
-                    className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 ${item.color}`}
+                    className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-all duration-355 group-hover/menuitem:scale-110 group-hover/menuitem:translate-x-0.5 ${item.color}`}
                   >
                     <item.icon className="h-4.5 w-4.5" />
                   </div>
@@ -150,14 +151,15 @@ export function SiteHeader() {
 
           {/* Marketplace Mega Menu Link */}
           <div className="relative group py-4">
-            <button className="flex items-center gap-1.5 hover:text-accent transition-colors font-bold uppercase tracking-wider text-xs cursor-pointer select-none">
+            <button className="relative flex items-center gap-1.5 hover:text-accent transition-colors font-bold uppercase tracking-wider text-xs cursor-pointer select-none">
               <ShoppingBag className="h-3.5 w-3.5 shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-0.5" />
               Marketplace
               <ChevronDown className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-180 group-hover:translate-y-0.5" />
+              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-accent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
             </button>
 
             {/* Mega Menu Dropdown */}
-            <div className="absolute top-[100%] left-0 w-[520px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-glow opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 p-6 grid grid-cols-2 gap-4 translate-y-2 group-hover:translate-y-0 text-left z-50">
+            <div className="absolute top-[100%] left-0 w-[520px] backdrop-blur-md bg-white/95 dark:bg-slate-900/95 border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-glow opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 p-6 grid grid-cols-2 gap-4 translate-y-2 group-hover:translate-y-0 text-left z-50">
               <div className="col-span-2 pb-2.5 border-b border-border/40 flex justify-between items-center">
                 <span className="text-[10px] font-black uppercase text-accent tracking-widest">
                   Wellness & Expert Marketplace
@@ -203,7 +205,7 @@ export function SiteHeader() {
                 },
                 {
                   title: "Mental Wellness",
-                  desc: "Mindfulness, therapy and yoga instructors.",
+                  desc: "Mental wellness and yoga instructors.",
                   icon: HeartPulse,
                   path: "/marketplace/wellness",
                   color: "text-rose-500 bg-rose-500/10",
@@ -212,10 +214,10 @@ export function SiteHeader() {
                 <Link
                   key={idx}
                   to={item.path}
-                  className="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-805/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                  className="group/menuitem flex items-start gap-3.5 p-3 rounded-2xl hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <div
-                    className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 ${item.color}`}
+                    className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-all duration-355 group-hover/menuitem:scale-110 group-hover/menuitem:translate-x-0.5 ${item.color}`}
                   >
                     <item.icon className="h-4.5 w-4.5" />
                   </div>
