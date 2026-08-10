@@ -648,14 +648,23 @@ function Home() {
                 heroActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               }`}
             >
-              Personalized wellness programs, expert guidance and integrated
-              progress tracking — all unified under one secure health-tech
-              ecosystem.
+              Personalized nutrition, wellness programs and progress tracking — built around your goals.
             </p>
+
+            {/* Tagline Concept */}
+            <div
+              className={`text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-2 select-none transition-all duration-700 delay-700 ease-out transform ${
+                heroActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+              }`}
+            >
+              <span>Precision nutrition.</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+              <span>Sustainable results.</span>
+            </div>
 
             {/* Buttons & Links */}
             <div
-              className={`space-y-5 pt-2 transition-all duration-700 delay-750 ease-out transform ${
+              className={`space-y-5 pt-2 transition-all duration-700 delay-[800ms] ease-out transform ${
                 heroActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               }`}
             >
@@ -680,8 +689,7 @@ function Home() {
                   className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-accent hover:underline group/market"
                 >
                   <ShoppingBag className="h-4 w-4 shrink-0 text-accent transition-transform group-hover/market:scale-110 group-hover/market:-translate-y-0.5" />
-                  <span>Explore Marketplace</span>
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/market:translate-x-1" />
+                  <span>Explore Marketplace &rarr;</span>
                 </Link>
               </div>
             </div>
@@ -754,6 +762,62 @@ function Home() {
         </div>
       </section>
 
+      {/* 2. TRUST VALUES SHOWCASE SECTION */}
+      <section className="py-20 bg-emerald-500/5 dark:bg-emerald-500/5 border-t border-b border-border/40 scroll-reveal">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              {
+                title: "Precision",
+                desc: "Personalized nutrition plans and caloric matching built around your metabolic metrics.",
+                icon: Sparkles,
+                color: "text-emerald-500 bg-emerald-500/10",
+              },
+              {
+                title: "Science",
+                desc: "Every recommendation and program is backed by clinical data and evidence-based science.",
+                icon: Activity,
+                color: "text-teal-500 bg-teal-500/10",
+              },
+              {
+                title: "Compassion",
+                desc: "Supporting your personal health transformation journey with genuine care and empathy.",
+                icon: Heart,
+                color: "text-rose-500 bg-rose-500/10",
+              },
+              {
+                title: "Accountability",
+                desc: "Consistent progress feedback, direct chat support, and dedicated weekly assessments.",
+                icon: ShieldCheck,
+                color: "text-sky-500 bg-sky-500/10",
+              },
+            ].map((val, idx) => {
+              const Icon = val.icon;
+              return (
+                <div
+                  key={val.title}
+                  className={`group p-6.5 rounded-3xl bg-card border border-border/50 hover:border-accent hover:shadow-soft transition-all duration-300 flex flex-col text-left space-y-4 scroll-reveal delay-stagger-${
+                    idx + 1
+                  }`}
+                >
+                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-transform duration-500 group-hover:rotate-[360deg] ${val.color}`}>
+                    <Icon className="h-6 w-6 shrink-0" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <h3 className="font-display font-black text-lg text-slate-900 dark:text-white uppercase tracking-wider">
+                      {val.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-semibold">
+                      {val.desc}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* 2. CORE PROGRAMS SECTION (Staggered scroll reveal cards + Parallax images) */}
       <section id="programs" className="py-24 border-t border-border/40 scroll-reveal">
         <div className="max-w-7xl mx-auto px-6">
@@ -778,11 +842,11 @@ function Home() {
                   key={p.id}
                   to="/programs/$programId"
                   params={{ programId: p.id }}
-                  className={`group relative flex flex-col justify-between overflow-hidden rounded-[32px] border border-slate-200/80 dark:border-slate-800 bg-card p-6.5 shadow-soft hover:shadow-glow hover:-translate-y-1.5 active:scale-[0.99] transition-all duration-350 text-left scroll-reveal delay-stagger-${
+                  className={`group relative flex flex-col justify-between overflow-hidden rounded-[36px] border border-slate-200/80 dark:border-slate-800 bg-card p-8 shadow-soft hover:shadow-glow hover:-translate-y-1.5 active:scale-[0.99] transition-all duration-350 text-left scroll-reveal delay-stagger-${
                     (i % 3) + 1
                   }`}
                 >
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     {p.image && (
                       <div className="relative aspect-[1.5] w-full overflow-hidden rounded-2xl border border-border/50 bg-slate-100 dark:bg-slate-800">
                         <img
@@ -796,14 +860,14 @@ function Home() {
                         />
                       </div>
                     )}
-                    <div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-accent">
+                    <div className="space-y-2">
+                      <span className="inline-block px-2.5 py-1 rounded bg-accent/10 border border-accent/20 text-[9px] font-black uppercase tracking-widest text-accent">
                         {p.duration} Duration
                       </span>
-                      <h3 className="mt-1 font-display font-black text-2xl text-slate-900 dark:text-white">
+                      <h3 className="font-display font-black text-2xl text-slate-900 dark:text-white leading-tight">
                         {p.name}
                       </h3>
-                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-normal">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-semibold">
                         {p.tagline}
                       </p>
                     </div>
@@ -811,16 +875,18 @@ function Home() {
                       {p.focus.map((f) => (
                         <span
                           key={f}
-                          className="text-[9px] font-bold bg-secondary text-secondary-foreground rounded-md px-2.5 py-1"
+                          className="text-[9px] font-black uppercase tracking-wider bg-secondary/80 text-secondary-foreground rounded border border-border/40 px-2.5 py-1"
                         >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="mt-8 pt-4 border-t border-border/40 flex items-center justify-between text-xs font-bold text-accent">
-                    <span>View Details & Intake Form</span>
-                    <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <div className="mt-8 pt-4 border-t border-border/40 flex items-center justify-between text-xs font-black uppercase tracking-wider text-accent group-hover:text-emerald-500 transition-colors duration-300">
+                    <span>View Details & Intake</span>
+                    <div className="h-7 w-7 rounded-full bg-accent/10 text-accent group-hover:bg-emerald-500 group-hover:text-white transition-all flex items-center justify-center shrink-0">
+                      <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </div>
                   </div>
                 </Link>
               );
@@ -840,65 +906,73 @@ function Home() {
       </section>
 
       {/* 3. OPTIVITA HEALTH JOURNEY MARKETPLACE */}
-      <section id="marketplace" className="py-24 bg-secondary/20 border-t border-b border-border/40 scroll-reveal">
+      <section id="marketplace" className="py-24 bg-sky-500/5 dark:bg-sky-950/20 border-t border-b border-border/40 scroll-reveal">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
             <span className="text-xs font-black uppercase tracking-widest text-accent bg-accent/10 px-3.5 py-1.5 rounded-full border border-accent/20">
-              Wellness Network
+              Health Marketplace
             </span>
             <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white pt-2">
               HEALTH JOURNEY MARKETPLACE
             </h2>
             <p className="text-slate-500 dark:text-slate-400 text-sm">
-              Discover verified local professionals, sports clinics, and medical consultants synced for continuous health tracking.
+              Discover nutrition consults, verified supplements, fitness coaching, active wearables, and medical tracking devices.
             </p>
           </div>
 
-          {/* Sequential Categories reveals */}
+          {/* Categories grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {[
               { label: "Nutrition", icon: Apple, color: "text-emerald-500 bg-emerald-500/10", path: "/marketplace/nutrition" },
-              { label: "Fitness", icon: Dumbbell, color: "text-teal-500 bg-teal-500/10", path: "/marketplace/fitness" },
-              { label: "Gyms", icon: Award, color: "text-sky-500 bg-sky-500/10", path: "/marketplace/gyms" },
+              { label: "Supplements", icon: Sparkles, color: "text-teal-500 bg-teal-500/10", path: "/marketplace" },
+              { label: "Fitness", icon: Dumbbell, color: "text-sky-500 bg-sky-500/10", path: "/marketplace/fitness" },
               { label: "Wearables", icon: Smartphone, color: "text-amber-500 bg-amber-500/10", path: "/marketplace" },
               { label: "Health Devices", icon: Activity, color: "text-blue-500 bg-blue-500/10", path: "/marketplace" },
               { label: "Wellness", icon: HeartPulse, color: "text-rose-500 bg-rose-500/10", path: "/marketplace/wellness" },
-            ].map((cat, idx) => (
-              <Link
-                key={idx}
-                to={cat.path}
-                className={`group p-5 rounded-3xl bg-card border border-border/50 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-accent hover:shadow-soft active:scale-95 transition-all duration-300 flex flex-col items-center justify-center text-center space-y-3.5 scroll-reveal delay-stagger-${
-                  (idx % 4) + 1
-                }`}
-              >
-                <div
-                  className={`h-11 w-11 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${cat.color}`}
+            ].map((cat, idx) => {
+              const Icon = cat.icon;
+              return (
+                <Link
+                  key={idx}
+                  to={cat.path}
+                  className={`group p-5 rounded-3xl bg-card border border-border/50 hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-accent hover:shadow-soft active:scale-95 transition-all duration-300 flex flex-col items-center justify-center text-center space-y-3.5 scroll-reveal delay-stagger-${
+                    (idx % 4) + 1
+                  }`}
                 >
-                  <cat.icon className="h-5 w-5" />
-                </div>
-                <span className="text-[10px] font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider">
-                  {cat.label}
-                </span>
-              </Link>
-            ))}
+                  <div
+                    className={`h-11 w-11 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${cat.color}`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider">
+                    {cat.label}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
 
           {/* Actual Database Providers Showcase */}
           <div className="mt-16 space-y-6 text-left scroll-reveal delay-stagger-2">
-            <div className="flex justify-between items-center">
-              <h3 className="font-display font-black text-xl text-slate-900 dark:text-white">
-                Featured Verified Experts
-              </h3>
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <h3 className="font-display font-black text-xl text-slate-900 dark:text-white">
+                  Featured Verified Experts
+                </h3>
+                <p className="text-xs text-slate-400 font-medium mt-1">
+                  Marketplace catalog is ready for supplements and gear. Browse verified experts currently active in your region:
+                </p>
+              </div>
               <Link
                 to="/marketplace"
-                className="text-xs font-bold text-accent hover:underline flex items-center gap-1 group/btn"
+                className="text-xs font-bold text-accent hover:underline flex items-center gap-1 group/btn shrink-0 w-fit"
               >
                 <span>Browse Marketplace Directory</span>
                 <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1" />
               </Link>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-3 gap-6 pt-2">
               {PROVIDERS.slice(0, 3).map((provider, i) => (
                 <Link
                   key={provider.id}
@@ -934,7 +1008,7 @@ function Home() {
       </section>
 
       {/* 4. SOPHISTICATED HEALTH JOURNEY FLOWCHART (Scroll drawing SVG line) */}
-      <section id="flowchart" className="py-24 bg-card scroll-reveal" id="flowchart-section">
+      <section id="flowchart-section" className="py-24 bg-card scroll-reveal">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
             <span className="text-xs font-black uppercase tracking-widest text-accent bg-accent/10 px-3.5 py-1.5 rounded-full border border-accent/20">
@@ -1049,14 +1123,14 @@ function Home() {
           <div className="lg:col-span-6 bg-card border border-border/80 rounded-[36px] p-8 shadow-glow space-y-6 scroll-reveal delay-stagger-1">
             <div className="flex justify-between items-center pb-4 border-b border-border/40">
               <div>
-                <h3 className="font-display font-black text-lg text-slate-900 dark:text-white">
-                  Sample Health Profile
+                <h3 className="font-display font-black text-lg text-slate-900 dark:text-white uppercase tracking-wider">
+                  SAMPLE HEALTH PROFILE
                 </h3>
-                <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider">
-                  Logged out / anonymous preview
+                <p className="text-[9px] text-muted-foreground mt-0.5 font-bold uppercase tracking-wider">
+                  Sample data only — Check health to get real stats
                 </p>
               </div>
-              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase">
+              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase shrink-0">
                 Healthy Class
               </span>
             </div>
@@ -1154,11 +1228,11 @@ function Home() {
             <span className="text-xs font-black uppercase tracking-widest text-accent bg-accent/10 px-3.5 py-1.5 rounded-full border border-accent/20">
               Optivita Intelligence
             </span>
-            <h3 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white">
-              Data Convergence Engine
+            <h3 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white uppercase">
+              TURNING HEALTH DATA INTO ACTION
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 max-w-lg mx-auto">
-              How user input data transforms into personalized health programs and tailored marketplace recommendations.
+              How your assessment data maps to personalized nutrition guidance and verified marketplace specialists.
             </p>
           </div>
 
@@ -1312,38 +1386,42 @@ function Home() {
         </div>
       </section>
 
-      {/* 8. TRUST / PLATFORM BENEFITS SECTION */}
-      <section className="py-24 bg-card border-t border-border/40 scroll-reveal">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-xs font-black uppercase tracking-widest text-accent bg-accent/10 px-3.5 py-1.5 rounded-full border border-accent/20">
-              Why Optivita
+      {/* 8. OUTCOMES SHOWCASE SECTION */}
+      <section className="py-24 bg-slate-900 dark:bg-slate-950 text-white scroll-reveal">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-6 text-left">
+            <span className="inline-block text-xs font-black uppercase tracking-widest text-emerald-400 bg-emerald-400/10 px-3.5 py-1.5 rounded-full border border-emerald-400/20">
+              Optivita Standards
             </span>
-            <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white pt-2">
-              PRECISION DELIVERED WITH CARE
+            <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
+              OUTCOMES,
+              <br />
+              NOT JUST PLANS.
             </h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
-              We focus on evidence-based health technology, direct accountability, and clinical precision.
+            <p className="text-slate-350 text-sm leading-relaxed max-w-md">
+              We focus on evidence-based health technology, direct accountability, and clinical precision. No generic templates or guesswork.
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {trustBenefits.map((item, idx) => (
+          <div className="grid sm:grid-cols-2 gap-4 text-left">
+            {[
+              "Personalized assessment",
+              "Expert guidance",
+              "Weekly check-ins",
+              "Progress tracking",
+              "Direct support",
+              "Evidence-based nutrition",
+            ].map((item, idx) => (
               <div
                 key={idx}
-                className={`p-6 rounded-3xl bg-secondary/15 border border-border/40 space-y-3.5 text-left hover:shadow-soft active:scale-98 transition-all duration-350 scroll-reveal delay-stagger-${
-                  idx + 1
+                className={`flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-4.5 hover:bg-white/10 transition-colors duration-300 scroll-reveal delay-stagger-${
+                  (idx % 3) + 1
                 }`}
               >
-                <div className="h-10 w-10 rounded-2xl bg-accent/10 text-accent flex items-center justify-center">
-                  <item.icon className="h-5 w-5" />
+                <div className="h-6 w-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                  <CheckCircle className="h-4 w-4" />
                 </div>
-                <h3 className="font-display font-black text-lg text-slate-900 dark:text-white">
-                  {item.title}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {item.desc}
-                </p>
+                <span className="text-xs font-bold text-slate-100">{item}</span>
               </div>
             ))}
           </div>
