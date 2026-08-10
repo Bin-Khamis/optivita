@@ -40,13 +40,7 @@ function CustomerPrograms() {
   const currentWeek = Number(clientEnrollment["Current Week"] || 2);
 
   // Deliverables Roadmap
-  let deliverables = [
-    { week: 1, title: "Initial Clinical Assessment & Detox Meal Plan", status: "Completed" },
-    { week: 2, title: "Metabolic Adaptation & Calorie Adjustment", status: "In Progress" },
-    { week: 3, title: "Mid-Program Progress Evaluation & Biomarkers", status: "Pending" },
-    { week: 4, title: "Final Health Summary & Subscription Renewal Plan", status: "Pending" },
-  ];
-
+  let deliverables: any[] = [];
   try {
     const rawDelivs =
       typeof clientEnrollment["Deliverables"] === "string"
@@ -58,7 +52,7 @@ function CustomerPrograms() {
   } catch (e) {}
 
   // Deliverables checklist
-  const [tasks, setTasks] = useState(() => {
+  const [tasks, setTasks] = useState<any[]>(() => {
     try {
       const rawTasks =
         typeof clientEnrollment["Tasks"] === "string"
@@ -68,12 +62,7 @@ function CustomerPrograms() {
         return rawTasks;
       }
     } catch (e) {}
-    return [
-      { id: 1, text: "Log weekly calorie count in profile tracker", done: true },
-      { id: 2, text: "Complete weekly checklist health review", done: false },
-      { id: 3, text: "Attend Live Webinar: Science of PCOS & Keto", done: false },
-      { id: 4, text: "Log daily target steps limit (minimum 8,000 steps)", done: true },
-    ];
+    return [];
   });
 
   const handleToggleTask = (id: number) => {
@@ -137,54 +126,60 @@ function CustomerPrograms() {
             </div>
 
             <div className="space-y-3">
-              {deliverables.map((item: any, idx: number) => {
-                const isCurrent = item.week === currentWeek;
-                return (
-                  <div
-                    key={idx}
-                    className={`p-4 border rounded-2xl flex items-center justify-between transition-all duration-200 ${
-                      item.status === "Completed"
-                        ? "border-emerald-500/10 bg-emerald-500/5 text-slate-700 dark:text-slate-300"
-                        : isCurrent
-                          ? "border-emerald-500/30 bg-white dark:bg-slate-900 ring-2 ring-emerald-500/20 shadow-soft"
-                          : "border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 text-slate-500"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div
-                        className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs ${
-                          item.status === "Completed"
-                            ? "bg-emerald-600 text-white"
-                            : isCurrent
-                              ? "bg-emerald-500/20 text-emerald-600"
-                              : "bg-slate-200 dark:bg-slate-800 text-slate-400"
-                        }`}
-                      >
-                        W{item.week || idx + 1}
-                      </div>
-                      <div>
-                        <p className="font-bold text-xs text-slate-900 dark:text-slate-100">
-                          {item.title}
-                        </p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">
-                          Assigned Clinical Deliverable
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider ${
+              {deliverables.length === 0 ? (
+                <div className="p-8 border border-dashed rounded-2xl text-center text-xs text-slate-400">
+                  No deliverables scheduled for this program yet.
+                </div>
+              ) : (
+                deliverables.map((item: any, idx: number) => {
+                  const isCurrent = item.week === currentWeek;
+                  return (
+                    <div
+                      key={idx}
+                      className={`p-4 border rounded-2xl flex items-center justify-between transition-all duration-200 ${
                         item.status === "Completed"
-                          ? "bg-emerald-500/10 text-emerald-600"
-                          : item.status === "In Progress"
-                            ? "bg-blue-500/10 text-blue-600"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                          ? "border-emerald-500/10 bg-emerald-500/5 text-slate-700 dark:text-slate-300"
+                          : isCurrent
+                            ? "border-emerald-500/30 bg-white dark:bg-slate-900 ring-2 ring-emerald-500/20 shadow-soft"
+                            : "border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 text-slate-500"
                       }`}
                     >
-                      {item.status}
-                    </span>
-                  </div>
-                );
-              })}
+                      <div className="flex items-center gap-3.5">
+                        <div
+                          className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs ${
+                            item.status === "Completed"
+                              ? "bg-emerald-600 text-white"
+                              : isCurrent
+                                ? "bg-emerald-500/20 text-emerald-600"
+                                : "bg-slate-200 dark:bg-slate-800 text-slate-400"
+                          }`}
+                        >
+                          W{item.week || idx + 1}
+                        </div>
+                        <div>
+                          <p className="font-bold text-xs text-slate-900 dark:text-slate-100">
+                            {item.title}
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            Assigned Clinical Deliverable
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider ${
+                          item.status === "Completed"
+                            ? "bg-emerald-500/10 text-emerald-600"
+                            : item.status === "In Progress"
+                              ? "bg-blue-500/10 text-blue-600"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -200,29 +195,35 @@ function CustomerPrograms() {
             </div>
 
             <div className="space-y-3">
-              {tasks.map((t) => (
-                <div
-                  key={t.id}
-                  onClick={() => handleToggleTask(t.id)}
-                  className={`p-4 border rounded-2xl flex items-start gap-3.5 cursor-pointer hover:shadow-soft transition-all duration-200 ${
-                    t.done
-                      ? "border-emerald-500/10 bg-emerald-500/5 text-slate-500"
-                      : "border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 text-slate-800 dark:text-slate-100"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={t.done}
-                    onChange={() => {}}
-                    className="mt-0.5 rounded border-slate-300 dark:border-slate-800 text-emerald-600 focus:ring-emerald-500 accent-emerald-600"
-                  />
-                  <span
-                    className={`text-xs font-semibold leading-normal ${t.done ? "line-through opacity-70" : ""}`}
-                  >
-                    {t.text}
-                  </span>
+              {tasks.length === 0 ? (
+                <div className="p-8 border border-dashed rounded-2xl text-center text-xs text-slate-400">
+                  No weekly coaching tasks assigned for this week.
                 </div>
-              ))}
+              ) : (
+                tasks.map((t) => (
+                  <div
+                    key={t.id}
+                    onClick={() => handleToggleTask(t.id)}
+                    className={`p-4 border rounded-2xl flex items-start gap-3.5 cursor-pointer hover:shadow-soft transition-all duration-200 ${
+                      t.done
+                        ? "border-emerald-500/10 bg-emerald-500/5 text-slate-500"
+                        : "border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 text-slate-800 dark:text-slate-100"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={t.done}
+                      onChange={() => {}}
+                      className="mt-0.5 rounded border-slate-300 dark:border-slate-800 text-emerald-600 focus:ring-emerald-500 accent-emerald-600"
+                    />
+                    <span
+                      className={`text-xs font-semibold leading-normal ${t.done ? "line-through opacity-70" : ""}`}
+                    >
+                      {t.text}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
 
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border text-[11px] text-slate-400 leading-normal flex items-start gap-2.5">

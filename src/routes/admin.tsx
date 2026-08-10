@@ -19,11 +19,15 @@ import {
   Shield,
   MessageSquare,
   Smartphone,
+  Store,
+  ChevronDown,
+  ChevronUp,
+  Building,
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
 import { CRMContext, type UserSession } from "../lib/crmContext";
-import { getCRMDataFromFirestore, saveCRMDataToFirestore } from "@/lib/firebase";
+import { getCRMDataFromFirestore, saveCRMDataToFirestore, syncClientsToFirestore } from "@/lib/firebase";
 import { isWebhookOffline } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin")({
@@ -45,6 +49,7 @@ function AdminLayout() {
     "Referral bonus assigned to Ahmed",
   ]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [marketplaceOpen, setMarketplaceOpen] = useState(false);
 
   const [lastMsgCount, setLastMsgCount] = useState<number | null>(null);
 
@@ -205,6 +210,7 @@ function AdminLayout() {
         localStorage.setItem("optivita_crm_cache", JSON.stringify(result.data));
         // Mirror live Google Sheets Master into Firestore
         saveCRMDataToFirestore(result.data);
+        syncClientsToFirestore(result.data);
       }
     } catch (err: any) {
       console.warn("Master Google Sheets fetch note:", err);
@@ -251,6 +257,7 @@ function AdminLayout() {
     { label: "Appointments", icon: Calendar, path: "/admin/appointments" },
     { label: "Loyalty Program", icon: Award, path: "/admin/loyalty" },
     { label: "Financial Console", icon: DollarSign, path: "/admin/finance" },
+    { label: "Corporate Wellness", icon: Building, path: "/admin/corporate" },
     { label: "HR & Payroll", icon: Users, path: "/admin/hr" },
     { label: "Communication Center", icon: MessageSquare, path: "/admin/communication" },
     { label: "User Management", icon: Shield, path: "/admin/users", restricted: true },
@@ -310,6 +317,68 @@ function AdminLayout() {
                 </Link>
               );
             })}
+
+            {/* Collapsible Marketplace Accordion */}
+            <div className="space-y-1 border-t border-border/20 pt-2.5 mt-2.5">
+              <button
+                type="button"
+                onClick={() => setMarketplaceOpen(!marketplaceOpen)}
+                className="w-full flex items-center justify-between px-4.5 py-3.5 rounded-xl font-medium text-sm transition-all duration-200 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/60 text-left"
+              >
+                <div className="flex items-center gap-3.5">
+                  <Store className="h-5 w-5 shrink-0 text-accent" />
+                  {sidebarOpen && <span>Marketplace</span>}
+                </div>
+                {sidebarOpen && (
+                  marketplaceOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+
+              {marketplaceOpen && sidebarOpen && (
+                <div className="pl-6 space-y-1.5 border-l border-border/50 ml-6 text-left">
+                  {[
+                    { label: "Dashboard", path: "/admin/marketplace" },
+                    { label: "Providers", path: "/admin/marketplace/providers" },
+                    { label: "Verification Desk", path: "/admin/marketplace/verification" },
+                    { label: "Categories", path: "/admin/marketplace/categories" },
+                    { label: "Services Moderation", path: "/admin/marketplace/services" },
+                    { label: "Bookings Audit", path: "/admin/marketplace/bookings" },
+                    { label: "Disputes Desk", path: "/admin/marketplace/disputes" },
+                    { label: "Refunds Desk", path: "/admin/marketplace/refunds" },
+                    { label: "Payouts Queue", path: "/admin/marketplace/payouts" },
+                    { label: "Commission Rates", path: "/admin/marketplace/commissions" },
+                    { label: "Reviews Moderation", path: "/admin/marketplace/reviews" },
+                    { label: "Financial Ledger", path: "/admin/marketplace/transactions" },
+                    { label: "Settlement Center", path: "/admin/marketplace/settlements" },
+                    { label: "Reconciliation Desk", path: "/admin/marketplace/reconciliation" },
+                    { label: "Financial Reports", path: "/admin/marketplace/financial-reports" },
+                    { label: "Webhook Security Monitor", path: "/api/payments/webhook" },
+                    { label: "Communications Center", path: "/admin/marketplace/communications" },
+                    { label: "Executive Analytics", path: "/admin/marketplace/analytics" },
+                    { label: "AI Insights Center", path: "/admin/marketplace/ai-insights" },
+                    { label: "Marketplace Audit Trail", path: "/admin/marketplace/audit-log" },
+                    { label: "Security Audit Logs", path: "/admin/security/audit-log" },
+                    { label: "Launch Readiness", path: "/admin/security/readiness" },
+                    { label: "Corporate Directory", path: "/admin/corporate" },
+                    { label: "System Settings", path: "/admin/marketplace/settings" },
+                  ].map((sub) => (
+                    <Link
+                      key={sub.label}
+                      to={sub.path}
+                      activeProps={{
+                        className: "text-accent font-bold",
+                      }}
+                      inactiveProps={{
+                        className: "text-slate-400 hover:text-foreground dark:text-slate-500 dark:hover:text-slate-200",
+                      }}
+                      className="block py-1.5 text-xs font-semibold transition-colors"
+                    >
+                      {sub.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* User Profile Summary */}

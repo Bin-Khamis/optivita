@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { useCRM } from "@/lib/crmContext";
-import { updateFirestoreRecord } from "@/lib/firebase";
+import { db, updateFirestoreRecord } from "@/lib/firebase";
+import { collection, addDoc, query, onSnapshot, orderBy, serverTimestamp } from "firebase/firestore";
 import {
   MessageSquare,
   Bell,
@@ -51,8 +52,45 @@ function AdminCommunication() {
   const enrollments = data?.["Program Enrollments"] || [];
   const notifications = data?.["Notifications"] || [];
   const notificationRecipients = data?.["Notification Recipients"] || [];
-  const rawMessages = data?.["Messages"] || [];
   const staffList = data?.["Staff"] || [];
+
+  // --- Real-time Firestore Messages Listener ---
+  const [firestoreMessages, setFirestoreMessages] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!db) return;
+    const q = query(collection(db, "private_messages"), orderBy("createdAt", "asc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs: any[] = [];
+      snapshot.forEach((doc) => {
+        const item = doc.data();
+        msgs.push({
+          "Message ID": doc.id,
+          "Sender ID": item.senderId,
+          "Sender Type": item.senderType,
+          "Recipient ID": item.recipientId,
+          Message: item.message,
+          Timestamp: item.timestamp,
+          createdAt: item.createdAt,
+        });
+      });
+      setFirestoreMessages(msgs);
+    }, (err) => {
+      console.error("Firestore chat listener error:", err);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const rawMessagesMap = new Map<string, any>();
+  (data?.["Messages"] || []).forEach((m: any) => {
+    const id = m["Message ID"] || m.MessageID || m.id;
+    if (id) rawMessagesMap.set(id, m);
+  });
+  firestoreMessages.forEach((m) => {
+    const id = m["Message ID"];
+    rawMessagesMap.set(id, m);
+  });
+  const rawMessages = Array.from(rawMessagesMap.values());
 
   // --- Broadcast Form States ---
   const [bcTitle, setBcTitle] = useState("");
@@ -373,59 +411,47 @@ function AdminCommunication() {
     const now = new Date();
     const timestampStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} | ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
 
-    const targetRecipientId =
-      selectedClientChat.id || selectedClientChat["Enrollment ID"] || selectedClientChat.StaffId;
+    const targetRecipientId = String(
+      selectedClientChat.id || selectedClientChat["Enrollment ID"] || selectedClientChat.StaffId
+    ).trim().toUpperCase();
 
-    const newMsgRecord = {
-      action: "webhookSubmit",
-      sheetName: "Messages",
-      "Message ID": msgId,
-      "Sender ID": "admin",
-      "Sender Type": "Admin",
-      "Recipient ID": targetRecipientId,
-      Message: chatInputText.trim(),
-      Timestamp: timestampStr,
-    };
-
-    const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline = isWebhookOffline(webhookUrl);
-
-    if (isOffline) {
-      setTimeout(() => {
-        if (!data["Messages"]) data["Messages"] = [];
-        data["Messages"].push({
-          "Message ID": msgId,
-          "Sender ID": "admin",
-          "Sender Type": "Admin",
-          "Recipient ID": targetRecipientId,
-          Message: chatInputText.trim(),
-          Timestamp: timestampStr,
-        });
-        localStorage.setItem("optivita_crm_cache", JSON.stringify(data));
-
-        setChatInputText("");
-        setSendingMessage(false);
-        refreshData();
-      }, 300);
-      return;
-    }
+    const messageText = chatInputText.trim();
+    setChatInputText("");
 
     try {
-      const res = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify(newMsgRecord),
-      });
-      const result = await res.json();
-      if (result.status === "success") {
-        setChatInputText("");
-        refreshData();
-      } else {
-        toast.error("Failed to deliver message.");
+      if (db) {
+        // Send instantly via Firestore
+        await addDoc(collection(db, "private_messages"), {
+          senderId: "admin",
+          senderType: "Admin",
+          recipientId: targetRecipientId,
+          message: messageText,
+          timestamp: timestampStr,
+          createdAt: serverTimestamp(),
+        });
       }
-    } catch (e) {
-      console.error(e);
-      toast.error("Network issue. Saved locally.");
+
+      // Sync with Sheets background API
+      const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
+      if (webhookUrl && !isWebhookOffline(webhookUrl)) {
+        fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({
+            action: "webhookSubmit",
+            sheetName: "Messages",
+            "Message ID": msgId,
+            "Sender ID": "admin",
+            "Sender Type": "Admin",
+            "Recipient ID": targetRecipientId,
+            Message: messageText,
+            Timestamp: timestampStr,
+          }),
+        }).catch((err) => console.warn("Google Sheets background sync failed:", err));
+      }
+    } catch (error: any) {
+      console.error("Firestore message send error:", error);
+      toast.error("Failed to send message via Firestore: " + error.message);
     } finally {
       setSendingMessage(false);
     }

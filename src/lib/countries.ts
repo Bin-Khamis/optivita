@@ -195,13 +195,27 @@ export function normalizeE164(phone: string, selectedDialCode: string = ""): str
   }
 
   if (!cleaned.startsWith("+")) {
-    // If it starts with 0, strip the 0
-    if (cleaned.startsWith("0")) {
-      cleaned = cleaned.slice(1);
+    // Check if the number already starts with a known country code dial digits (e.g. 966)
+    const sorted = [...COUNTRIES].sort((a, b) => b.dial_code.length - a.dial_code.length);
+    let startsWithCountryCode = false;
+    for (const c of sorted) {
+      const dialDigits = c.dial_code.replace(/[^0-9]/g, "");
+      if (cleaned.startsWith(dialDigits)) {
+        cleaned = "+" + cleaned;
+        startsWithCountryCode = true;
+        break;
+      }
     }
-    const dial = selectedDialCode.trim();
-    const prefix = dial.startsWith("+") ? dial : dial ? "+" + dial : "+966";
-    cleaned = prefix + cleaned;
+
+    if (!startsWithCountryCode) {
+      // If it starts with 0, strip the 0
+      if (cleaned.startsWith("0")) {
+        cleaned = cleaned.slice(1);
+      }
+      const dial = selectedDialCode.trim();
+      const prefix = dial.startsWith("+") ? dial : dial ? "+" + dial : "+966";
+      cleaned = prefix + cleaned;
+    }
   }
 
   // Strip duplicate leading country codes and leading zeroes in subscriber part

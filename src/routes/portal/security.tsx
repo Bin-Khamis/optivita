@@ -12,6 +12,8 @@ import {
   Send,
 } from "lucide-react";
 import { toast } from "sonner";
+import { TelegramLoginButton, TelegramUser } from "@/components/TelegramLoginButton";
+import { updatePortalClientFirestore } from "@/lib/firebase";
 
 export const Route = createFileRoute("/portal/security")({
   component: SecuritySettings,
@@ -98,13 +100,46 @@ function SecuritySettings() {
 
   // Load preferences from Cache or DB
   const [preferredMethod, setPreferredMethod] = useState<
-    "email" | "whatsapp" | "totp" | "telegram"
+    "email" | "whatsapp" | "totp"
   >("email");
   const [totpConfigured, setTotpConfigured] = useState(false);
   const [loading, setLoading] = useState(false);
   const [telegramChatId, setTelegramChatId] = useState("");
   const [telegramBotUsername, setTelegramBotUsername] = useState("OptiVitaOTPBot");
   const [savingTelegram, setSavingTelegram] = useState(false);
+
+  // Notification channel preference toggles
+  const [prefInApp, setPrefInApp] = useState(true);
+  const [prefEmail, setPrefEmail] = useState(true);
+  const [prefPush, setPrefPush] = useState(true);
+  const [prefWhatsapp, setPrefWhatsapp] = useState(false);
+
+  useEffect(() => {
+    if (!customer) return;
+    const prefKey = `optivita_marketplace_notification_preferences_${customer.enrollmentId}`;
+    const raw = localStorage.getItem(prefKey);
+    if (raw) {
+      try {
+        const obj = JSON.parse(raw);
+        setPrefInApp(obj.inApp ?? true);
+        setPrefEmail(obj.email ?? true);
+        setPrefPush(obj.push ?? true);
+        setPrefWhatsapp(obj.whatsapp ?? false);
+      } catch {}
+    }
+  }, [customer]);
+
+  const handleSaveNotificationPrefs = () => {
+    if (!customer) return;
+    const prefKey = `optivita_marketplace_notification_preferences_${customer.enrollmentId}`;
+    localStorage.setItem(prefKey, JSON.stringify({
+      inApp: prefInApp,
+      email: prefEmail,
+      push: prefPush,
+      whatsapp: prefWhatsapp
+    }));
+    toast.success("Notification channel preferences updated successfully!");
+  };
 
   // Authenticator App setup Wizard states
   const [showTotpWizard, setShowTotpWizard] = useState(false);
@@ -185,7 +220,7 @@ function SecuritySettings() {
   };
 
   // Submit security method updates
-  const handleSavePreferences = async (method: "email" | "whatsapp" | "totp" | "telegram") => {
+  const handleSavePreferences = async (method: "email" | "whatsapp" | "totp") => {
     if (method === "totp" && !totpConfigured) {
       handleStartTotpSetup();
       return;
@@ -220,6 +255,7 @@ function SecuritySettings() {
         }
         setPreferredMethod(method);
         toast.success("Security authentication preference updated successfully.");
+        updatePortalClientFirestore(customer?.enrollmentId || "", { preferredAuthMethod: method });
         setLoading(false);
       }, 600);
     } else {
@@ -238,6 +274,7 @@ function SecuritySettings() {
         if (result.status === "success") {
           setPreferredMethod(method);
           toast.success("Security preferences synced to account.");
+          updatePortalClientFirestore(customer?.enrollmentId || "", { preferredAuthMethod: method });
         } else {
           toast.error(result.message || "Failed to update preference.");
         }
@@ -249,13 +286,7 @@ function SecuritySettings() {
     }
   };
 
-  const handleSaveTelegramChatId = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!telegramChatId.trim()) {
-      toast.error("Please enter a valid Telegram Chat ID.");
-      return;
-    }
-
+  const handleTelegramLink = async (user: TelegramUser) => {
     setSavingTelegram(true);
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
     const isOffline =
@@ -275,14 +306,16 @@ function SecuritySettings() {
               (e: any) => e["Enrollment ID"] === customer?.enrollmentId,
             );
             if (index !== -1) {
-              db["Program Enrollments"][index].telegramChatId = telegramChatId;
+              db["Program Enrollments"][index].telegramChatId = String(user.id).trim();
               localStorage.setItem("optivita_crm_cache", JSON.stringify(db));
             }
           } catch (e) {
             console.error(e);
           }
         }
-        toast.success("Telegram Chat ID updated (offline simulation).");
+        setTelegramChatId(String(user.id).trim());
+        toast.success("Telegram account linked (offline simulation)!");
+        updatePortalClientFirestore(customer?.enrollmentId || "", { telegramChatId: String(user.id).trim() });
         setSavingTelegram(false);
       }, 600);
     } else {
@@ -291,18 +324,78 @@ function SecuritySettings() {
           method: "POST",
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({
-            action: "update-security-preference",
+            action: "link-telegram-oauth",
             enrollmentId: customer?.enrollmentId,
-            preferredMethod: "telegram",
-            telegramChatId: telegramChatId.trim(),
+            telegramUser: user,
           }),
         });
         const result = await res.json();
         if (result.status === "success") {
-          toast.success("Telegram Chat ID successfully linked!");
+          toast.success("Telegram account successfully linked!");
+          setTelegramChatId(String(user.id).trim());
+          updatePortalClientFirestore(customer?.enrollmentId || "", { telegramChatId: String(user.id).trim() });
           refreshData();
         } else {
-          toast.error(result.message || "Failed to link Telegram Chat ID.");
+          toast.error(result.message || "Failed to link Telegram account.");
+        }
+      } catch (err) {
+        toast.error("Failed to connect to authentication server.");
+      } finally {
+        setSavingTelegram(false);
+      }
+    }
+  };
+
+  const handleTelegramUnlink = async () => {
+    setSavingTelegram(true);
+    const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
+    const isOffline =
+      !webhookUrl ||
+      webhookUrl.includes("placeholder") ||
+      webhookUrl === "undefined" ||
+      webhookUrl === "null" ||
+      webhookUrl.trim() === "";
+
+    if (isOffline) {
+      setTimeout(() => {
+        const cached = localStorage.getItem("optivita_crm_cache");
+        if (cached) {
+          try {
+            const db = JSON.parse(cached);
+            const index = db["Program Enrollments"].findIndex(
+              (e: any) => e["Enrollment ID"] === customer?.enrollmentId,
+            );
+            if (index !== -1) {
+              db["Program Enrollments"][index].telegramChatId = "";
+              localStorage.setItem("optivita_crm_cache", JSON.stringify(db));
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        setTelegramChatId("");
+        toast.success("Telegram account unlinked (offline simulation)!");
+        updatePortalClientFirestore(customer?.enrollmentId || "", { telegramChatId: "" });
+        setSavingTelegram(false);
+      }, 600);
+    } else {
+      try {
+        const res = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({
+            action: "unlink-telegram-oauth",
+            enrollmentId: customer?.enrollmentId,
+          }),
+        });
+        const result = await res.json();
+        if (result.status === "success") {
+          toast.success("Telegram account unlinked successfully!");
+          setTelegramChatId("");
+          updatePortalClientFirestore(customer?.enrollmentId || "", { telegramChatId: "" });
+          refreshData();
+        } else {
+          toast.error(result.message || "Failed to unlink Telegram account.");
         }
       } catch (err) {
         toast.error("Failed to connect to authentication server.");
@@ -359,6 +452,10 @@ function SecuritySettings() {
         setPreferredMethod("totp");
         setShowTotpWizard(false);
         toast.success("Authenticator app bound and enabled successfully!");
+        updatePortalClientFirestore(customer?.enrollmentId || "", {
+          totpSecret: tempSecret,
+          preferredAuthMethod: "totp"
+        });
         setLoading(false);
       }, 700);
     } else {
@@ -381,6 +478,10 @@ function SecuritySettings() {
           setPreferredMethod("totp");
           setShowTotpWizard(false);
           toast.success("Authenticator app successfully bound!");
+          updatePortalClientFirestore(customer?.enrollmentId || "", {
+            totpSecret: tempSecret,
+            preferredAuthMethod: "totp"
+          });
         } else {
           toast.error(result.message || "Authenticator verification failed.");
         }
@@ -513,85 +614,60 @@ function SecuritySettings() {
                   </p>
                 </div>
               </label>
+            </div>
 
-              {/* Telegram Option */}
-              <div
-                onClick={() => handleSavePreferences("telegram")}
-                className={`flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${
-                  preferredMethod === "telegram"
-                    ? "border-emerald-500 bg-emerald-50/10"
-                    : "border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="auth-pref"
-                  checked={preferredMethod === "telegram"}
-                  onChange={() => handleSavePreferences("telegram")}
-                  className="mt-1 accent-emerald-500"
-                />
-                <div className="space-y-1 w-full">
-                  <span className="font-semibold text-sm flex items-center gap-1.5 text-slate-850 dark:text-slate-100">
-                    <Send className="h-4 w-4 text-[#173B63] dark:text-[#7ee0c8]" /> Telegram OTP
-                    (Optional)
-                  </span>
-                  <p className="text-xs text-slate-400 leading-normal">
-                    Receive your 6-digit verification code directly on Telegram via{" "}
-                    <strong>@{telegramBotUsername}</strong>.
-                  </p>
-
-                  {preferredMethod === "telegram" && (
-                    <div
-                      className="mt-3 space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 animate-fade-in"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed space-y-1">
-                        <p className="font-bold text-slate-700 dark:text-slate-350">
-                          How to link Telegram:
-                        </p>
-                        <p>
-                          1. Open Telegram and search for{" "}
-                          <a
-                            href={`https://t.me/${telegramBotUsername}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-emerald-600 font-bold hover:underline"
-                          >
-                            @{telegramBotUsername}
-                          </a>
-                        </p>
-                        <p>
-                          2. Send <strong>/start</strong> to the bot.
-                        </p>
-                        <p>
-                          3. The bot will reply with your <strong>Chat ID</strong>.
-                        </p>
-                        <p>4. Enter your Chat ID below and click Link.</p>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={telegramChatId}
-                          onChange={(e) =>
-                            setTelegramChatId(e.target.value.replace(/[^0-9-]/g, ""))
-                          }
-                          placeholder="Enter your Telegram Chat ID"
-                          className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleSaveTelegramChatId}
-                          disabled={savingTelegram}
-                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-soft disabled:opacity-50 transition"
-                        >
-                          {savingTelegram ? "Linking..." : "Link ID"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+            {/* Telegram Option */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-3xl p-6 shadow-soft space-y-5">
+              <div className="space-y-1">
+                <h3 className="font-display font-bold text-sm text-[#173B63] dark:text-slate-50 flex items-center gap-1.5">
+                  <Send className="h-4 w-4 text-[#173B63] dark:text-[#7ee0c8]" />
+                  Telegram Instant Access
+                </h3>
+                <p className="text-xs text-slate-400 leading-normal">
+                  Link your Telegram account to bypass typing OTP codes and log in instantly with one click.
+                </p>
               </div>
+              
+              {telegramChatId ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/50 rounded-2xl">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <div className="text-[11px] text-slate-700 dark:text-slate-350">
+                      <p className="font-bold text-emerald-800 dark:text-emerald-300">Linked Account</p>
+                      <p className="mt-0.5 text-slate-500 font-mono">Telegram ID: {telegramChatId}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleTelegramUnlink}
+                    disabled={savingTelegram}
+                    className="w-full text-center py-2.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 border border-red-200 text-red-600 rounded-xl text-xs font-bold transition disabled:opacity-50"
+                  >
+                    {savingTelegram ? "Unlinking..." : "Unlink Telegram"}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex flex-col items-center justify-center p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl text-center">
+                    <Send className="h-10 w-10 text-slate-300 dark:text-slate-700 mx-auto" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">
+                      Not Linked
+                    </span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-2">
+                    <TelegramLoginButton
+                      botName={telegramBotUsername}
+                      onAuth={handleTelegramLink}
+                      buttonSize="large"
+                      cornerRadius={12}
+                      className="w-full flex justify-center py-1"
+                    />
+                    <p className="text-[9px] text-slate-400 text-center leading-normal max-w-[180px]">
+                      Authorize Telegram to automatically link it to your profile.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Developers / Warning Notices for WhatsApp */}
@@ -660,6 +736,62 @@ function SecuritySettings() {
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Notification Preferences Card */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-3xl p-6 shadow-soft space-y-4 text-xs">
+            <h3 className="font-display font-bold text-sm text-[#173B63] dark:text-slate-50 uppercase tracking-wider">
+              Notification Channels
+            </h3>
+            
+            <div className="space-y-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-foreground">In-App Notifications</span>
+                <input
+                  type="checkbox"
+                  checked={prefInApp}
+                  onChange={(e) => setPrefInApp(e.target.checked)}
+                  className="h-4.5 w-4.5 accent-emerald-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-foreground">Email Alerts</span>
+                <input
+                  type="checkbox"
+                  checked={prefEmail}
+                  onChange={(e) => setPrefEmail(e.target.checked)}
+                  className="h-4.5 w-4.5 accent-emerald-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-foreground">Push Notifications</span>
+                <input
+                  type="checkbox"
+                  checked={prefPush}
+                  onChange={(e) => setPrefPush(e.target.checked)}
+                  className="h-4.5 w-4.5 accent-emerald-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-foreground">WhatsApp Messages</span>
+                <input
+                  type="checkbox"
+                  checked={prefWhatsapp}
+                  onChange={(e) => setPrefWhatsapp(e.target.checked)}
+                  className="h-4.5 w-4.5 accent-emerald-500"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleSaveNotificationPrefs}
+              className="w-full text-center py-2.5 bg-accent text-white rounded-xl text-xs font-bold transition shadow-soft mt-2"
+            >
+              Save Preferences
+            </button>
           </div>
         </div>
       </div>

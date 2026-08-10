@@ -182,17 +182,48 @@ function AdminSettings() {
 
   const rewards = data?.["Rewards Catalog"] || [];
 
-  const handleClearAllData = () => {
+  const handleClearAllData = async () => {
     if (
       window.confirm(
-        "Are you sure you want to clear all data and restore mock database defaults? This will erase all your local changes (adjusted points, logged receipts, etc.).",
+        "Are you sure you want to clear all data? This will permanently erase all local and database records (Clients, Invoices, Receipts, Expenses, Staff, Messages, Health Logs) while preserving your system Settings. This action cannot be undone.",
       )
     ) {
+      // 1. Wipe Firestore crm cache
+      try {
+        const { saveCRMDataToFirestore } = await import("@/lib/firebase");
+        await saveCRMDataToFirestore(null);
+      } catch (err) {
+        console.warn("Firestore wipe error:", err);
+      }
+
+      // 2. Wipe Google Sheets operational tables
+      const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
+      if (webhookUrl && !isWebhookOffline(webhookUrl)) {
+        try {
+          await fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({
+              action: "clearAllDatabaseTables"
+            })
+          });
+        } catch (err) {
+          console.warn("Apps Script wipe error:", err);
+        }
+      }
+
+      // 3. Wipe all localStorage databases and local caches
       localStorage.removeItem("optivita_crm_cache");
-      toast.success("Database cache cleared! Restoring defaults and reloading...");
+      localStorage.removeItem("optivita_message_templates");
+      localStorage.removeItem("optivita_favorite_clients");
+      localStorage.removeItem("optivita_archived_clients");
+      localStorage.removeItem("optivita_admin_session");
+      localStorage.removeItem("optivita_customer_session");
+
+      toast.success("All data and databases have been completely cleared!");
       setTimeout(() => {
         window.location.reload();
-      }, 1000);
+      }, 1500);
     }
   };
 

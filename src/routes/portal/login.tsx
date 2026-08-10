@@ -22,6 +22,8 @@ import {
 import { toast } from "sonner";
 import { COUNTRIES, normalizeE164, validatePhone } from "@/lib/countries";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { TelegramLoginButton, TelegramUser } from "@/components/TelegramLoginButton";
+import { getPortalClientFromFirestore, updatePortalClientFirestore } from "@/lib/firebase";
 
 export const Route = createFileRoute("/portal/login")({
   component: CustomerLogin,
@@ -111,10 +113,7 @@ function CustomerLogin() {
   // Credentials States
   const [enrollmentId, setEnrollmentId] = useState("");
   const [phone, setPhone] = useState("");
-  const [phoneCountryCode, setPhoneCountryCode] = useState("+966");
   const [loading, setLoading] = useState(false);
-  const [countrySearch, setCountrySearch] = useState("");
-  const [openCountryPopover, setOpenCountryPopover] = useState(false);
 
   // Multi-Channel Selection States
   const [selectedMethod, setSelectedMethod] = useState<"email" | "whatsapp" | "totp" | "telegram">(
@@ -122,10 +121,13 @@ function CustomerLogin() {
   );
   const [totpConfigured, setTotpConfigured] = useState(false);
   const [maskedEmail, setMaskedEmail] = useState("");
+  const [realEmail, setRealEmail] = useState("");
   const [maskedPhone, setMaskedPhone] = useState("");
   const [telegramChatId, setTelegramChatId] = useState("");
   const [telegramBotUsername, setTelegramBotUsername] = useState("OptiVitaOTPBot");
   const [newTelegramChatId, setNewTelegramChatId] = useState("");
+  const [sheetWhatsappBridgeUrl, setSheetWhatsappBridgeUrl] = useState("");
+  const [sheetWhatsappBridgeIndiaUrl, setSheetWhatsappBridgeIndiaUrl] = useState("");
 
   // OTP Verification States
   const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
@@ -213,12 +215,47 @@ function CustomerLogin() {
       return;
     }
 
-    const fullPhone = normalizeE164(phone, phoneCountryCode);
+    const fullPhone = normalizeE164(phone);
     if (!validatePhone(fullPhone)) {
       toast.error("Invalid Number");
       return;
     }
     setLoading(true);
+
+    // 1. Try high-speed Firestore cache lookup first
+    try {
+      const clientData = await getPortalClientFromFirestore(enrollmentId);
+      if (clientData) {
+        const cleanDbPhone = (clientData.phone || "").replace(/[^0-9]/g, "");
+        const cleanInputPhone = fullPhone.replace(/[^0-9]/g, "");
+        let isPhoneMatch = cleanDbPhone === cleanInputPhone;
+        if (!isPhoneMatch && cleanDbPhone.length >= 7 && cleanInputPhone.length >= 7) {
+          const minLen = Math.min(cleanDbPhone.length, cleanInputPhone.length, 8);
+          isPhoneMatch = cleanDbPhone.slice(-minLen) === cleanInputPhone.slice(-minLen);
+        }
+
+        if (isPhoneMatch) {
+          setMaskedEmail(maskEmail(clientData.email || "client@gmail.com"));
+          setRealEmail(clientData.email || "");
+          setMaskedPhone(maskPhone(fullPhone));
+          setTotpConfigured(!!clientData.totpSecret);
+          setTelegramChatId(clientData.telegramChatId || "");
+          setTelegramBotUsername(clientData.telegramBotUsername || "OptiVitaOTPBot");
+
+          const pref =
+            localStorage.getItem(`optivita_pref_${enrollmentId}`) ||
+            clientData.preferredAuthMethod ||
+            "email";
+          setSelectedMethod(pref as any);
+
+          setLoading(false);
+          setStep("select-method");
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Firestore lookup failed or timed out. Falling back...", e);
+    }
 
     const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
     const isOffline =
@@ -261,6 +298,7 @@ function CustomerLogin() {
 
         // Setup local selection parameters
         setMaskedEmail(maskEmail(clientData.email || "client@gmail.com"));
+        setRealEmail(clientData.email || "");
         setMaskedPhone(maskPhone(fullPhone));
         setTotpConfigured(!!clientData.totpSecret);
         setTelegramChatId(clientData.telegramChatId || "");
@@ -292,10 +330,13 @@ function CustomerLogin() {
         const result = await res.json();
         if (result.status === "success") {
           setMaskedEmail(result.emailMasked);
+          setRealEmail(result.email || "");
           setMaskedPhone(maskPhone(fullPhone));
           setTotpConfigured(result.totpConfigured);
           setTelegramChatId(result.telegramChatId || "");
           setTelegramBotUsername(result.telegramBotUsername || "OptiVitaOTPBot");
+          setSheetWhatsappBridgeUrl(result.whatsappBridgeUrl || "");
+          setSheetWhatsappBridgeIndiaUrl(result.whatsappBridgeIndiaUrl || "");
 
           const pref =
             localStorage.getItem(`optivita_pref_${enrollmentId}`) ||
@@ -315,9 +356,9 @@ function CustomerLogin() {
     }
   };
 
-  const dispatchWhatsAppBridgeMessage = async (targetPhone: string, code: string) => {
-    const fullPhone = normalizeE164(targetPhone, phoneCountryCode);
-    const configuredBridgeUrl = import.meta.env.VITE_WHATSAPP_BRIDGE_URL;
+  const dispatchWhatsAppBridgeMessage = async (targetPhone: string, code: string, customBridgeUrl?: string) => {
+    const fullPhone = normalizeE164(targetPhone);
+    const configuredBridgeUrl = customBridgeUrl || sheetWhatsappBridgeUrl || import.meta.env.VITE_WHATSAPP_BRIDGE_URL;
     const defaultBridgeUrl = "http://localhost:3000/send-whatsapp";
     const bridgeUrl = configuredBridgeUrl || defaultBridgeUrl;
 
@@ -346,14 +387,22 @@ function CustomerLogin() {
       }
     } catch (err) {
       console.warn("WhatsApp bridge connection error:", err);
-      if (window.location.protocol === "https:" && bridgeUrl.startsWith("http://localhost")) {
-        toast.error(
-          "Could not connect to the WhatsApp automation bridge. Since this site is hosted on a secure connection (HTTPS), the browser blocks insecure requests to localhost (Mixed Content). To test WhatsApp OTP, please run the site locally on http://localhost:8080/ or configure a secure WhatsApp Bridge URL.",
-          { duration: 10000 },
-        );
+      const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+      if (isLocalhost) {
+        if (window.location.protocol === "https:" && bridgeUrl.startsWith("http://localhost")) {
+          toast.error(
+            "Could not connect to the WhatsApp automation bridge. Since this site is hosted on a secure connection (HTTPS), the browser blocks insecure requests to localhost (Mixed Content). To test WhatsApp OTP, please run the site locally on http://localhost:8080/ or configure a secure WhatsApp Bridge URL.",
+            { duration: 10000 },
+          );
+        } else {
+          toast.error(
+            "Failed to connect to the WhatsApp automation bridge. Please ensure the local bridge is running on port 3000.",
+          );
+        }
       } else {
         toast.error(
-          "Failed to connect to the WhatsApp automation bridge. Please ensure the local bridge is running on port 3000.",
+          "WhatsApp OTP delivery is currently offline. A backup verification code has been dispatched to your registered email address.",
+          { duration: 6000 }
         );
       }
     }
@@ -366,14 +415,6 @@ function CustomerLogin() {
 
     // Save preference to local storage
     localStorage.setItem(`optivita_pref_${enrollmentId}`, selectedMethod);
-
-    const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
-    const isOffline =
-      !webhookUrl ||
-      webhookUrl.includes("placeholder") ||
-      webhookUrl === "undefined" ||
-      webhookUrl === "null" ||
-      webhookUrl.trim() === "";
 
     if (selectedMethod === "totp") {
       setLoading(false);
@@ -394,61 +435,112 @@ function CustomerLogin() {
       return;
     }
 
-    // Handle WhatsApp OTP
+    // High-speed generation of the 6-digit OTP code in the frontend
+    const otpCode = String(Math.floor(100000 + Math.random() * 900000));
+    
+    // Save to Firestore (low-latency lookup cache)
+    try {
+      await updatePortalClientFirestore(enrollmentId, {
+        activeOtp: otpCode,
+        otpExpiry: (Date.now() + 5 * 60 * 1000).toString()
+      });
+    } catch (err) {
+      console.warn("Could not save OTP to Firestore, proceeding with fallback:", err);
+    }
+
+    const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
+    const isOffline =
+      !webhookUrl ||
+      webhookUrl.includes("placeholder") ||
+      webhookUrl === "undefined" ||
+      webhookUrl === "null" ||
+      webhookUrl.trim() === "";
+
+    // 1. Handle WhatsApp OTP (Direct dispatch via Local Bridge with Country Routing)
     if (selectedMethod === "whatsapp") {
-      if (isOffline) {
-        const otpCode = String(Math.floor(100000 + Math.random() * 900000));
-        localStorage.setItem("optivita_portal_simulated_otp", otpCode);
+      const cleanPhone = phone.replace(/[^0-9]/g, "");
+      let normalizedPhone = cleanPhone;
+      if (normalizedPhone.startsWith("00")) {
+        normalizedPhone = normalizedPhone.slice(2);
+      }
+
+      let isIndia = normalizedPhone.startsWith("91");
+      let isSaudi = false;
+      let isOtherCountry = false;
+
+      const otherCountryCodes = [
+        "965", "971", "973", "968", "974", "20", "962", "961", "44", "1", 
+        "61", "64", "92", "880", "63", "60", "65", "62", "90", "49", "33", 
+        "39", "34", "351", "31", "41", "46", "47", "45", "358", "43", "32", 
+        "353", "30", "7", "55", "52", "27", "234", "254"
+      ];
+
+      if (!isIndia) {
+        for (const code of otherCountryCodes) {
+          if (normalizedPhone.startsWith(code)) {
+            isOtherCountry = true;
+            break;
+          }
+        }
+        if (!isOtherCountry) {
+          isSaudi = true;
+        }
+      }
+
+      if (isSaudi) {
         setCountdown(300);
         setOtpDigits(["", "", "", "", "", ""]);
-        setLoading(false);
         setStep("otp");
+        setLoading(false);
         dispatchWhatsAppBridgeMessage(phone, otpCode);
-      } else {
-        try {
-          const res = await fetch(webhookUrl, {
+      } else if (isIndia) {
+        const indiaBridgeUrl = sheetWhatsappBridgeIndiaUrl || import.meta.env.VITE_WHATSAPP_BRIDGE_INDIA_URL;
+        if (indiaBridgeUrl && indiaBridgeUrl.trim() !== "" && !indiaBridgeUrl.includes("placeholder")) {
+          setCountdown(300);
+          setOtpDigits(["", "", "", "", "", ""]);
+          setStep("otp");
+          setLoading(false);
+          dispatchWhatsAppBridgeMessage(phone, otpCode, indiaBridgeUrl);
+        } else {
+          toast.info("India WhatsApp bridge is not yet configured. The code has been sent to your registered email instead.", { duration: 6000 });
+          setCountdown(300);
+          setOtpDigits(["", "", "", "", "", ""]);
+          setStep("otp");
+          setLoading(false);
+          
+          fetch(webhookUrl, {
             method: "POST",
             headers: { "Content-Type": "text/plain" },
             body: JSON.stringify({
-              action: "send-otp",
+              action: "send-email-direct",
               enrollmentId: enrollmentId.trim(),
-              method: "whatsapp",
-            }),
+              email: realEmail || "client@gmail.com",
+              otp: otpCode
+            })
           });
-
-          const result = await res.json();
-          if (result.status === "success") {
-            setCountdown(300);
-            setOtpDigits(["", "", "", "", "", ""]);
-            setStep("otp");
-            if (result.fallbackDispatch || result.otp) {
-              // Dispatch directly from browser to local WhatsApp Bridge!
-              dispatchWhatsAppBridgeMessage(phone, result.otp);
-            }
-            toast.success(result.message || "Verification code sent successfully via WhatsApp.");
-          } else {
-            if (result.code === "RESEND_LIMIT_EXCEEDED") {
-              toast.error(result.message || "Too many resend attempts. Please wait 15 minutes.");
-            } else if (result.code === "INVALID_NUMBER") {
-              toast.error("Invalid Number");
-            } else if (result.code === "WHATSAPP_NOT_REGISTERED") {
-              toast.error("WhatsApp Not Registered");
-            } else if (result.code === "FAILED_SEND") {
-              toast.error("Failed to Send OTP");
-            } else {
-              toast.error(result.message || "Failed to deliver WhatsApp OTP.");
-            }
-          }
-        } catch (err) {
-          toast.error("Failed to connect to authentication server.");
-        } finally {
-          setLoading(false);
         }
+      } else {
+        toast.info("WhatsApp OTP is only available for Saudi Arabia and India. The verification code has been dispatched to your registered email.", { duration: 7000 });
+        setCountdown(300);
+        setOtpDigits(["", "", "", "", "", ""]);
+        setStep("otp");
+        setLoading(false);
+        
+        fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({
+            action: "send-email-direct",
+            enrollmentId: enrollmentId.trim(),
+            email: realEmail || "client@gmail.com",
+            otp: otpCode
+          })
+        });
       }
       return;
     }
 
-    // Handle Telegram OTP
+    // 2. Handle Telegram OTP (Fallback/Legacy BOT method)
     if (selectedMethod === "telegram") {
       const activeChatId = telegramChatId.trim() || newTelegramChatId.trim();
       if (!activeChatId) {
@@ -456,130 +548,65 @@ function CustomerLogin() {
         setLoading(false);
         return;
       }
+      
+      setCountdown(300);
+      setOtpDigits(["", "", "", "", "", ""]);
+      setStep("otp");
+      setLoading(false);
 
       if (isOffline) {
-        if (!telegramChatId.trim()) {
-          const cached = localStorage.getItem("optivita_crm_cache");
-          if (cached) {
-            try {
-              const db = JSON.parse(cached);
-              const index = db["Program Enrollments"].findIndex(
-                (e: any) => e["Enrollment ID"] === enrollmentId.trim(),
-              );
-              if (index !== -1) {
-                db["Program Enrollments"][index].telegramChatId = activeChatId;
-                localStorage.setItem("optivita_crm_cache", JSON.stringify(db));
-              }
-            } catch (e) {
-              console.error(e);
-            }
-          }
-          setTelegramChatId(activeChatId);
-          toast.success("Telegram Chat ID linked (offline simulation)!");
-        }
-
-        const otpCode = String(Math.floor(100000 + Math.random() * 900000));
         localStorage.setItem("optivita_portal_simulated_otp", otpCode);
-        setCountdown(300);
-        setOtpDigits(["", "", "", "", "", ""]);
-        setLoading(false);
-        setStep("otp");
-        toast.success(`Verification code dispatched! simulated TELEGRAM OTP: ${otpCode}`);
+        toast.success(`Verification code dispatched! Telegram simulation OTP: ${otpCode}`);
       } else {
-        try {
-          if (!telegramChatId.trim()) {
-            // Link it first via Sheets Webhook
-            const saveRes = await fetch(webhookUrl, {
-              method: "POST",
-              headers: { "Content-Type": "text/plain" },
-              body: JSON.stringify({
-                action: "update-security-preference",
-                enrollmentId: enrollmentId.trim(),
-                preferredMethod: "telegram",
-                telegramChatId: activeChatId,
-              }),
-            });
-            const saveResult = await saveRes.json();
-            if (saveResult.status !== "success") {
-              toast.error(saveResult.message || "Failed to link Telegram Chat ID.");
-              setLoading(false);
-              return;
-            }
-            setTelegramChatId(activeChatId);
-            toast.success("Telegram Chat ID linked successfully!");
-          }
-
-          const res = await fetch(webhookUrl, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify({
-              action: "send-otp",
-              enrollmentId: enrollmentId.trim(),
-              method: "telegram",
-            }),
-          });
-
-          const result = await res.json();
-          if (result.status === "success") {
-            setCountdown(300);
-            setOtpDigits(["", "", "", "", "", ""]);
-            setStep("otp");
-            toast.success("Verification code sent successfully via Telegram.");
-          } else {
-            if (result.code === "RESEND_LIMIT_EXCEEDED") {
-              toast.error(result.message || "Too many resend attempts. Please wait 15 minutes.");
-            } else if (result.code === "TELEGRAM_NOT_LINKED") {
-              toast.error(result.message || "Telegram Chat ID is not configured.");
-            } else {
-              toast.error(result.message || "Failed to deliver Telegram OTP.");
-            }
-          }
-        } catch (err) {
-          toast.error("Failed to connect to authentication server.");
-        } finally {
-          setLoading(false);
-        }
-      }
-      return;
-    }
-
-    // Call send OTP for Email OTP
-    if (isOffline) {
-      setTimeout(() => {
-        const otp = String(Math.floor(100000 + Math.random() * 900000));
-        localStorage.setItem("optivita_portal_simulated_otp", otp);
-        setCountdown(300);
-        setOtpDigits(["", "", "", "", "", ""]);
-        setLoading(false);
-        setStep("otp");
-        toast.success(`Verification code dispatched! simulated EMAIL OTP: ${otp}`);
-      }, 800);
-    } else {
-      try {
-        const res = await fetch(webhookUrl, {
+        // Call webhook to send Telegram bot message
+        fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({
             action: "send-otp",
             enrollmentId: enrollmentId.trim(),
-            method: selectedMethod,
-          }),
+            method: "telegram",
+            otp: otpCode
+          })
         });
-
-        const result = await res.json();
-        if (result.status === "success") {
-          setCountdown(300);
-          setOtpDigits(["", "", "", "", "", ""]);
-          setStep("otp");
-          toast.success("Verification code sent successfully.");
-        } else {
-          toast.error(result.message || "Failed to deliver OTP.");
-        }
-      } catch (err) {
-        toast.error("Failed to connect to authentication server.");
-      } finally {
-        setLoading(false);
       }
+      return;
+    }
+
+    // 3. Handle Email OTP (Call send-email-direct on Apps Script Webhook)
+    if (selectedMethod === "email") {
+      setCountdown(300);
+      setOtpDigits(["", "", "", "", "", ""]);
+      setStep("otp");
+      setLoading(false);
+
+      if (isOffline) {
+        localStorage.setItem("optivita_portal_simulated_otp", otpCode);
+        toast.success(`Verification code dispatched! simulated EMAIL OTP: ${otpCode}`);
+      } else {
+        toast.success("Sending verification code to your email...");
+        // Fire direct email dispatch in the background without blocking the login UI transition!
+        fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({
+            action: "send-email-direct",
+            enrollmentId: enrollmentId.trim(),
+            email: realEmail || "client@gmail.com",
+            otp: otpCode
+          })
+        }).then(async (res) => {
+          try {
+            const result = await res.json();
+            if (result.status === "success") {
+              toast.success("Verification code sent successfully via Email!");
+            }
+          } catch (e) {}
+        }).catch((err) => {
+          console.warn("Background email send error, already cached in Firestore:", err);
+        });
+      }
+      return;
     }
   };
 
@@ -616,7 +643,7 @@ function CustomerLogin() {
           ? configuredBridgeUrl.replace("/send-whatsapp", "/verify-whatsapp-log")
           : defaultBridgeUrl;
         try {
-          const fullPhone = normalizeE164(phone, phoneCountryCode);
+          const fullPhone = normalizeE164(phone);
           fetch(verifyLogUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -668,7 +695,7 @@ function CustomerLogin() {
             ? configuredBridgeUrl.replace("/send-whatsapp", "/verify-whatsapp-log")
             : defaultBridgeUrl;
           try {
-            const fullPhone = normalizeE164(phone, phoneCountryCode);
+            const fullPhone = normalizeE164(phone);
             fetch(verifyLogUrl, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -684,6 +711,44 @@ function CustomerLogin() {
     } else {
       // Live OTP Verification
       try {
+        // 1. High-speed Firestore verification first!
+        const clientData = await getPortalClientFromFirestore(enrollmentId);
+        if (clientData && clientData.activeOtp) {
+          const dbOtp = String(clientData.activeOtp).trim();
+          const expiry = parseInt(String(clientData.otpExpiry || "0"), 10);
+          
+          if (dbOtp === enteredOtp) {
+            if (Date.now() > expiry) {
+              toast.error("OTP Expired");
+              setLoading(false);
+              return;
+            }
+            
+            // Clear code in Firestore to prevent replay
+            updatePortalClientFirestore(enrollmentId, { activeOtp: "" });
+            
+            const sessionObj = {
+              enrollmentId: clientData.enrollmentId,
+              fullName: clientData.fullName,
+              phone: clientData.phone,
+              email: clientData.email,
+              programName: clientData.programName || "Client Program",
+              status: clientData.status || "Active",
+              loginTime: new Date()
+            };
+            
+            localStorage.removeItem("optivita_portal_simulated_otp");
+            localStorage.removeItem("optivita_portal_failed_attempts");
+            localStorage.removeItem(`optivita_resends_${enrollmentId}`);
+            localStorage.setItem("optivita_customer_session", JSON.stringify(sessionObj));
+            toast.success("Successfully authenticated!");
+            setLoading(false);
+            navigate({ to: "/portal/dashboard" });
+            return;
+          }
+        }
+
+        // 2. Sheets backup verification if not matches or not found in Firestore
         const res = await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "text/plain" },
@@ -945,7 +1010,7 @@ function CustomerLogin() {
         setCountdown(300);
         setOtpDigits(["", "", "", "", "", ""]);
         setLoading(false);
-        const fullPhone = normalizeE164(phone, phoneCountryCode);
+        const fullPhone = normalizeE164(phone);
         dispatchWhatsAppBridgeMessage(fullPhone, otpCode);
       } else {
         try {
@@ -964,7 +1029,11 @@ function CustomerLogin() {
             localStorage.setItem(`optivita_resends_${enrollmentId}`, String(localResends + 1));
             setCountdown(300);
             setOtpDigits(["", "", "", "", "", ""]);
-            toast.success("Verification code sent successfully via WhatsApp.");
+            if (result.fallbackDispatch && result.otp) {
+              const fullPhone = normalizeE164(phone);
+              dispatchWhatsAppBridgeMessage(fullPhone, result.otp);
+            }
+            toast.success(result.message || "Verification code sent successfully via WhatsApp.");
           } else {
             if (result.code === "RESEND_LIMIT_EXCEEDED") {
               localStorage.setItem(`optivita_resends_${enrollmentId}`, "3");
@@ -1014,7 +1083,10 @@ function CustomerLogin() {
             localStorage.setItem(`optivita_resends_${enrollmentId}`, String(localResends + 1));
             setCountdown(300);
             setOtpDigits(["", "", "", "", "", ""]);
-            toast.success("Verification code sent successfully via Telegram.");
+            if (result.otp) {
+              localStorage.setItem("optivita_portal_simulated_otp", result.otp);
+            }
+            toast.success(result.message || "Verification code sent successfully via Telegram.");
           } else {
             if (result.code === "RESEND_LIMIT_EXCEEDED") {
               localStorage.setItem(`optivita_resends_${enrollmentId}`, "3");
@@ -1108,6 +1180,79 @@ function CustomerLogin() {
     toast.success("Successfully logged into customer portal!");
     setLoading(false);
     navigate({ to: "/portal/dashboard" });
+  };
+
+  const handleTelegramOauth = async (user: TelegramUser) => {
+    setLoading(true);
+    const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
+    const isOffline =
+      !webhookUrl ||
+      webhookUrl.includes("placeholder") ||
+      webhookUrl === "undefined" ||
+      webhookUrl === "null" ||
+      webhookUrl.trim() === "";
+
+    const meta = getClientMetadata();
+
+    if (isOffline) {
+      setTimeout(() => {
+        const cached = localStorage.getItem("optivita_crm_cache");
+        if (cached) {
+          try {
+            const db = JSON.parse(cached);
+            const match = db["Program Enrollments"].find(
+              (e: any) => String(e.telegramChatId || "").trim() === String(user.id).trim(),
+            );
+            if (match) {
+              const clientProfile = {
+                enrollmentId: match["Enrollment ID"],
+                fullName: match.fullName,
+                phone: match.phone,
+                email: match.email,
+                programName: match.programName,
+              };
+              localStorage.setItem("optivita_customer_session", JSON.stringify(clientProfile));
+              toast.success("Successfully logged in via Telegram (offline simulation)!");
+              setLoading(false);
+              navigate({ to: "/portal/dashboard" });
+              return;
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        toast.error("This Telegram account is not linked to any profile in offline mode.");
+        setLoading(false);
+      }, 700);
+    } else {
+      try {
+        const res = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({
+            action: "telegram-oauth-login",
+            telegramUser: user,
+            browser: meta.browser,
+            device: `${meta.os} (${meta.device})`,
+            ip: "Telegram Login Widget",
+          }),
+        });
+
+        const result = await res.json();
+        if (result.status === "success" && (result.clientData || result.session)) {
+          const sessionData = result.clientData || result.session;
+          localStorage.setItem("optivita_customer_session", JSON.stringify(sessionData));
+          toast.success("Logged in successfully via Telegram!");
+          navigate({ to: "/portal/dashboard" });
+        } else {
+          toast.error(result.message || "This Telegram account is not linked to any profile.");
+        }
+      } catch (err) {
+        toast.error("Failed to connect to authentication server.");
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   // shifts focus across boxes
@@ -1216,85 +1361,14 @@ function CustomerLogin() {
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                     Registered Mobile Number
                   </label>
-                  <div className="flex gap-2">
-                    <Popover open={openCountryPopover} onOpenChange={setOpenCountryPopover}>
-                      <PopoverTrigger asChild>
-                        <button
-                          type="button"
-                          className="flex items-center gap-1 px-3 py-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-850 font-semibold cursor-pointer hover:bg-slate-100 transition-all shrink-0 min-w-[90px]"
-                        >
-                          <span className="text-base">
-                            {(() => {
-                              const c =
-                                COUNTRIES.find((x) => x.dial_code === phoneCountryCode) ||
-                                COUNTRIES[0];
-                              return c.flag;
-                            })()}
-                          </span>
-                          <span>{phoneCountryCode}</span>
-                          <ChevronDown className="h-3 w-3 text-slate-400 shrink-0 ml-auto" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        className="w-64 p-0 bg-white border border-slate-200 shadow-lg rounded-xl overflow-hidden z-[100]"
-                        align="start"
-                      >
-                        <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 bg-slate-50">
-                          <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                          <input
-                            type="text"
-                            placeholder="Search country..."
-                            value={countrySearch}
-                            onChange={(e) => setCountrySearch(e.target.value)}
-                            className="w-full bg-transparent border-none text-xs focus:outline-none text-slate-800"
-                          />
-                        </div>
-                        <div className="max-h-56 overflow-y-auto py-1">
-                          {COUNTRIES.filter(
-                            (c) =>
-                              c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
-                              c.dial_code.includes(countrySearch),
-                          ).map((c) => (
-                            <button
-                              key={`${c.code}-${c.dial_code}`}
-                              type="button"
-                              onClick={() => {
-                                setPhoneCountryCode(c.dial_code);
-                                setOpenCountryPopover(false);
-                                setCountrySearch("");
-                              }}
-                              className="w-full flex items-center justify-between px-3 py-2.5 text-left text-xs hover:bg-slate-50 transition-colors text-slate-700 hover:text-slate-900"
-                            >
-                              <div className="flex items-center gap-2 truncate">
-                                <span className="text-base shrink-0">{c.flag}</span>
-                                <span className="font-medium truncate">{c.name}</span>
-                              </div>
-                              <span className="font-semibold text-slate-400 shrink-0">
-                                {c.dial_code}
-                              </span>
-                            </button>
-                          ))}
-                          {COUNTRIES.filter(
-                            (c) =>
-                              c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
-                              c.dial_code.includes(countrySearch),
-                          ).length === 0 && (
-                            <div className="text-center py-4 text-xs text-slate-400 font-medium">
-                              No countries found
-                            </div>
-                          )}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="5xxxxxxx"
-                      className="flex-1 px-4 py-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 font-semibold"
-                      required
-                    />
-                  </div>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. +9665xxxxxxxx"
+                    className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-850 font-semibold"
+                    required
+                  />
                 </div>
 
                 <button
@@ -1379,8 +1453,7 @@ function CustomerLogin() {
                   </label>
 
                   {/* Telegram option */}
-                  <div
-                    onClick={() => setSelectedMethod("telegram")}
+                  <label
                     className={`flex items-start gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
                       selectedMethod === "telegram"
                         ? "border-emerald-500 bg-emerald-50/10"
@@ -1413,13 +1486,27 @@ function CustomerLogin() {
                             </p>
                             <div className="p-2.5 bg-slate-50 rounded-xl border text-[9px] text-slate-500 leading-normal space-y-1">
                               <p className="font-bold text-slate-700">How to get Chat ID:</p>
-                              <p>1. Open Telegram & search for <a href={`https://t.me/${telegramBotUsername}`} target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold hover:underline">@{telegramBotUsername}</a></p>
-                              <p>2. Send <strong>/start</strong> to get your Chat ID.</p>
+                              <p>
+                                1. Open Telegram & search for{" "}
+                                <a
+                                  href={`https://t.me/${telegramBotUsername}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-emerald-600 font-bold hover:underline"
+                                >
+                                  @{telegramBotUsername}
+                                </a>
+                              </p>
+                              <p>
+                                2. Send <strong>/start</strong> to get your Chat ID.
+                              </p>
                             </div>
                             <input
                               type="text"
                               value={newTelegramChatId}
-                              onChange={(e) => setNewTelegramChatId(e.target.value.replace(/[^0-9-]/g, ""))}
+                              onChange={(e) =>
+                                setNewTelegramChatId(e.target.value.replace(/[^0-9-]/g, ""))
+                              }
                               placeholder="Enter Telegram Chat ID"
                               className="w-full px-2.5 py-1.5 text-xs rounded-lg border bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
                             />
@@ -1427,7 +1514,7 @@ function CustomerLogin() {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </label>
 
                   {/* Authenticator App option */}
                   <label

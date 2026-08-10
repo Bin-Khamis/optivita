@@ -6,7 +6,7 @@
  * npm install whatsapp-web.js qrcode-terminal express body-parser
  *
  * How to Run:
- * 1. Run "node whatsapp-bridge.cjs" in your terminal.
+ * 1. Run "npm run whatsapp-bridge" in your terminal.
  * 2. Scan the QR code printed in the terminal using your WhatsApp app (Linked Devices).
  * 3. Once connected, your local server will listen on port 3000.
  */
@@ -18,6 +18,16 @@ const bodyParser = require("body-parser");
 const fs = require("fs");
 const path = require("path");
 
+// Parse CLI Arguments
+const clientNameArg = process.argv.find(arg => arg.startsWith("--client-id="));
+const clientId = clientNameArg ? clientNameArg.split("=")[1].trim() : "default";
+
+const portArg = process.argv.find(arg => arg.startsWith("--port="));
+const PORT = portArg ? parseInt(portArg.split("=")[1], 10) : 3000;
+
+const countryArg = process.argv.find(arg => arg.startsWith("--default-country="));
+const defaultCountry = countryArg ? "+" + countryArg.split("=")[1].replace("+", "").trim() : "+966";
+
 const app = express();
 app.use(bodyParser.json());
 
@@ -25,6 +35,7 @@ app.use(bodyParser.json());
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Private-Network", "true");
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
   }
@@ -81,18 +92,32 @@ const COUNTRIES = [
 ];
 
 // Helper: Normalize to E.164 phone format
-function normalizeE164(phone, defaultDialCode = "+966") {
+function normalizeE164(phone, defaultDialCode = defaultCountry) {
   let cleaned = phone.replace(/[\s\-\(\)]/g, "");
   if (cleaned.startsWith("00")) {
     cleaned = "+" + cleaned.slice(2);
   }
   if (!cleaned.startsWith("+")) {
-    if (cleaned.startsWith("0")) {
-      cleaned = cleaned.slice(1);
+    // Check if the number already starts with a known country code dial digits (e.g. 966)
+    const sorted = [...COUNTRIES].sort((a, b) => b.dial_code.length - a.dial_code.length);
+    let startsWithCountryCode = false;
+    for (const c of sorted) {
+      const dialDigits = c.dial_code.replace(/[^0-9]/g, "");
+      if (cleaned.startsWith(dialDigits)) {
+        cleaned = "+" + cleaned;
+        startsWithCountryCode = true;
+        break;
+      }
     }
-    const dial = defaultDialCode.trim();
-    const prefix = dial.startsWith("+") ? dial : dial ? "+" + dial : "+966";
-    cleaned = prefix + cleaned;
+
+    if (!startsWithCountryCode) {
+      if (cleaned.startsWith("0")) {
+        cleaned = cleaned.slice(1);
+      }
+      const dial = defaultDialCode.trim();
+      const prefix = dial.startsWith("+") ? dial : dial ? "+" + dial : "+966";
+      cleaned = prefix + cleaned;
+    }
   }
   const sorted = [...COUNTRIES].sort((a, b) => b.dial_code.length - a.dial_code.length);
   for (const c of sorted) {
@@ -144,9 +169,9 @@ function logOTP(phone, country, status, failedReason = "") {
   }
 }
 
-// Initialize WhatsApp client with local session caching
+// Initialize WhatsApp client with isolated local session caching
 const client = new Client({
-  authStrategy: new LocalAuth(),
+  authStrategy: new LocalAuth({ clientId: clientId }),
   puppeteer: {
     handleSIGINT: true,
     args: [
@@ -281,9 +306,11 @@ app.post("/verify-whatsapp-log", (req, res) => {
   res.json({ status: "success" });
 });
 
-const PORT = 3000;
 app.listen(PORT, () => {
+  console.log(`=============================================================`);
   console.log(`WhatsApp Bridge Server running on http://localhost:${PORT}`);
+  console.log(`Client ID: ${clientId} | Default Country: ${defaultCountry}`);
+  console.log(`=============================================================`);
 });
 
 client.initialize();

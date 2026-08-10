@@ -8,6 +8,7 @@
     "build": "vite build --config vite.spa.config.ts",
     "build:dev": "vite build --mode development",
     "preview": "vite preview --config vite.spa.config.ts",
+    "whatsapp-bridge": "node whatsapp-bridge.cjs",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

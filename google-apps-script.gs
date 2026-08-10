@@ -465,6 +465,11 @@ function getWhatsAppBridgeUrl(spreadsheet) {
   return WHATSAPP_BRIDGE_URL;
 }
 
+function getWhatsAppBridgeIndiaUrl(spreadsheet) {
+  var val = getSettingValue(spreadsheet, "whatsapp bridge india url");
+  return val ? val.trim() : "";
+}
+
 
 function doGet(e) {
   try {
@@ -543,6 +548,15 @@ function doPost(e) {
       }
     }
 
+    // Merge query parameters into requestData for clients sending values via query string (like Retrofit)
+    if (e && e.parameter) {
+      for (var key in e.parameter) {
+        if (requestData[key] === undefined) {
+          requestData[key] = e.parameter[key];
+        }
+      }
+    }
+
     // Intercept Telegram bot updates
     if (requestData.message || requestData.edited_message || requestData.callback_query) {
       return handleTelegramUpdate(requestData);
@@ -583,11 +597,23 @@ function doPost(e) {
       case "send-otp":
         response = sendOTP(requestData);
         break;
+      case "send-email-direct":
+        response = handleSendEmailDirect(requestData);
+        break;
       case "verify-otp":
         response = verifyOTP(requestData);
         break;
       case "update-security-preference":
         response = updateSecurityPreference(requestData);
+        break;
+      case "telegram-oauth-login":
+        response = handleTelegramOauthLogin(requestData);
+        break;
+      case "link-telegram-oauth":
+        response = handleLinkTelegramOauth(requestData);
+        break;
+      case "unlink-telegram-oauth":
+        response = handleUnlinkTelegramOauth(requestData);
         break;
       case "bookAppointment":
         requestData.sheetName = "Appointments";
@@ -621,6 +647,9 @@ function doPost(e) {
           message: pushSuccess ? "Notification dispatched successfully." : "Failed to dispatch notification. Device may be offline or unregistered."
         };
         break;
+      case "clearAllDatabaseTables":
+        response = clearAllDatabaseTables(spreadsheet);
+        break;
       default:
         if (requestData.fullName || requestData.email || requestData.programName) {
           response = handleWebhookSubmit(requestData);
@@ -645,7 +674,7 @@ function doPost(e) {
 
 // 1. Verify Client Credentials Action
 function verifyClient(data) {
-  var enrollmentId = String(data.enrollmentId || "").trim();
+  var enrollmentId = String(data.enrollmentId || "").trim().toUpperCase();
   var phoneInput = String(data.phone || "")
     .trim()
     .replace(/[^0-9+]/g, "");
@@ -701,7 +730,7 @@ function verifyClient(data) {
   }
 
   for (var i = 1; i < rows.length; i++) {
-    var dbId = String(rows[i][clientIdIdx]).trim();
+    var dbId = String(rows[i][clientIdIdx]).trim().toUpperCase();
     var dbPhoneRaw = String(rows[i][clientPhoneIdx]).trim();
     var dbPhone = dbPhoneRaw.replace(/[^0-9]/g, "");
     var dbStatus = String(rows[i][clientStatusIdx]).trim();
@@ -819,12 +848,14 @@ function verifyClient(data) {
     totpConfigured: totpConfigured,
     telegramChatId: telegramChatId,
     telegramBotUsername: telegramBotUsername,
+    whatsappBridgeUrl: getWhatsAppBridgeUrl(spreadsheet),
+    whatsappBridgeIndiaUrl: getWhatsAppBridgeIndiaUrl(spreadsheet)
   };
 }
 
 // 2. Generate and Dispatch OTP
 function sendOTP(data) {
-  var enrollmentId = String(data.enrollmentId || "").trim();
+  var enrollmentId = String(data.enrollmentId || "").trim().toUpperCase();
   var method = String(data.method || "email")
     .trim()
     .toLowerCase(); // email | whatsapp
@@ -848,12 +879,29 @@ function sendOTP(data) {
   var clientPhone = "";
   var clientTelegramChatId = "";
 
+  // Map Clients headers dynamically
+  var clientsHeaders = clientRows[0];
+  var clientIdIdx = 0;
+  var clientNameIdx = 1;
+  var clientPhoneIdx = 2;
+  var clientEmailIdx = 3;
+  var clientTelegramIdx = 8;
+
+  for (var h = 0; h < clientsHeaders.length; h++) {
+    var hName = String(clientsHeaders[h]).trim().toLowerCase();
+    if (hName.indexOf("enrollment") !== -1 || hName === "id") clientIdIdx = h;
+    else if (hName.indexOf("name") !== -1) clientNameIdx = h;
+    else if (hName.indexOf("phone") !== -1 || hName.indexOf("mobile") !== -1) clientPhoneIdx = h;
+    else if (hName.indexOf("email") !== -1) clientEmailIdx = h;
+    else if (hName.indexOf("telegram") !== -1 || hName.indexOf("chat") !== -1) clientTelegramIdx = h;
+  }
+
   for (var i = 1; i < clientRows.length; i++) {
-    if (String(clientRows[i][0]).trim() === enrollmentId) {
-      clientName = String(clientRows[i][1]).trim();
-      clientPhone = String(clientRows[i][2]).trim();
-      clientEmail = String(clientRows[i][3]).trim();
-      clientTelegramChatId = String(clientRows[i][8] || "").trim();
+    if (String(clientRows[i][clientIdIdx]).trim().toUpperCase() === enrollmentId) {
+      clientName = String(clientRows[i][clientNameIdx] || "").trim();
+      clientPhone = String(clientRows[i][clientPhoneIdx] || "").trim();
+      clientEmail = String(clientRows[i][clientEmailIdx] || "").trim();
+      clientTelegramChatId = String(clientRows[i][clientTelegramIdx] || "").trim();
       break;
     }
   }
@@ -899,7 +947,7 @@ function sendOTP(data) {
   var oneHourAgo = nowTime - 60 * 60 * 1000;
 
   for (var j = 1; j < otpRows.length; j++) {
-    if (String(otpRows[j][0]).trim() === enrollmentId) {
+    if (String(otpRows[j][0]).trim().toUpperCase() === enrollmentId) {
       var created = new Date(otpRows[j][2]).getTime();
       if (created > oneHourAgo) {
         requestCount++;
@@ -923,7 +971,7 @@ function sendOTP(data) {
   var resendCount = 0;
   var existingRowIndex = -1;
   for (var k = 1; k < otpRows.length; k++) {
-    if (String(otpRows[k][0]).trim() === enrollmentId) {
+    if (String(otpRows[k][0]).trim().toUpperCase() === enrollmentId) {
       resendCount = parseInt(otpRows[k][7] || 0, 10);
       existingRowIndex = k;
       exists = true;
@@ -951,7 +999,7 @@ function sendOTP(data) {
   var expiry = new Date(nowTime + 5 * 60 * 1000);
 
   if (exists) {
-    otpSheet.getRange(existingRowIndex + 1, 2).setValue(pin);
+    otpSheet.getRange(existingRowIndex + 1, 2).setValue("'" + pin);
     otpSheet.getRange(existingRowIndex + 1, 3).setValue(new Date());
     otpSheet.getRange(existingRowIndex + 1, 4).setValue(expiry);
     otpSheet.getRange(existingRowIndex + 1, 5).setValue("false");
@@ -959,10 +1007,50 @@ function sendOTP(data) {
     otpSheet.getRange(existingRowIndex + 1, 7).setValue("");
     otpSheet.getRange(existingRowIndex + 1, 8).setValue(resendCount + 1);
   } else {
-    otpSheet.appendRow([enrollmentId, pin, new Date(), expiry, "false", 0, "", 0]);
+    otpSheet.appendRow([enrollmentId, "'" + pin, new Date(), expiry, "false", 0, "", 0]);
   }
 
-  // Handle Multi-Channel Dispatch
+  // Handle Multi-Channel Dispatch with Country Routing
+  var cleanPhone = String(clientPhone || "").replace(/[^0-9]/g, "");
+  var normalizedPhone = cleanPhone;
+  if (normalizedPhone.indexOf("00") === 0) {
+    normalizedPhone = normalizedPhone.slice(2);
+  }
+  
+  var isIndia = normalizedPhone.indexOf("91") === 0;
+  var isSaudi = false;
+  var isOtherCountry = false;
+
+  var otherCountryCodes = [
+    "965", "971", "973", "968", "974", "20", "962", "961", "44", "1", 
+    "61", "64", "92", "880", "63", "60", "65", "62", "90", "49", "33", 
+    "39", "34", "351", "31", "41", "46", "47", "45", "358", "43", "32", 
+    "353", "30", "7", "55", "52", "27", "234", "254"
+  ];
+
+  if (!isIndia) {
+    for (var cIdx = 0; cIdx < otherCountryCodes.length; cIdx++) {
+      if (normalizedPhone.indexOf(otherCountryCodes[cIdx]) === 0) {
+        isOtherCountry = true;
+        break;
+      }
+    }
+    if (!isOtherCountry) {
+      isSaudi = true;
+    }
+  }
+
+  if (method === "whatsapp") {
+    if (isIndia) {
+      var indiaBridge = getWhatsAppBridgeIndiaUrl(spreadsheet);
+      if (!indiaBridge) {
+        method = "email";
+      }
+    } else if (!isSaudi) {
+      method = "email";
+    }
+  }
+
   if (method === "whatsapp") {
     var messageText =
       "Hello " +
@@ -970,7 +1058,7 @@ function sendOTP(data) {
       ",\n\nYour Optivita verification code is: " +
       pin +
       "\n\nThis code expires in 5 minutes.";
-    var activeBridgeUrl = getWhatsAppBridgeUrl(spreadsheet);
+    var activeBridgeUrl = isIndia ? getWhatsAppBridgeIndiaUrl(spreadsheet) : getWhatsAppBridgeUrl(spreadsheet);
 
     if (activeBridgeUrl && activeBridgeUrl.indexOf("your-ngrok-url-here") === -1) {
       var options = {
@@ -995,6 +1083,12 @@ function sendOTP(data) {
         if (respJson && respJson.status === "error") {
           throw new Error(respJson.message || "Bridge error");
         }
+        return {
+          status: "success",
+          message: "Verification code sent successfully via WhatsApp.",
+          emailMasked: maskEmail(clientEmail),
+          phoneMasked: maskPhone(clientPhone)
+        };
       } catch (err) {
         Logger.log("WhatsApp Bridge Error: " + err.toString() + ". Falling back to local browser dispatch and email simulation.");
         try {
@@ -1035,6 +1129,15 @@ function sendOTP(data) {
             "</h2>",
         );
       } catch (e) {}
+
+      return {
+        status: "success",
+        message: "Verification code generated (simulated WhatsApp).",
+        emailMasked: maskEmail(clientEmail),
+        phoneMasked: maskPhone(clientPhone),
+        otp: pin,
+        fallbackDispatch: true
+      };
     }
   } else if (method === "telegram") {
     if (!clientTelegramChatId) {
@@ -1070,6 +1173,14 @@ function sendOTP(data) {
             "</h2>",
         );
       } catch (e) {}
+
+      return {
+        status: "success",
+        message: "Verification code generated (simulated Telegram).",
+        emailMasked: maskEmail(clientEmail),
+        phoneMasked: maskPhone(clientPhone),
+        otp: pin
+      };
     } else {
       var messageText =
         "Hello " +
@@ -1102,6 +1213,12 @@ function sendOTP(data) {
               "Failed to send Telegram message: " + (respJson.description || "Unknown error"),
           };
         }
+        return {
+          status: "success",
+          message: "Verification code sent successfully via Telegram.",
+          emailMasked: maskEmail(clientEmail),
+          phoneMasked: maskPhone(clientPhone)
+        };
       } catch (err) {
         Logger.log("Telegram API Error: " + err.toString());
         return {
@@ -1150,7 +1267,7 @@ function sendOTP(data) {
 
 // 3. Verify OTP / TOTP & Create Authenticated Session
 function verifyOTP(data) {
-  var enrollmentId = String(data.enrollmentId || "").trim();
+  var enrollmentId = String(data.enrollmentId || "").trim().toUpperCase();
   var otpCode = String(data.otp || "").trim();
   var clientBrowser = String(data.browser || "Unknown");
   var clientDevice = String(data.device || "Unknown");
@@ -1176,13 +1293,35 @@ function verifyOTP(data) {
   var totpSecret = "";
   var clientRowIndex = -1;
 
+  var clientsHeaders = clientRows[0];
+  var clientIdIdx = 0;
+  var clientNameIdx = 1;
+  var clientPhoneIdx = 2;
+  var clientEmailIdx = 3;
+  var clientProgramIdx = 4;
+  var clientPrefIdx = 6;
+  var clientTotpIdx = 7;
+  var clientTelegramIdx = 8;
+
+  for (var h = 0; h < clientsHeaders.length; h++) {
+    var hName = String(clientsHeaders[h]).trim().toLowerCase();
+    if (hName.indexOf("enrollment") !== -1 || hName === "id") clientIdIdx = h;
+    else if (hName.indexOf("name") !== -1) clientNameIdx = h;
+    else if (hName.indexOf("phone") !== -1 || hName.indexOf("mobile") !== -1) clientPhoneIdx = h;
+    else if (hName.indexOf("email") !== -1) clientEmailIdx = h;
+    else if (hName.indexOf("program") !== -1) clientProgramIdx = h;
+    else if (hName.indexOf("preferred") !== -1 || hName.indexOf("auth") !== -1) clientPrefIdx = h;
+    else if (hName.indexOf("totp") !== -1 || hName.indexOf("secret") !== -1) clientTotpIdx = h;
+    else if (hName.indexOf("telegram") !== -1 || hName.indexOf("chat") !== -1) clientTelegramIdx = h;
+  }
+
   for (var j = 1; j < clientRows.length; j++) {
-    if (String(clientRows[j][0]).trim() === enrollmentId) {
+    if (String(clientRows[j][clientIdIdx]).trim().toUpperCase() === enrollmentId) {
       clientRowIndex = j + 1;
-      preferredMethod = String(clientRows[j][6] || "email")
+      preferredMethod = String(clientRows[j][clientPrefIdx] || "email")
         .trim()
         .toLowerCase();
-      totpSecret = String(clientRows[j][7] || "").trim();
+      totpSecret = String(clientRows[j][clientTotpIdx] || "").trim();
       var joinStatusVal = "Pending Confirmation";
       var enrollSheetForStatus = getSheetSafe(spreadsheet, "Program Enrollments");
       if (enrollSheetForStatus) {
@@ -1212,11 +1351,11 @@ function verifyOTP(data) {
       }
 
       clientData = {
-        enrollmentId: String(clientRows[j][0]).trim(),
-        fullName: String(clientRows[j][1]).trim(),
-        phone: String(clientRows[j][2]).trim(),
-        email: String(clientRows[j][3]).trim(),
-        programName: String(clientRows[j][4]).trim(),
+        enrollmentId: String(clientRows[j][clientIdIdx]).trim(),
+        fullName: String(clientRows[j][clientNameIdx]).trim(),
+        phone: String(clientRows[j][clientPhoneIdx]).trim(),
+        email: String(clientRows[j][clientEmailIdx]).trim(),
+        programName: String(clientRows[j][clientProgramIdx]).trim(),
         status: joinStatusVal,
       };
       break;
@@ -1289,7 +1428,7 @@ function verifyOTP(data) {
   var lastAttemptTime = 0;
 
   for (var k = 1; k < otpRows.length; k++) {
-    if (String(otpRows[k][0]).trim() === enrollmentId) {
+    if (String(otpRows[k][0]).trim().toUpperCase() === enrollmentId) {
       otpRowIndex = k + 1;
       dbOtp = String(otpRows[k][1]).trim();
       dbExpiry = new Date(otpRows[k][3]).getTime();
@@ -1467,14 +1606,28 @@ function updateSecurityPreference(data) {
   }
 
   var rows = clientsSheet.getDataRange().getValues();
+  var headers = rows[0];
+  var clientIdIdx = 0;
+  var clientPrefIdx = 6;
+  var clientTotpIdx = 7;
+  var clientTelegramIdx = 8;
+
+  for (var h = 0; h < headers.length; h++) {
+    var hName = String(headers[h]).trim().toLowerCase();
+    if (hName.indexOf("enrollment") !== -1 || hName === "id") clientIdIdx = h;
+    else if (hName.indexOf("preferred") !== -1 || hName.indexOf("auth") !== -1) clientPrefIdx = h;
+    else if (hName.indexOf("totp") !== -1 || hName.indexOf("secret") !== -1) clientTotpIdx = h;
+    else if (hName.indexOf("telegram") !== -1 || hName.indexOf("chat") !== -1) clientTelegramIdx = h;
+  }
+
   for (var i = 1; i < rows.length; i++) {
-    if (String(rows[i][0]).trim() === enrollmentId) {
-      clientsSheet.getRange(i + 1, 7).setValue(preferredMethod); // Preferred Auth Method
+    if (String(rows[i][clientIdIdx]).trim() === enrollmentId) {
+      clientsSheet.getRange(i + 1, clientPrefIdx + 1).setValue(preferredMethod); // Preferred Auth Method
       if (preferredMethod === "totp" && totpSecret) {
-        clientsSheet.getRange(i + 1, 8).setValue(totpSecret); // TOTP Secret
+        clientsSheet.getRange(i + 1, clientTotpIdx + 1).setValue(totpSecret); // TOTP Secret
       }
       if (data.telegramChatId !== undefined) {
-        clientsSheet.getRange(i + 1, 9).setValue(String(data.telegramChatId).trim()); // Telegram Chat ID
+        clientsSheet.getRange(i + 1, clientTelegramIdx + 1).setValue(String(data.telegramChatId).trim()); // Telegram Chat ID
       }
       return {
         status: "success",
@@ -2932,15 +3085,41 @@ function handleApiGetProfile(enrollmentId, spreadsheet) {
     return { success: false, message: "Client profile not found.", code: 404 };
   }
   
+  var headers = match.headers;
+  var rowData = match.rowData;
+  
+  // Dynamic header indexes
+  var enrollmentIdVal = "";
+  var clientNameVal = "";
+  var phoneVal = "";
+  var emailVal = "";
+  var programVal = "";
+  var statusVal = "";
+  var preferredAuthVal = "";
+  var telegramChatIdVal = "";
+  
+  for (var h = 0; h < headers.length; h++) {
+    var hName = String(headers[h]).trim().toLowerCase();
+    var val = String(rowData[h] || "").trim();
+    if (hName.indexOf("enrollment") !== -1 || hName === "id") enrollmentIdVal = val;
+    else if (hName.indexOf("name") !== -1) clientNameVal = val;
+    else if (hName.indexOf("phone") !== -1 || hName.indexOf("mobile") !== -1) phoneVal = val;
+    else if (hName.indexOf("email") !== -1) emailVal = val;
+    else if (hName.indexOf("program") !== -1) programVal = val;
+    else if (hName === "status") statusVal = val;
+    else if (hName.indexOf("preferred") !== -1 || hName.indexOf("auth") !== -1) preferredAuthVal = val;
+    else if (hName.indexOf("telegram") !== -1 || hName.indexOf("chat") !== -1) telegramChatIdVal = val;
+  }
+  
   var profile = {
-    enrollmentId: String(match.rowData[0] || ""),
-    clientName: String(match.rowData[1] || ""),
-    phone: String(match.rowData[2] || ""),
-    email: String(match.rowData[3] || ""),
-    program: String(match.rowData[4] || ""),
-    status: String(match.rowData[5] || ""),
-    preferredAuth: String(match.rowData[6] || ""),
-    telegramChatId: String(match.rowData[8] || "")
+    enrollmentId: enrollmentIdVal,
+    clientName: clientNameVal,
+    phone: phoneVal,
+    email: emailVal,
+    program: programVal,
+    status: statusVal,
+    preferredAuth: preferredAuthVal,
+    telegramChatId: telegramChatIdVal
   };
   
   return {
@@ -3664,5 +3843,312 @@ function sendFcmNotification(fcmToken, title, body, dataPayload) {
     Logger.log("Error sending FCM push: " + err.toString());
     return false;
   }
+}
+
+// Telegram OAuth helper functions
+function verifyTelegramHash(data, botToken) {
+  var hash = data.hash;
+  if (!hash) return false;
+  
+  // Check auth_date (within 24 hours)
+  var authDate = parseInt(data.auth_date, 10);
+  var now = Math.floor(new Date().getTime() / 1000);
+  if (now - authDate > 86400) {
+    return false; // expired
+  }
+  
+  // Collect all fields except hash
+  var keys = [];
+  for (var k in data) {
+    if (k !== "hash") {
+      keys.push(k);
+    }
+  }
+  keys.sort();
+  
+  var dataCheckArr = [];
+  for (var i = 0; i < keys.length; i++) {
+    dataCheckArr.push(keys[i] + "=" + data[keys[i]]);
+  }
+  var dataCheckString = dataCheckArr.join("\n");
+  
+  // Secret key is SHA256 of botToken
+  var secretKey = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, botToken);
+  
+  var signature = Utilities.computeHmacSignature(
+    Utilities.MacAlgorithm.HMAC_SHA_256,
+    dataCheckString,
+    secretKey
+  );
+  
+  var signatureHex = signature.map(function(byte) {
+    var val = (byte & 0xff).toString(16);
+    return val.length === 1 ? "0" + val : val;
+  }).join("");
+  
+  return signatureHex === hash;
+}
+
+function handleTelegramOauthLogin(data) {
+  var telegramUser = data.telegramUser;
+  if (!telegramUser || !telegramUser.id) {
+    return { status: "error", message: "Invalid request. Missing Telegram user data." };
+  }
+
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var clientsSheet = getSheetSafe(spreadsheet, "Clients");
+  if (!clientsSheet) {
+    return { status: "error", message: "Database connection failed." };
+  }
+
+  var botToken = getSettingValue(spreadsheet, "telegram api key");
+  var isOffline = !botToken || botToken.indexOf("your-api-key") !== -1 || botToken.trim() === "";
+
+  // Perform OAuth validation in live mode
+  if (!isOffline) {
+    var isValid = verifyTelegramHash(telegramUser, botToken);
+    if (!isValid) {
+      return { status: "error", message: "Telegram authentication signature verification failed." };
+    }
+  }
+
+  var telegramIdStr = String(telegramUser.id).trim();
+
+  // Find Client metadata matching Telegram Chat ID
+  var clientRows = clientsSheet.getDataRange().getValues();
+  var clientsHeaders = clientRows[0];
+  var clientIdIdx = 0;
+  var clientTelegramIdx = 8;
+  var clientNameIdx = 1;
+  var clientPhoneIdx = 2;
+  var clientEmailIdx = 3;
+  var clientProgramIdx = 4;
+  var clientPrefIdx = 6;
+
+  for (var h = 0; h < clientsHeaders.length; h++) {
+    var hName = String(clientsHeaders[h]).trim().toLowerCase();
+    if (hName.indexOf("enrollment") !== -1 || hName === "id") clientIdIdx = h;
+    else if (hName.indexOf("name") !== -1) clientNameIdx = h;
+    else if (hName.indexOf("phone") !== -1 || hName.indexOf("mobile") !== -1) clientPhoneIdx = h;
+    else if (hName.indexOf("email") !== -1) clientEmailIdx = h;
+    else if (hName.indexOf("program") !== -1) clientProgramIdx = h;
+    else if (hName.indexOf("preferred") !== -1 || hName.indexOf("auth") !== -1) clientPrefIdx = h;
+    else if (hName.indexOf("telegram") !== -1 || hName.indexOf("chat") !== -1) clientTelegramIdx = h;
+  }
+
+  for (var i = 1; i < clientRows.length; i++) {
+    if (String(clientRows[i][clientTelegramIdx]).trim() === telegramIdStr) {
+      // Success! Found client. Return profile & record log.
+      var clientData = {
+        enrollmentId: String(clientRows[i][clientIdIdx]).trim(),
+        fullName: String(clientRows[i][clientNameIdx]).trim(),
+        phone: String(clientRows[i][clientPhoneIdx]).trim(),
+        email: String(clientRows[i][clientEmailIdx]).trim(),
+        programName: String(clientRows[i][clientProgramIdx]).trim(),
+        preferredMethod: String(clientRows[i][clientPrefIdx] || "email").trim().toLowerCase()
+      };
+
+      // Add default Status check
+      var joinStatusVal = "Confirmed";
+      var enrollSheetForStatus = getSheetSafe(spreadsheet, "Program Enrollments");
+      if (enrollSheetForStatus) {
+        var enrollRowsForStatus = enrollSheetForStatus.getDataRange().getValues();
+        var enrollHeadersForStatus = enrollRowsForStatus[0];
+        var idIdxForStatus = -1, statusIdxForStatus = -1;
+        for (var h = 0; h < enrollHeadersForStatus.length; h++) {
+          var hName = String(enrollHeadersForStatus[h]).trim().toLowerCase();
+          if (hName === "enrollment id" || hName === "enrollmentid") idIdxForStatus = h;
+          if (hName === "joining status" || hName === "joiningstatus" || hName === "status" || hName === "lead status") statusIdxForStatus = h;
+        }
+        if (idIdxForStatus !== -1 && statusIdxForStatus !== -1) {
+          for (var r = 1; r < enrollRowsForStatus.length; r++) {
+            if (String(enrollRowsForStatus[r][idIdxForStatus]).trim() === clientData.enrollmentId) {
+              joinStatusVal = String(enrollRowsForStatus[r][statusIdxForStatus]).trim();
+              break;
+            }
+          }
+        }
+      }
+      clientData.status = joinStatusVal;
+
+      // Log successful login
+      var logsSheet = getSheetSafe(spreadsheet, "Login Logs");
+      if (logsSheet) {
+        logsSheet.appendRow([
+          clientData.enrollmentId,
+          new Date(),
+          data.browser || "Telegram OAuth",
+          data.device || "Telegram OAuth",
+          data.ip || "Telegram OAuth",
+          "Success"
+        ]);
+      }
+
+      return {
+        status: "success",
+        message: "Telegram Login successful.",
+        clientData: clientData
+      };
+    }
+  }
+
+  return {
+    status: "error",
+    code: "TELEGRAM_NOT_LINKED",
+    message: "This Telegram account (" + (telegramUser.username ? "@" + telegramUser.username : telegramUser.first_name) + ") is not linked to any client profile. Please log in using Email or WhatsApp first, then link Telegram in Security settings."
+  };
+}
+
+function handleLinkTelegramOauth(data) {
+  var enrollmentId = String(data.enrollmentId || "").trim();
+  var telegramUser = data.telegramUser;
+
+  if (!enrollmentId || !telegramUser || !telegramUser.id) {
+    return { status: "error", message: "Missing required parameters." };
+  }
+
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var clientsSheet = getSheetSafe(spreadsheet, "Clients");
+  if (!clientsSheet) {
+    return { status: "error", message: "Database connection failed." };
+  }
+
+  var botToken = getSettingValue(spreadsheet, "telegram api key");
+  var isOffline = !botToken || botToken.indexOf("your-api-key") !== -1 || botToken.trim() === "";
+
+  if (!isOffline) {
+    var isValid = verifyTelegramHash(telegramUser, botToken);
+    if (!isValid) {
+      return { status: "error", message: "Telegram authentication signature verification failed." };
+    }
+  }
+
+  var telegramIdStr = String(telegramUser.id).trim();
+
+  var rows = clientsSheet.getDataRange().getValues();
+  var headers = rows[0];
+  var clientIdIdx = 0;
+  var clientTelegramIdx = 8;
+
+  for (var h = 0; h < headers.length; h++) {
+    var hName = String(headers[h]).trim().toLowerCase();
+    if (hName.indexOf("enrollment") !== -1 || hName === "id") clientIdIdx = h;
+    else if (hName.indexOf("telegram") !== -1 || hName.indexOf("chat") !== -1) clientTelegramIdx = h;
+  }
+
+  // Enforce unique telegram linking
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][clientIdIdx]).trim() !== enrollmentId && String(rows[i][clientTelegramIdx]).trim() === telegramIdStr) {
+      return { status: "error", message: "This Telegram account is already linked to another client profile." };
+    }
+  }
+
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][clientIdIdx]).trim() === enrollmentId) {
+      clientsSheet.getRange(i + 1, clientTelegramIdx + 1).setValue(telegramIdStr);
+      return {
+        status: "success",
+        message: "Telegram account successfully linked.",
+        telegramChatId: telegramIdStr
+      };
+    }
+  }
+
+  return { status: "error", message: "Client not found." };
+}
+
+function handleUnlinkTelegramOauth(data) {
+  var enrollmentId = String(data.enrollmentId || "").trim();
+  if (!enrollmentId) {
+    return { status: "error", message: "Missing enrollmentId." };
+  }
+
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var clientsSheet = getSheetSafe(spreadsheet, "Clients");
+  if (!clientsSheet) {
+    return { status: "error", message: "Database connection failed." };
+  }
+
+  var rows = clientsSheet.getDataRange().getValues();
+  var headers = rows[0];
+  var clientIdIdx = 0;
+  var clientTelegramIdx = 8;
+
+  for (var h = 0; h < headers.length; h++) {
+    var hName = String(headers[h]).trim().toLowerCase();
+    if (hName.indexOf("enrollment") !== -1 || hName === "id") clientIdIdx = h;
+    else if (hName.indexOf("telegram") !== -1 || hName.indexOf("chat") !== -1) clientTelegramIdx = h;
+  }
+
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][clientIdIdx]).trim() === enrollmentId) {
+      clientsSheet.getRange(i + 1, clientTelegramIdx + 1).setValue("");
+      return {
+        status: "success",
+        message: "Telegram account successfully unlinked."
+      };
+    }
+  }
+
+  return { status: "error", message: "Client not found." };
+}
+
+function handleSendEmailDirect(data) {
+  var enrollmentId = String(data.enrollmentId || "").trim().toUpperCase();
+  var email = String(data.email || "").trim();
+  var otp = String(data.otp || "").trim();
+  
+  if (!email || !otp) {
+    return { status: "error", message: "Missing required parameters." };
+  }
+  
+  // Save OTP in the Sheets database for compatibility
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var otpSheet = getSheetSafe(spreadsheet, "OTP");
+  if (otpSheet) {
+    var otpRows = otpSheet.getDataRange().getValues();
+    var exists = false;
+    var existingRowIndex = -1;
+    for (var k = 1; k < otpRows.length; k++) {
+      if (String(otpRows[k][0]).trim().toUpperCase() === enrollmentId) {
+        existingRowIndex = k;
+        exists = true;
+        break;
+      }
+    }
+    var expiry = new Date(new Date().getTime() + 5 * 60 * 1000);
+    if (exists) {
+      otpSheet.getRange(existingRowIndex + 1, 2).setValue("'" + otp);
+      otpSheet.getRange(existingRowIndex + 1, 3).setValue(new Date());
+      otpSheet.getRange(existingRowIndex + 1, 4).setValue(expiry);
+    } else {
+      otpSheet.appendRow([enrollmentId, "'" + otp, new Date(), expiry, "false", 0, "", 0]);
+    }
+  }
+  
+  // Dispatch email
+  sendEmailViaProvider(
+    email,
+    "Optivita Verification Code",
+    "<p>Hello,</p><p>Your verification code is:</p><h2>" + otp + "</h2><p>This code is valid for 5 minutes.</p>"
+  );
+  
+  return { status: "success", message: "Email sent successfully" };
+}
+
+function clearAllDatabaseTables(spreadsheet) {
+  var sheets = spreadsheet.getSheets();
+  for (var i = 0; i < sheets.length; i++) {
+    var sheet = sheets[i];
+    var sheetName = sheet.getName();
+    if (sheetName === "Settings") {
+      continue;
+    }
+    var lastRow = sheet.getLastRow();
+    if (lastRow > 1) {
+      sheet.deleteRows(2, lastRow - 1);
+    }
+  }
+  return { status: "success", message: "All database tables cleared successfully (Settings preserved)." };
 }
 

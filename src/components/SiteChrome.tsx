@@ -22,6 +22,9 @@ export function SiteHeader() {
           <a href="/#programs" className="hover:text-accent transition-colors">
             Programs
           </a>
+          <Link to="/marketplace" className="hover:text-accent transition-colors">
+            Marketplace
+          </Link>
           <Link to="/calculator" className="hover:text-accent transition-colors">
             Health Calculator
           </Link>
@@ -70,6 +73,13 @@ export function SiteHeader() {
             >
               Programs
             </a>
+            <Link
+              to="/marketplace"
+              className="hover:text-accent py-2 transition-colors border-b border-border/30"
+              onClick={closeMenu}
+            >
+              Marketplace
+            </Link>
             <Link
               to="/calculator"
               className="hover:text-accent py-2 transition-colors border-b border-border/30"
@@ -178,8 +188,12 @@ export function SiteFooter() {
           <p className="text-sm opacity-90 mt-1">WhatsApp coaching support</p>
         </div>
       </div>
-      <div className="border-t border-white/10 py-5 text-center text-xs opacity-70">
-        © {new Date().getFullYear()} Optivita — Your Precision Health Partner
+      <div className="border-t border-white/10 py-5 text-center text-xs opacity-70 flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4">
+        <span>© {new Date().getFullYear()} Optivita — Your Precision Health Partner</span>
+        <span className="hidden sm:inline">|</span>
+        <Link to="/privacy-policy" className="hover:text-accent hover:underline transition-colors">
+          Privacy Policy
+        </Link>
       </div>
     </footer>
   );

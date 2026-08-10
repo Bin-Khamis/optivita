@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, runTransaction, setDoc, getDoc } from "firebase/firestore";
+import { getFirestore, doc, runTransaction, setDoc, getDoc, writeBatch } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -206,4 +206,91 @@ function generateLocalFallbackId(): string {
   });
 
   return `OPT-2026-${String(nextIdNumber).padStart(6, "0")}`;
+}
+
+/**
+ * Synchronize all client records from Sheets to individual portal_clients documents in Firestore
+ */
+export async function syncClientsToFirestore(crmData: any): Promise<boolean> {
+  if (!db || !crmData) return false;
+  try {
+    // 1. Identify client records (prefer Clients sheet, fallback to Program Enrollments)
+    const rawClients = crmData["Clients"] || [];
+    const rawEnrollments = crmData["Program Enrollments"] || [];
+    const sourceList = rawClients.length > 0 ? rawClients : rawEnrollments;
+
+    if (sourceList.length === 0) return false;
+
+    // Use Firestore Batched Writes for high-speed atomic sync
+    let batch = writeBatch(db);
+    let opCount = 0;
+
+    for (const record of sourceList) {
+      const enrollmentId = String(record["Enrollment ID"] || record["id"] || record["enrollmentId"] || "").trim();
+      if (!enrollmentId || enrollmentId.toLowerCase() === "enrollment id") continue;
+
+      const clientDocRef = doc(db, "portal_clients", enrollmentId);
+      const profileData = {
+        enrollmentId: enrollmentId,
+        fullName: String(record["Name"] || record["fullName"] || record["Customer Name"] || "Client").trim(),
+        phone: String(record["Phone"] || record["phone"] || record["Mobile Number"] || "").trim(),
+        email: String(record["Email"] || record["email"] || record["Email Address"] || "").trim(),
+        preferredAuthMethod: String(record["preferredAuthMethod"] || record["preferredMethod"] || record["Preferred Method"] || "email").trim().toLowerCase(),
+        totpSecret: String(record["totpSecret"] || record["TOTP Secret"] || "").trim(),
+        telegramChatId: String(record["telegramChatId"] || record["Telegram Chat ID"] || "").trim(),
+        telegramBotUsername: String(record["telegramBotUsername"] || record["Telegram Bot Username"] || "OptiVitaOTPBot").trim(),
+        lastSyncAt: new Date().toISOString()
+      };
+
+      batch.set(clientDocRef, profileData, { merge: true });
+      opCount++;
+
+      // Firestore batches support up to 500 operations
+      if (opCount === 400) {
+        await batch.commit();
+        batch = writeBatch(db);
+        opCount = 0;
+      }
+    }
+
+    if (opCount > 0) {
+      await batch.commit();
+    }
+    return true;
+  } catch (err) {
+    console.error("Firestore syncClientsToFirestore error:", err);
+    return false;
+  }
+}
+
+/**
+ * Low-latency query to retrieve a single client document from Firestore
+ */
+export async function getPortalClientFromFirestore(enrollmentId: string): Promise<any | null> {
+  if (!db || !enrollmentId) return null;
+  try {
+    const docRef = doc(db, "portal_clients", enrollmentId.trim());
+    const snapshot = await getDoc(docRef);
+    if (snapshot.exists()) {
+      return snapshot.data();
+    }
+  } catch (err) {
+    console.error("Firestore getPortalClientFromFirestore error:", err);
+  }
+  return null;
+}
+
+/**
+ * Synchronize settings update instantly to the portal_clients document
+ */
+export async function updatePortalClientFirestore(enrollmentId: string, fields: any): Promise<boolean> {
+  if (!db || !enrollmentId) return false;
+  try {
+    const docRef = doc(db, "portal_clients", enrollmentId.trim());
+    await setDoc(docRef, { ...fields, lastSyncAt: new Date().toISOString() }, { merge: true });
+    return true;
+  } catch (err) {
+    console.error("Firestore updatePortalClientFirestore error:", err);
+    return false;
+  }
 }

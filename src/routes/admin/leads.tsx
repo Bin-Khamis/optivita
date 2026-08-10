@@ -29,7 +29,234 @@ export const Route = createFileRoute("/admin/leads")({
 
 function AdminLeads() {
   const { data, refreshData } = useCRM();
-  const [activeTab, setActiveTab] = useState<"leads" | "assessments">("leads");
+  const [activeTab, setActiveTab] = useState<"leads" | "assessments" | "planner">("leads");
+
+  // Daily Tasks Planner States
+  const [selectedClientId, setSelectedClientId] = useState("");
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
+
+  // Add Meal inputs
+  const [mealType, setMealType] = useState("Breakfast");
+  const [foodItems, setFoodItems] = useState("");
+  const [mealCalories, setMealCalories] = useState("");
+  const [mealProtein, setMealProtein] = useState("");
+  const [mealCarbs, setMealCarbs] = useState("");
+  const [mealFat, setMealFat] = useState("");
+  const [addingMeal, setAddingMeal] = useState(false);
+
+  // Add Workout inputs
+  const [workoutActivity, setWorkoutActivity] = useState("");
+  const [workoutDuration, setWorkoutDuration] = useState("");
+  const [workoutCalories, setWorkoutCalories] = useState("");
+  const [workoutIntensity, setWorkoutIntensity] = useState("Medium");
+  const [workoutNotes, setWorkoutNotes] = useState("");
+  const [addingWorkout, setAddingWorkout] = useState(false);
+
+  const enrollments = data?.["Program Enrollments"] || [];
+  const assessments = data?.["Health Assessments"] || [];
+  const allMeals = data?.["Meal Logs"] || [];
+  const allWorkouts = data?.["Workout Logs"] || [];
+
+  const isMatchingDate = (dateVal: any, targetDate: string) => {
+    if (!dateVal) return false;
+    const targetStr = new Date(targetDate).toISOString().split("T")[0];
+    const logStr = new Date(dateVal).toISOString().split("T")[0];
+    return targetStr === logStr;
+  };
+
+  const plannerMeals = allMeals.filter(
+    (m: any) =>
+      String(m["Enrollment ID"] || m.EnrollmentID || "").trim() === String(selectedClientId).trim() &&
+      isMatchingDate(m.Date, selectedDate)
+  );
+
+  const plannerWorkouts = allWorkouts.filter(
+    (w: any) =>
+      String(w["Enrollment ID"] || w.EnrollmentID || "").trim() === String(selectedClientId).trim() &&
+      isMatchingDate(w.Date, selectedDate)
+  );
+
+  const handleAddMealSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClientId) return;
+    setAddingMeal(true);
+
+    const logId = "ML-" + Math.floor(100000 + Math.random() * 900000);
+    const newMeal = {
+      "Log ID": logId,
+      "Enrollment ID": selectedClientId,
+      Date: selectedDate,
+      "Meal Type": mealType,
+      "Food Items": foodItems,
+      Calories: Number(mealCalories) || 0,
+      Protein: Number(mealProtein) || 0,
+      Carbs: Number(mealCarbs) || 0,
+      Fat: Number(mealFat) || 0,
+      Status: "Pending",
+      Timestamp: new Date().toISOString()
+    };
+
+    // 1. Update Firestore & Local Memory
+    const currentDataset = { ...data };
+    if (!currentDataset["Meal Logs"]) currentDataset["Meal Logs"] = [];
+    currentDataset["Meal Logs"].push(newMeal);
+
+    localStorage.setItem("optivita_crm_cache", JSON.stringify(currentDataset));
+    try {
+      const { saveCRMDataToFirestore } = await import("@/lib/firebase");
+      await saveCRMDataToFirestore(currentDataset);
+    } catch (err) {
+      console.warn("Firestore save error:", err);
+    }
+
+    toast.success("Meal scheduled successfully!");
+    setFoodItems("");
+    setMealCalories("");
+    setMealProtein("");
+    setMealCarbs("");
+    setMealFat("");
+    setAddingMeal(false);
+    refreshData();
+
+    // 2. Sync to Sheets in background
+    const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
+    if (!isWebhookOffline(webhookUrl)) {
+      fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action: "webhookSubmit",
+          sheetName: "Meal Logs",
+          ...newMeal
+        })
+      }).catch(() => {});
+    }
+  };
+
+  const handleAddWorkoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClientId) return;
+    setAddingWorkout(true);
+
+    const logId = "WL-" + Math.floor(100000 + Math.random() * 900000);
+    const newWorkout = {
+      "Log ID": logId,
+      "Enrollment ID": selectedClientId,
+      Date: selectedDate,
+      Activity: workoutActivity,
+      Duration: Number(workoutDuration) || 0,
+      "Calories Burned": Number(workoutCalories) || 0,
+      Intensity: workoutIntensity,
+      Notes: workoutNotes,
+      Status: "Pending",
+      Timestamp: new Date().toISOString()
+    };
+
+    // 1. Update Firestore & Local Memory
+    const currentDataset = { ...data };
+    if (!currentDataset["Workout Logs"]) currentDataset["Workout Logs"] = [];
+    currentDataset["Workout Logs"].push(newWorkout);
+
+    localStorage.setItem("optivita_crm_cache", JSON.stringify(currentDataset));
+    try {
+      const { saveCRMDataToFirestore } = await import("@/lib/firebase");
+      await saveCRMDataToFirestore(currentDataset);
+    } catch (err) {
+      console.warn("Firestore save error:", err);
+    }
+
+    toast.success("Workout scheduled successfully!");
+    setWorkoutActivity("");
+    setWorkoutDuration("");
+    setWorkoutCalories("");
+    setWorkoutNotes("");
+    setAddingWorkout(false);
+    refreshData();
+
+    // 2. Sync to Sheets in background
+    const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
+    if (!isWebhookOffline(webhookUrl)) {
+      fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action: "webhookSubmit",
+          sheetName: "Workout Logs",
+          ...newWorkout
+        })
+      }).catch(() => {});
+    }
+  };
+
+  const handleDeleteMealLog = async (logId: string) => {
+    if (!confirm("Are you sure you want to delete this scheduled meal?")) return;
+
+    // 1. Remove from local memory dataset
+    const currentDataset = { ...data };
+    currentDataset["Meal Logs"] = (currentDataset["Meal Logs"] || []).filter(
+      (m: any) => (m["Log ID"] || m.LogID) !== logId
+    );
+
+    localStorage.setItem("optivita_crm_cache", JSON.stringify(currentDataset));
+    try {
+      const { saveCRMDataToFirestore } = await import("@/lib/firebase");
+      await saveCRMDataToFirestore(currentDataset);
+    } catch (err) {
+      console.warn("Firestore save error:", err);
+    }
+
+    toast.success("Meal plan deleted.");
+    refreshData();
+
+    // 2. Sync to Sheets in background
+    const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
+    if (!isWebhookOffline(webhookUrl)) {
+      fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action: "deleteRecord",
+          sheetName: "Meal Logs",
+          id: logId
+        })
+      }).catch(() => {});
+    }
+  };
+
+  const handleDeleteWorkoutLog = async (logId: string) => {
+    if (!confirm("Are you sure you want to delete this scheduled workout?")) return;
+
+    // 1. Remove from local memory dataset
+    const currentDataset = { ...data };
+    currentDataset["Workout Logs"] = (currentDataset["Workout Logs"] || []).filter(
+      (w: any) => (w["Log ID"] || w.LogID) !== logId
+    );
+
+    localStorage.setItem("optivita_crm_cache", JSON.stringify(currentDataset));
+    try {
+      const { saveCRMDataToFirestore } = await import("@/lib/firebase");
+      await saveCRMDataToFirestore(currentDataset);
+    } catch (err) {
+      console.warn("Firestore save error:", err);
+    }
+
+    toast.success("Workout plan deleted.");
+    refreshData();
+
+    // 2. Sync to Sheets in background
+    const webhookUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
+    if (!isWebhookOffline(webhookUrl)) {
+      fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action: "deleteRecord",
+          sheetName: "Workout Logs",
+          id: logId
+        })
+      }).catch(() => {});
+    }
+  };
 
   // Filtering & Searching states
   const [searchTerm, setSearchTerm] = useState("");
@@ -205,9 +432,6 @@ function AdminLeads() {
       }).catch(() => {});
     }
   };
-
-  const enrollments = data?.["Program Enrollments"] || [];
-  const assessments = data?.["Health Assessments"] || [];
 
   // 1. Filter Leads
   const filteredLeads = enrollments.filter((lead: any) => {
@@ -574,64 +798,75 @@ function AdminLeads() {
           >
             <HeartPulse className="h-4 w-4" /> Assessments ({assessments.length})
           </button>
+          <button
+            onClick={() => setActiveTab("planner")}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 ${
+              activeTab === "planner"
+                ? "bg-white dark:bg-slate-800 shadow-soft text-emerald-600 dark:text-emerald-400"
+                : "text-slate-500"
+            }`}
+          >
+            <Calendar className="h-4 w-4" /> Daily Planner
+          </button>
         </div>
       </div>
 
-      {/* Filter and Search Panel */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-[20px] p-5 shadow-soft">
-        <div className="flex flex-wrap gap-4 items-center">
-          {/* Search bar */}
-          <div className="relative flex-1 min-w-[240px]">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={
-                activeTab === "leads"
-                  ? "Search ID, phone, name, email..."
-                  : "Search name or program..."
-              }
-              className="w-full pl-10 pr-4 py-2.5 border rounded-full text-xs bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 dark:text-slate-100"
-            />
+      {activeTab !== "planner" && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-[20px] p-5 shadow-soft">
+          <div className="flex flex-wrap gap-4 items-center">
+            {/* Search bar */}
+            <div className="relative flex-1 min-w-[240px]">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={
+                  activeTab === "leads"
+                    ? "Search ID, phone, name, email..."
+                    : "Search name or program..."
+                }
+                className="w-full pl-10 pr-4 py-2.5 border rounded-full text-xs bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+            {/* Filters (only for leads) */}
+            {activeTab === "leads" && (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Status</span>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="px-3.5 py-2 border rounded-full text-xs bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:outline-none text-slate-800 dark:text-slate-100"
+                  >
+                    <option value="All">All Statuses</option>
+                    {statusOptions.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Program</span>
+                  <select
+                    value={programFilter}
+                    onChange={(e) => setProgramFilter(e.target.value)}
+                    className="px-3.5 py-2 border rounded-full text-xs bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:outline-none text-slate-800 dark:text-slate-100"
+                  >
+                    <option value="All">All Programs</option>
+                    <option value="30-Day Weight Loss Challenge">Weight Loss</option>
+                    <option value="Diabetes Nutrition Program">Diabetes Nutrition</option>
+                    <option value="Healthy Lifestyle Reset">Lifestyle Reset</option>
+                  </select>
+                </div>
+              </>
+            )}
           </div>
-
-          {/* Filters (only for leads) */}
-          {activeTab === "leads" && (
-            <>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] uppercase font-bold text-slate-400">Status</span>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3.5 py-2 border rounded-full text-xs bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:outline-none text-slate-800 dark:text-slate-100"
-                >
-                  <option value="All">All Statuses</option>
-                  {statusOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] uppercase font-bold text-slate-400">Program</span>
-                <select
-                  value={programFilter}
-                  onChange={(e) => setProgramFilter(e.target.value)}
-                  className="px-3.5 py-2 border rounded-full text-xs bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:outline-none text-slate-800 dark:text-slate-100"
-                >
-                  <option value="All">All Programs</option>
-                  <option value="30-Day Weight Loss Challenge">Weight Loss</option>
-                  <option value="Diabetes Nutrition Program">Diabetes Nutrition</option>
-                  <option value="Healthy Lifestyle Reset">Lifestyle Reset</option>
-                </select>
-              </div>
-            </>
-          )}
         </div>
-      </div>
+      )}
 
       {/* Main Tables */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 rounded-[24px] shadow-soft overflow-hidden">
@@ -767,7 +1002,7 @@ function AdminLeads() {
               </tbody>
             </table>
           </div>
-        ) : (
+        ) : activeTab === "assessments" ? (
           /* Assessments Sub-table */
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
@@ -832,6 +1067,255 @@ function AdminLeads() {
                 )}
               </tbody>
             </table>
+          </div>
+        ) : (
+          <div className="p-6 space-y-6">
+            {/* Top client selection row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-950 p-5 rounded-2xl border">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Client</label>
+                <select
+                  value={selectedClientId}
+                  onChange={(e) => setSelectedClientId(e.target.value)}
+                  className="w-full p-3 text-xs border rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
+                >
+                  <option value="">-- Choose Client --</option>
+                  {enrollments.map((c: any) => (
+                    <option key={c["Enrollment ID"] || c.EnrollmentID} value={c["Enrollment ID"] || c.EnrollmentID}>
+                      {c.fullName || c["Client Name"] || c.ClientName || ""} ({c["Enrollment ID"] || c.EnrollmentID})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Date</label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full p-2.5 text-xs border rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
+                />
+              </div>
+            </div>
+
+            {selectedClientId ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left Panel: Meals */}
+                <div className="space-y-6">
+                  <div className="bg-slate-50 dark:bg-slate-950 border p-5 rounded-[24px] space-y-4">
+                    <h3 className="font-semibold text-sm flex items-center gap-2 border-b pb-2">
+                      🍳 Scheduled Daily Meals ({plannerMeals.length})
+                    </h3>
+                    
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                      {plannerMeals.length === 0 ? (
+                        <p className="text-xs text-slate-400 py-4 text-center">No meals scheduled for this date.</p>
+                      ) : (
+                        plannerMeals.map((meal: any) => (
+                          <div key={meal["Log ID"] || meal.LogID} className="p-3 border rounded-xl bg-white dark:bg-slate-900 flex justify-between items-center text-xs leading-normal">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-emerald-600 uppercase text-[9px] bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
+                                  {meal["Meal Type"]}
+                                </span>
+                                <span className="font-bold">{meal["Food Items"]}</span>
+                              </div>
+                              <p className="text-slate-400 mt-1">
+                                {meal.Calories} kcal • {meal.Protein || 0}g P | {meal.Carbs || 0}g C | {meal.Fat || 0}g F
+                              </p>
+                              <span className={`inline-block mt-1 text-[8px] font-black px-1 rounded ${
+                                String(meal.Status).toLowerCase().includes("complete")
+                                  ? "bg-emerald-500/10 text-emerald-600"
+                                  : "bg-amber-500/10 text-amber-600"
+                              }`}>
+                                {meal.Status || "Pending"}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => handleDeleteMealLog(meal["Log ID"] || meal.LogID)}
+                              className="p-1 rounded hover:bg-red-50 text-red-500 cursor-pointer"
+                              title="Delete Meal Plan"
+                            >
+                              <Trash2 className="h-4.5 w-4.5" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Add Meal Form */}
+                    <form onSubmit={handleAddMealSubmit} className="border-t pt-4 space-y-3">
+                      <h4 className="font-bold text-xs uppercase text-slate-400">Schedule Meal</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <select
+                          value={mealType}
+                          onChange={(e) => setMealType(e.target.value)}
+                          className="p-2 text-xs border rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                        >
+                          <option value="Breakfast">Breakfast</option>
+                          <option value="Lunch">Lunch</option>
+                          <option value="Dinner">Dinner</option>
+                          <option value="Snack">Snack</option>
+                        </select>
+                        <input
+                          type="text"
+                          value={foodItems}
+                          onChange={(e) => setFoodItems(e.target.value)}
+                          placeholder="e.g. Avocado Toast with Eggs"
+                          className="p-2 text-xs border rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 gap-2">
+                        <input
+                          type="number"
+                          value={mealCalories}
+                          onChange={(e) => setMealCalories(e.target.value)}
+                          placeholder="kcal"
+                          className="p-2 text-xs border rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                          required
+                        />
+                        <input
+                          type="number"
+                          value={mealProtein}
+                          onChange={(e) => setMealProtein(e.target.value)}
+                          placeholder="Prot (g)"
+                          className="p-2 text-xs border rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                        />
+                        <input
+                          type="number"
+                          value={mealCarbs}
+                          onChange={(e) => setMealCarbs(e.target.value)}
+                          placeholder="Carb (g)"
+                          className="p-2 text-xs border rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                        />
+                        <input
+                          type="number"
+                          value={mealFat}
+                          onChange={(e) => setMealFat(e.target.value)}
+                          placeholder="Fat (g)"
+                          className="p-2 text-xs border rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={addingMeal}
+                        className="w-full p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold disabled:opacity-50 cursor-pointer"
+                      >
+                        {addingMeal ? "Adding..." : "Add Meal to Schedule"}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+
+                {/* Right Panel: Workouts */}
+                <div className="space-y-6">
+                  <div className="bg-slate-50 dark:bg-slate-950 border p-5 rounded-[24px] space-y-4">
+                    <h3 className="font-semibold text-sm flex items-center gap-2 border-b pb-2">
+                      🏃 Scheduled Daily Workouts ({plannerWorkouts.length})
+                    </h3>
+                    
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                      {plannerWorkouts.length === 0 ? (
+                        <p className="text-xs text-slate-400 py-4 text-center">No workouts scheduled for this date.</p>
+                      ) : (
+                        plannerWorkouts.map((workout: any) => (
+                          <div key={workout["Log ID"] || workout.LogID} className="p-3 border rounded-xl bg-white dark:bg-slate-900 flex justify-between items-center text-xs leading-normal">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-cyan-600 uppercase text-[9px] bg-cyan-50 dark:bg-cyan-950/40 px-1.5 py-0.5 rounded">
+                                  {workout.Intensity || "Medium"}
+                                </span>
+                                <span className="font-bold">{workout.Activity}</span>
+                              </div>
+                              <p className="text-slate-400 mt-1">
+                                {workout.Duration} mins • {workout["Calories Burned"] || 0} kcal burned
+                              </p>
+                              {workout.Notes && <p className="text-[10px] text-slate-450 italic mt-0.5">Notes: {workout.Notes}</p>}
+                              <span className={`inline-block mt-1 text-[8px] font-black px-1 rounded ${
+                                String(workout.Status).toLowerCase().includes("complete")
+                                  ? "bg-emerald-500/10 text-emerald-600"
+                                  : "bg-amber-500/10 text-amber-600"
+                              }`}>
+                                {workout.Status || "Pending"}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => handleDeleteWorkoutLog(workout["Log ID"] || workout.LogID)}
+                              className="p-1 rounded hover:bg-red-50 text-red-500 cursor-pointer"
+                              title="Delete Workout Plan"
+                            >
+                              <Trash2 className="h-4.5 w-4.5" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Add Workout Form */}
+                    <form onSubmit={handleAddWorkoutSubmit} className="border-t pt-4 space-y-3">
+                      <h4 className="font-bold text-xs uppercase text-slate-400">Schedule Workout</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <input
+                          type="text"
+                          value={workoutActivity}
+                          onChange={(e) => setWorkoutActivity(e.target.value)}
+                          placeholder="e.g. Cardio Walk / HIIT"
+                          className="p-2 text-xs border rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                          required
+                        />
+                        <select
+                          value={workoutIntensity}
+                          onChange={(e) => setWorkoutIntensity(e.target.value)}
+                          className="p-2 text-xs border rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-bold"
+                        >
+                          <option value="Low">Low Intensity</option>
+                          <option value="Medium">Medium Intensity</option>
+                          <option value="High">High Intensity</option>
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <input
+                          type="number"
+                          value={workoutDuration}
+                          onChange={(e) => setWorkoutDuration(e.target.value)}
+                          placeholder="Duration (mins)"
+                          className="p-2 text-xs border rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                          required
+                        />
+                        <input
+                          type="number"
+                          value={workoutCalories}
+                          onChange={(e) => setWorkoutCalories(e.target.value)}
+                          placeholder="Est. Calories Burned"
+                          className="p-2 text-xs border rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                          required
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        value={workoutNotes}
+                        onChange={(e) => setWorkoutNotes(e.target.value)}
+                        placeholder="Additional coach notes/targets..."
+                        className="w-full p-2 text-xs border rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                      />
+                      <button
+                        type="submit"
+                        disabled={addingWorkout}
+                        className="w-full p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold disabled:opacity-50 cursor-pointer"
+                      >
+                        {addingWorkout ? "Adding..." : "Add Workout to Schedule"}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-8 text-center text-slate-400 border border-dashed rounded-[24px]">
+                Please select a client from the dropdown menu to begin planning their daily schedule.
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -19,6 +19,7 @@ import {
   Key,
   RefreshCw,
   MessageSquare,
+  Store,
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
@@ -313,6 +314,59 @@ function PortalLayout() {
     }
   };
 
+  const [notificationTab, setNotificationTab] = useState<"announcements" | "marketplace">("announcements");
+
+  const [marketplaceNotifications, setMarketplaceNotifications] = useState<any[]>(() => {
+    const raw = localStorage.getItem("optivita_marketplace_notifications");
+    if (raw) {
+      try {
+        const list = JSON.parse(raw);
+        return list.filter((n: any) => n.recipientId === clientEnrollmentId);
+      } catch {}
+    }
+    // Default test notifications for prototype
+    const testList = [
+      {
+        id: "NTF-901",
+        recipientId: clientEnrollmentId,
+        recipientRole: "customer",
+        event: "booking.confirmed",
+        title: "Booking Confirmed",
+        message: "Hi client, your appointment is confirmed.",
+        read: false,
+        timestamp: new Date().toISOString(),
+        deepLink: "/portal/appointments",
+      },
+      {
+        id: "NTF-902",
+        recipientId: clientEnrollmentId,
+        recipientRole: "customer",
+        event: "payment.success",
+        title: "Payment Received",
+        message: "Your payment of SAR 150 has been received.",
+        read: true,
+        timestamp: new Date().toISOString(),
+        deepLink: "/portal/wallet",
+      }
+    ];
+    localStorage.setItem("optivita_marketplace_notifications", JSON.stringify(testList));
+    return testList.filter((n: any) => n.recipientId === clientEnrollmentId);
+  });
+
+  const totalUnreadCount = unreadCount + marketplaceNotifications.filter(n => !n.read).length;
+
+  const handleMarkMarketplaceRead = (id: string) => {
+    const raw = localStorage.getItem("optivita_marketplace_notifications") || "[]";
+    let list = [];
+    try { list = JSON.parse(raw); } catch {}
+    const updated = list.map((n: any) => {
+      if (n.id === id) return { ...n, read: true };
+      return n;
+    });
+    localStorage.setItem("optivita_marketplace_notifications", JSON.stringify(updated));
+    setMarketplaceNotifications(updated.filter((n: any) => n.recipientId === clientEnrollmentId));
+  };
+
   const navItems = [
     { label: "Dashboard", icon: HeartPulse, path: "/portal/dashboard" },
     { label: "Coaching Programs", icon: CheckSquare, path: "/portal/programs" },
@@ -321,7 +375,9 @@ function PortalLayout() {
     { label: "Appointments", icon: Calendar, path: "/portal/appointments" },
     { label: "Secure Messages", icon: MessageSquare, path: "/portal/messages" },
     { label: "Billing & Invoices", icon: FileText, path: "/portal/invoices" },
+    { label: "Marketplace Wallet", icon: Wallet, path: "/portal/wallet" },
     { label: "Security Settings", icon: Key, path: "/portal/security" },
+    { label: "Marketplace", icon: Store, path: "/marketplace" },
   ];
 
   return (
@@ -443,69 +499,124 @@ function PortalLayout() {
                   className="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 relative"
                 >
                   <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
+                  {totalUnreadCount > 0 && (
                     <span className="absolute top-1.5 right-1.5 bg-red-500 text-white rounded-full text-[8px] font-black h-4.5 w-4.5 flex items-center justify-center animate-bounce">
-                      {unreadCount}
+                      {totalUnreadCount}
                     </span>
                   )}
                 </button>
 
                 {showNotifications && (
                   <div
-                    className={`absolute right-0 mt-3 w-80 rounded-2xl shadow-glow border p-4 z-50 animate-scale-up max-h-[350px] overflow-y-auto ${darkMode ? "bg-slate-900 border-slate-800 text-slate-200" : "bg-white border-slate-200 text-slate-800"}`}
+                    className={`absolute right-0 mt-3 w-80 rounded-2xl shadow-glow border p-4 z-50 animate-scale-up max-h-[380px] overflow-y-auto ${darkMode ? "bg-slate-900 border-slate-800 text-slate-200" : "bg-white border-slate-200 text-slate-800"}`}
                   >
-                    <h4 className="font-bold text-sm mb-3 text-left">
-                      Portal Announcements ({clientNotifications.length})
-                    </h4>
-                    <div className="space-y-2">
-                      {clientNotifications.length > 0 ? (
-                        clientNotifications.map((n: any) => {
-                          const nid = String(n["Notification ID"] || n.NotificationID || "").trim();
-                          const isUnread = recipientsLog.some((r: any) => {
-                            const rCid = String(r["Client ID"] || r.ClientID || "").trim();
-                            const rNid = String(
-                              r["Notification ID"] || r.NotificationID || "",
-                            ).trim();
-                            const rStatus = String(r["Read Status"] || r.ReadStatus || "").trim();
-                            return (
-                              rCid === clientEnrollmentId && rNid === nid && rStatus === "Unread"
-                            );
-                          });
+                    {/* Header Tabs */}
+                    <div className="flex border-b border-border/40 pb-2 mb-3 gap-2">
+                      <button
+                        onClick={() => setNotificationTab("announcements")}
+                        className={`flex-1 py-1 rounded text-[9px] font-bold ${
+                          notificationTab === "announcements" ? "bg-accent/15 text-accent" : "text-muted-foreground"
+                        }`}
+                      >
+                        Announcements ({clientNotifications.length})
+                      </button>
+                      <button
+                        onClick={() => setNotificationTab("marketplace")}
+                        className={`flex-1 py-1 rounded text-[9px] font-bold ${
+                          notificationTab === "marketplace" ? "bg-accent/15 text-accent" : "text-muted-foreground"
+                        }`}
+                      >
+                        Marketplace ({marketplaceNotifications.length})
+                      </button>
+                    </div>
 
-                          return (
+                    <div className="space-y-2">
+                      {notificationTab === "announcements" ? (
+                        clientNotifications.length > 0 ? (
+                          clientNotifications.map((n: any) => {
+                            const nid = String(n["Notification ID"] || n.NotificationID || "").trim();
+                            const isUnread = recipientsLog.some((r: any) => {
+                              const rCid = String(r["Client ID"] || r.ClientID || "").trim();
+                              const rNid = String(
+                                r["Notification ID"] || r.NotificationID || "",
+                              ).trim();
+                              const rStatus = String(r["Read Status"] || r.ReadStatus || "").trim();
+                              return (
+                                rCid === clientEnrollmentId && rNid === nid && rStatus === "Unread"
+                              );
+                            });
+
+                            return (
+                              <div
+                                key={nid}
+                                onClick={() => isUnread && handleMarkAsRead(nid)}
+                                className={`p-3 rounded-xl text-xs border leading-normal text-left transition-all duration-200 relative ${
+                                  isUnread
+                                    ? "bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10 cursor-pointer"
+                                    : "bg-slate-50/50 dark:bg-slate-850 border-slate-100 dark:border-slate-800 opacity-80"
+                                }`}
+                              >
+                                {isUnread && (
+                                  <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                )}
+                                <p className="font-bold text-slate-850 dark:text-slate-100 flex items-center gap-1.5">
+                                  {n.Title || n.title}
+                                  {isUnread && (
+                                    <span className="text-[7px] bg-emerald-600 text-white font-black px-1 rounded uppercase tracking-widest">
+                                      New
+                                    </span>
+                                  )}
+                                </p>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                                  {n.Message || n.message}
+                                </p>
+                                <p className="text-[8px] text-slate-400 mt-1.5 text-right">
+                                  {n.Date || n.date}
+                                </p>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <p className="text-xs text-slate-400 text-center py-4">
+                            No announcement notifications.
+                          </p>
+                        )
+                      ) : (
+                        marketplaceNotifications.length > 0 ? (
+                          marketplaceNotifications.map((n: any) => (
                             <div
-                              key={nid}
-                              onClick={() => isUnread && handleMarkAsRead(nid)}
+                              key={n.id}
+                              onClick={() => !n.read && handleMarkMarketplaceRead(n.id)}
                               className={`p-3 rounded-xl text-xs border leading-normal text-left transition-all duration-200 relative ${
-                                isUnread
+                                !n.read
                                   ? "bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10 cursor-pointer"
                                   : "bg-slate-50/50 dark:bg-slate-850 border-slate-100 dark:border-slate-800 opacity-80"
                               }`}
                             >
-                              {isUnread && (
+                              {!n.read && (
                                 <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
                               )}
                               <p className="font-bold text-slate-850 dark:text-slate-100 flex items-center gap-1.5">
-                                {n.Title || n.title}
-                                {isUnread && (
+                                {n.title}
+                                {!n.read && (
                                   <span className="text-[7px] bg-emerald-600 text-white font-black px-1 rounded uppercase tracking-widest">
                                     New
                                   </span>
                                 )}
                               </p>
                               <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
-                                {n.Message || n.message}
+                                {n.message}
                               </p>
                               <p className="text-[8px] text-slate-400 mt-1.5 text-right">
-                                {n.Date || n.date}
+                                {new Date(n.timestamp).toLocaleDateString()}
                               </p>
                             </div>
-                          );
-                        })
-                      ) : (
-                        <p className="text-xs text-slate-400 text-center py-4">
-                          No announcement notifications.
-                        </p>
+                          ))
+                        ) : (
+                          <p className="text-xs text-slate-400 text-center py-4">
+                            No marketplace notifications.
+                          </p>
+                        )
                       )}
                     </div>
                   </div>

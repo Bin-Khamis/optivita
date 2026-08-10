@@ -9,12 +9,33 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ProviderRouteImport } from './routes/provider'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PortalRouteImport } from './routes/portal'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as CalculatorRouteImport } from './routes/calculator'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProviderIndexRouteImport } from './routes/provider/index'
+import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
+import { Route as CorporateIndexRouteImport } from './routes/corporate.index'
+import { Route as ProviderSettingsRouteImport } from './routes/provider/settings'
+import { Route as ProviderServicesRouteImport } from './routes/provider/services'
+import { Route as ProviderReviewsRouteImport } from './routes/provider/reviews'
+import { Route as ProviderRegisterRouteImport } from './routes/provider/register'
+import { Route as ProviderPromotionsRouteImport } from './routes/provider/promotions'
+import { Route as ProviderProfileRouteImport } from './routes/provider/profile'
+import { Route as ProviderPayoutsRouteImport } from './routes/provider/payouts'
+import { Route as ProviderMessagesRouteImport } from './routes/provider/messages'
+import { Route as ProviderLoginRouteImport } from './routes/provider/login'
+import { Route as ProviderEarningsRouteImport } from './routes/provider/earnings'
+import { Route as ProviderCustomersRouteImport } from './routes/provider/customers'
+import { Route as ProviderAvailabilityRouteImport } from './routes/provider/availability'
+import { Route as ProviderAppointmentsRouteImport } from './routes/provider/appointments'
+import { Route as ProviderAnalyticsRouteImport } from './routes/provider/analytics'
 import { Route as ProgramsProgramIdRouteImport } from './routes/programs.$programId'
+import { Route as PortalWalletRouteImport } from './routes/portal/wallet'
 import { Route as PortalSecurityRouteImport } from './routes/portal/security'
 import { Route as PortalProgressRouteImport } from './routes/portal/progress'
 import { Route as PortalProgramsRouteImport } from './routes/portal/programs'
@@ -24,22 +45,78 @@ import { Route as PortalLoginRouteImport } from './routes/portal/login'
 import { Route as PortalInvoicesRouteImport } from './routes/portal/invoices'
 import { Route as PortalDashboardRouteImport } from './routes/portal/dashboard'
 import { Route as PortalAppointmentsRouteImport } from './routes/portal/appointments'
+import { Route as MarketplaceBookingRouteImport } from './routes/marketplace.booking'
+import { Route as MarketplaceCategoryRouteImport } from './routes/marketplace.$category'
+import { Route as CorporateRegisterRouteImport } from './routes/corporate.register'
+import { Route as CorporateAnalyticsRouteImport } from './routes/corporate.analytics'
+import { Route as ApiHealthRouteImport } from './routes/api.health'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
 import { Route as AdminMobileRouteImport } from './routes/admin/mobile'
+import { Route as AdminMarketplaceRouteImport } from './routes/admin.marketplace'
 import { Route as AdminLoyaltyRouteImport } from './routes/admin/loyalty'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminLeadsRouteImport } from './routes/admin/leads'
 import { Route as AdminHrRouteImport } from './routes/admin/hr'
 import { Route as AdminFinanceRouteImport } from './routes/admin/finance'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminCorporateRouteImport } from './routes/admin.corporate'
 import { Route as AdminCommunicationRouteImport } from './routes/admin/communication'
 import { Route as AdminAppointmentsRouteImport } from './routes/admin/appointments'
+import { Route as AdminMarketplaceIndexRouteImport } from './routes/admin.marketplace.index'
+import { Route as MarketplaceServiceServiceIdRouteImport } from './routes/marketplace.service.$serviceId'
+import { Route as MarketplaceProviderProviderIdRouteImport } from './routes/marketplace.provider.$providerId'
+import { Route as MarketplacePaymentSuccessRouteImport } from './routes/marketplace.payment.success'
+import { Route as MarketplacePaymentFailedRouteImport } from './routes/marketplace.payment.failed'
+import { Route as MarketplacePaymentCancelRouteImport } from './routes/marketplace.payment.cancel'
+import { Route as CorporateEmployeesGroupsRouteImport } from './routes/corporate.employees.groups'
+import { Route as ApiPaymentsWebhookRouteImport } from './routes/api.payments.webhook'
+import { Route as AdminSecurityReadinessRouteImport } from './routes/admin.security.readiness'
+import { Route as AdminSecurityAuditLogRouteImport } from './routes/admin.security.audit-log'
+import { Route as AdminMarketplaceVerificationRouteImport } from './routes/admin.marketplace.verification'
+import { Route as AdminMarketplaceTransactionsRouteImport } from './routes/admin.marketplace.transactions'
+import { Route as AdminMarketplaceSettlementsRouteImport } from './routes/admin.marketplace.settlements'
+import { Route as AdminMarketplaceSettingsRouteImport } from './routes/admin.marketplace.settings'
+import { Route as AdminMarketplaceServicesRouteImport } from './routes/admin.marketplace.services'
+import { Route as AdminMarketplaceReviewsRouteImport } from './routes/admin.marketplace.reviews'
+import { Route as AdminMarketplaceRefundsRouteImport } from './routes/admin.marketplace.refunds'
+import { Route as AdminMarketplaceReconciliationRouteImport } from './routes/admin.marketplace.reconciliation'
+import { Route as AdminMarketplaceProvidersRouteImport } from './routes/admin.marketplace.providers'
+import { Route as AdminMarketplacePromotionsRouteImport } from './routes/admin.marketplace.promotions'
+import { Route as AdminMarketplacePayoutsRouteImport } from './routes/admin.marketplace.payouts'
+import { Route as AdminMarketplacePaymentsRouteImport } from './routes/admin.marketplace.payments'
+import { Route as AdminMarketplaceFinancialReportsRouteImport } from './routes/admin.marketplace.financial-reports'
+import { Route as AdminMarketplaceDisputesRouteImport } from './routes/admin.marketplace.disputes'
+import { Route as AdminMarketplaceComplaintsRouteImport } from './routes/admin.marketplace.complaints'
+import { Route as AdminMarketplaceCommunicationsRouteImport } from './routes/admin.marketplace.communications'
+import { Route as AdminMarketplaceCommissionsRouteImport } from './routes/admin.marketplace.commissions'
+import { Route as AdminMarketplaceCategoriesRouteImport } from './routes/admin.marketplace.categories'
+import { Route as AdminMarketplaceBookingsRouteImport } from './routes/admin.marketplace.bookings'
+import { Route as AdminMarketplaceAuditLogRouteImport } from './routes/admin.marketplace.audit-log'
+import { Route as AdminMarketplaceAnalyticsRouteImport } from './routes/admin.marketplace.analytics'
+import { Route as AdminMarketplaceAiInsightsRouteImport } from './routes/admin.marketplace.ai-insights'
+import { Route as AdminMarketplaceProvidersProviderIdRouteImport } from './routes/admin.marketplace.providers.$providerId'
+import { Route as AdminMarketplaceBookingsBookingIdRouteImport } from './routes/admin.marketplace.bookings.$bookingId'
 
+const ProviderRoute = ProviderRouteImport.update({
+  id: '/provider',
+  path: '/provider',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortalRoute = PortalRouteImport.update({
   id: '/portal',
   path: '/portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CalculatorRoute = CalculatorRouteImport.update({
@@ -62,10 +139,100 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProviderIndexRoute = ProviderIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MarketplaceRoute,
+} as any)
+const CorporateIndexRoute = CorporateIndexRouteImport.update({
+  id: '/corporate/',
+  path: '/corporate/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderSettingsRoute = ProviderSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderServicesRoute = ProviderServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderReviewsRoute = ProviderReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderRegisterRoute = ProviderRegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderPromotionsRoute = ProviderPromotionsRouteImport.update({
+  id: '/promotions',
+  path: '/promotions',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderProfileRoute = ProviderProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderPayoutsRoute = ProviderPayoutsRouteImport.update({
+  id: '/payouts',
+  path: '/payouts',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderMessagesRoute = ProviderMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderLoginRoute = ProviderLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderEarningsRoute = ProviderEarningsRouteImport.update({
+  id: '/earnings',
+  path: '/earnings',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderCustomersRoute = ProviderCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderAvailabilityRoute = ProviderAvailabilityRouteImport.update({
+  id: '/availability',
+  path: '/availability',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderAppointmentsRoute = ProviderAppointmentsRouteImport.update({
+  id: '/appointments',
+  path: '/appointments',
+  getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderAnalyticsRoute = ProviderAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => ProviderRoute,
+} as any)
 const ProgramsProgramIdRoute = ProgramsProgramIdRouteImport.update({
   id: '/programs/$programId',
   path: '/programs/$programId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PortalWalletRoute = PortalWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => PortalRoute,
 } as any)
 const PortalSecurityRoute = PortalSecurityRouteImport.update({
   id: '/security',
@@ -112,6 +279,31 @@ const PortalAppointmentsRoute = PortalAppointmentsRouteImport.update({
   path: '/appointments',
   getParentRoute: () => PortalRoute,
 } as any)
+const MarketplaceBookingRoute = MarketplaceBookingRouteImport.update({
+  id: '/booking',
+  path: '/booking',
+  getParentRoute: () => MarketplaceRoute,
+} as any)
+const MarketplaceCategoryRoute = MarketplaceCategoryRouteImport.update({
+  id: '/$category',
+  path: '/$category',
+  getParentRoute: () => MarketplaceRoute,
+} as any)
+const CorporateRegisterRoute = CorporateRegisterRouteImport.update({
+  id: '/corporate/register',
+  path: '/corporate/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CorporateAnalyticsRoute = CorporateAnalyticsRouteImport.update({
+  id: '/corporate/analytics',
+  path: '/corporate/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -130,6 +322,11 @@ const AdminReportsRoute = AdminReportsRouteImport.update({
 const AdminMobileRoute = AdminMobileRouteImport.update({
   id: '/mobile',
   path: '/mobile',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMarketplaceRoute = AdminMarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminLoyaltyRoute = AdminLoyaltyRouteImport.update({
@@ -162,6 +359,11 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCorporateRoute = AdminCorporateRouteImport.update({
+  id: '/corporate',
+  path: '/corporate',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCommunicationRoute = AdminCommunicationRouteImport.update({
   id: '/communication',
   path: '/communication',
@@ -172,25 +374,232 @@ const AdminAppointmentsRoute = AdminAppointmentsRouteImport.update({
   path: '/appointments',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminMarketplaceIndexRoute = AdminMarketplaceIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminMarketplaceRoute,
+} as any)
+const MarketplaceServiceServiceIdRoute =
+  MarketplaceServiceServiceIdRouteImport.update({
+    id: '/service/$serviceId',
+    path: '/service/$serviceId',
+    getParentRoute: () => MarketplaceRoute,
+  } as any)
+const MarketplaceProviderProviderIdRoute =
+  MarketplaceProviderProviderIdRouteImport.update({
+    id: '/provider/$providerId',
+    path: '/provider/$providerId',
+    getParentRoute: () => MarketplaceRoute,
+  } as any)
+const MarketplacePaymentSuccessRoute =
+  MarketplacePaymentSuccessRouteImport.update({
+    id: '/payment/success',
+    path: '/payment/success',
+    getParentRoute: () => MarketplaceRoute,
+  } as any)
+const MarketplacePaymentFailedRoute =
+  MarketplacePaymentFailedRouteImport.update({
+    id: '/payment/failed',
+    path: '/payment/failed',
+    getParentRoute: () => MarketplaceRoute,
+  } as any)
+const MarketplacePaymentCancelRoute =
+  MarketplacePaymentCancelRouteImport.update({
+    id: '/payment/cancel',
+    path: '/payment/cancel',
+    getParentRoute: () => MarketplaceRoute,
+  } as any)
+const CorporateEmployeesGroupsRoute =
+  CorporateEmployeesGroupsRouteImport.update({
+    id: '/corporate/employees/groups',
+    path: '/corporate/employees/groups',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPaymentsWebhookRoute = ApiPaymentsWebhookRouteImport.update({
+  id: '/api/payments/webhook',
+  path: '/api/payments/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSecurityReadinessRoute = AdminSecurityReadinessRouteImport.update({
+  id: '/security/readiness',
+  path: '/security/readiness',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSecurityAuditLogRoute = AdminSecurityAuditLogRouteImport.update({
+  id: '/security/audit-log',
+  path: '/security/audit-log',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMarketplaceVerificationRoute =
+  AdminMarketplaceVerificationRouteImport.update({
+    id: '/verification',
+    path: '/verification',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceTransactionsRoute =
+  AdminMarketplaceTransactionsRouteImport.update({
+    id: '/transactions',
+    path: '/transactions',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceSettlementsRoute =
+  AdminMarketplaceSettlementsRouteImport.update({
+    id: '/settlements',
+    path: '/settlements',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceSettingsRoute =
+  AdminMarketplaceSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceServicesRoute =
+  AdminMarketplaceServicesRouteImport.update({
+    id: '/services',
+    path: '/services',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceReviewsRoute = AdminMarketplaceReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => AdminMarketplaceRoute,
+} as any)
+const AdminMarketplaceRefundsRoute = AdminMarketplaceRefundsRouteImport.update({
+  id: '/refunds',
+  path: '/refunds',
+  getParentRoute: () => AdminMarketplaceRoute,
+} as any)
+const AdminMarketplaceReconciliationRoute =
+  AdminMarketplaceReconciliationRouteImport.update({
+    id: '/reconciliation',
+    path: '/reconciliation',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceProvidersRoute =
+  AdminMarketplaceProvidersRouteImport.update({
+    id: '/providers',
+    path: '/providers',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplacePromotionsRoute =
+  AdminMarketplacePromotionsRouteImport.update({
+    id: '/promotions',
+    path: '/promotions',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplacePayoutsRoute = AdminMarketplacePayoutsRouteImport.update({
+  id: '/payouts',
+  path: '/payouts',
+  getParentRoute: () => AdminMarketplaceRoute,
+} as any)
+const AdminMarketplacePaymentsRoute =
+  AdminMarketplacePaymentsRouteImport.update({
+    id: '/payments',
+    path: '/payments',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceFinancialReportsRoute =
+  AdminMarketplaceFinancialReportsRouteImport.update({
+    id: '/financial-reports',
+    path: '/financial-reports',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceDisputesRoute =
+  AdminMarketplaceDisputesRouteImport.update({
+    id: '/disputes',
+    path: '/disputes',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceComplaintsRoute =
+  AdminMarketplaceComplaintsRouteImport.update({
+    id: '/complaints',
+    path: '/complaints',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceCommunicationsRoute =
+  AdminMarketplaceCommunicationsRouteImport.update({
+    id: '/communications',
+    path: '/communications',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceCommissionsRoute =
+  AdminMarketplaceCommissionsRouteImport.update({
+    id: '/commissions',
+    path: '/commissions',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceCategoriesRoute =
+  AdminMarketplaceCategoriesRouteImport.update({
+    id: '/categories',
+    path: '/categories',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceBookingsRoute =
+  AdminMarketplaceBookingsRouteImport.update({
+    id: '/bookings',
+    path: '/bookings',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceAuditLogRoute =
+  AdminMarketplaceAuditLogRouteImport.update({
+    id: '/audit-log',
+    path: '/audit-log',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceAnalyticsRoute =
+  AdminMarketplaceAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceAiInsightsRoute =
+  AdminMarketplaceAiInsightsRouteImport.update({
+    id: '/ai-insights',
+    path: '/ai-insights',
+    getParentRoute: () => AdminMarketplaceRoute,
+  } as any)
+const AdminMarketplaceProvidersProviderIdRoute =
+  AdminMarketplaceProvidersProviderIdRouteImport.update({
+    id: '/$providerId',
+    path: '/$providerId',
+    getParentRoute: () => AdminMarketplaceProvidersRoute,
+  } as any)
+const AdminMarketplaceBookingsBookingIdRoute =
+  AdminMarketplaceBookingsBookingIdRouteImport.update({
+    id: '/$bookingId',
+    path: '/$bookingId',
+    getParentRoute: () => AdminMarketplaceBookingsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/calculator': typeof CalculatorRoute
+  '/marketplace': typeof MarketplaceRouteWithChildren
   '/portal': typeof PortalRouteWithChildren
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/provider': typeof ProviderRouteWithChildren
   '/admin/appointments': typeof AdminAppointmentsRoute
   '/admin/communication': typeof AdminCommunicationRoute
+  '/admin/corporate': typeof AdminCorporateRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/finance': typeof AdminFinanceRoute
   '/admin/hr': typeof AdminHrRoute
   '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/loyalty': typeof AdminLoyaltyRoute
+  '/admin/marketplace': typeof AdminMarketplaceRouteWithChildren
   '/admin/mobile': typeof AdminMobileRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/health': typeof ApiHealthRoute
+  '/corporate/analytics': typeof CorporateAnalyticsRoute
+  '/corporate/register': typeof CorporateRegisterRoute
+  '/marketplace/$category': typeof MarketplaceCategoryRoute
+  '/marketplace/booking': typeof MarketplaceBookingRoute
   '/portal/appointments': typeof PortalAppointmentsRoute
   '/portal/dashboard': typeof PortalDashboardRoute
   '/portal/invoices': typeof PortalInvoicesRoute
@@ -200,7 +609,59 @@ export interface FileRoutesByFullPath {
   '/portal/programs': typeof PortalProgramsRoute
   '/portal/progress': typeof PortalProgressRoute
   '/portal/security': typeof PortalSecurityRoute
+  '/portal/wallet': typeof PortalWalletRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
+  '/provider/analytics': typeof ProviderAnalyticsRoute
+  '/provider/appointments': typeof ProviderAppointmentsRoute
+  '/provider/availability': typeof ProviderAvailabilityRoute
+  '/provider/customers': typeof ProviderCustomersRoute
+  '/provider/earnings': typeof ProviderEarningsRoute
+  '/provider/login': typeof ProviderLoginRoute
+  '/provider/messages': typeof ProviderMessagesRoute
+  '/provider/payouts': typeof ProviderPayoutsRoute
+  '/provider/profile': typeof ProviderProfileRoute
+  '/provider/promotions': typeof ProviderPromotionsRoute
+  '/provider/register': typeof ProviderRegisterRoute
+  '/provider/reviews': typeof ProviderReviewsRoute
+  '/provider/services': typeof ProviderServicesRoute
+  '/provider/settings': typeof ProviderSettingsRoute
+  '/corporate/': typeof CorporateIndexRoute
+  '/marketplace/': typeof MarketplaceIndexRoute
+  '/provider/': typeof ProviderIndexRoute
+  '/admin/marketplace/ai-insights': typeof AdminMarketplaceAiInsightsRoute
+  '/admin/marketplace/analytics': typeof AdminMarketplaceAnalyticsRoute
+  '/admin/marketplace/audit-log': typeof AdminMarketplaceAuditLogRoute
+  '/admin/marketplace/bookings': typeof AdminMarketplaceBookingsRouteWithChildren
+  '/admin/marketplace/categories': typeof AdminMarketplaceCategoriesRoute
+  '/admin/marketplace/commissions': typeof AdminMarketplaceCommissionsRoute
+  '/admin/marketplace/communications': typeof AdminMarketplaceCommunicationsRoute
+  '/admin/marketplace/complaints': typeof AdminMarketplaceComplaintsRoute
+  '/admin/marketplace/disputes': typeof AdminMarketplaceDisputesRoute
+  '/admin/marketplace/financial-reports': typeof AdminMarketplaceFinancialReportsRoute
+  '/admin/marketplace/payments': typeof AdminMarketplacePaymentsRoute
+  '/admin/marketplace/payouts': typeof AdminMarketplacePayoutsRoute
+  '/admin/marketplace/promotions': typeof AdminMarketplacePromotionsRoute
+  '/admin/marketplace/providers': typeof AdminMarketplaceProvidersRouteWithChildren
+  '/admin/marketplace/reconciliation': typeof AdminMarketplaceReconciliationRoute
+  '/admin/marketplace/refunds': typeof AdminMarketplaceRefundsRoute
+  '/admin/marketplace/reviews': typeof AdminMarketplaceReviewsRoute
+  '/admin/marketplace/services': typeof AdminMarketplaceServicesRoute
+  '/admin/marketplace/settings': typeof AdminMarketplaceSettingsRoute
+  '/admin/marketplace/settlements': typeof AdminMarketplaceSettlementsRoute
+  '/admin/marketplace/transactions': typeof AdminMarketplaceTransactionsRoute
+  '/admin/marketplace/verification': typeof AdminMarketplaceVerificationRoute
+  '/admin/security/audit-log': typeof AdminSecurityAuditLogRoute
+  '/admin/security/readiness': typeof AdminSecurityReadinessRoute
+  '/api/payments/webhook': typeof ApiPaymentsWebhookRoute
+  '/corporate/employees/groups': typeof CorporateEmployeesGroupsRoute
+  '/marketplace/payment/cancel': typeof MarketplacePaymentCancelRoute
+  '/marketplace/payment/failed': typeof MarketplacePaymentFailedRoute
+  '/marketplace/payment/success': typeof MarketplacePaymentSuccessRoute
+  '/marketplace/provider/$providerId': typeof MarketplaceProviderProviderIdRoute
+  '/marketplace/service/$serviceId': typeof MarketplaceServiceServiceIdRoute
+  '/admin/marketplace/': typeof AdminMarketplaceIndexRoute
+  '/admin/marketplace/bookings/$bookingId': typeof AdminMarketplaceBookingsBookingIdRoute
+  '/admin/marketplace/providers/$providerId': typeof AdminMarketplaceProvidersProviderIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -208,8 +669,10 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/calculator': typeof CalculatorRoute
   '/portal': typeof PortalRouteWithChildren
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/admin/appointments': typeof AdminAppointmentsRoute
   '/admin/communication': typeof AdminCommunicationRoute
+  '/admin/corporate': typeof AdminCorporateRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/finance': typeof AdminFinanceRoute
   '/admin/hr': typeof AdminHrRoute
@@ -220,6 +683,11 @@ export interface FileRoutesByTo {
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/health': typeof ApiHealthRoute
+  '/corporate/analytics': typeof CorporateAnalyticsRoute
+  '/corporate/register': typeof CorporateRegisterRoute
+  '/marketplace/$category': typeof MarketplaceCategoryRoute
+  '/marketplace/booking': typeof MarketplaceBookingRoute
   '/portal/appointments': typeof PortalAppointmentsRoute
   '/portal/dashboard': typeof PortalDashboardRoute
   '/portal/invoices': typeof PortalInvoicesRoute
@@ -229,7 +697,59 @@ export interface FileRoutesByTo {
   '/portal/programs': typeof PortalProgramsRoute
   '/portal/progress': typeof PortalProgressRoute
   '/portal/security': typeof PortalSecurityRoute
+  '/portal/wallet': typeof PortalWalletRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
+  '/provider/analytics': typeof ProviderAnalyticsRoute
+  '/provider/appointments': typeof ProviderAppointmentsRoute
+  '/provider/availability': typeof ProviderAvailabilityRoute
+  '/provider/customers': typeof ProviderCustomersRoute
+  '/provider/earnings': typeof ProviderEarningsRoute
+  '/provider/login': typeof ProviderLoginRoute
+  '/provider/messages': typeof ProviderMessagesRoute
+  '/provider/payouts': typeof ProviderPayoutsRoute
+  '/provider/profile': typeof ProviderProfileRoute
+  '/provider/promotions': typeof ProviderPromotionsRoute
+  '/provider/register': typeof ProviderRegisterRoute
+  '/provider/reviews': typeof ProviderReviewsRoute
+  '/provider/services': typeof ProviderServicesRoute
+  '/provider/settings': typeof ProviderSettingsRoute
+  '/corporate': typeof CorporateIndexRoute
+  '/marketplace': typeof MarketplaceIndexRoute
+  '/provider': typeof ProviderIndexRoute
+  '/admin/marketplace/ai-insights': typeof AdminMarketplaceAiInsightsRoute
+  '/admin/marketplace/analytics': typeof AdminMarketplaceAnalyticsRoute
+  '/admin/marketplace/audit-log': typeof AdminMarketplaceAuditLogRoute
+  '/admin/marketplace/bookings': typeof AdminMarketplaceBookingsRouteWithChildren
+  '/admin/marketplace/categories': typeof AdminMarketplaceCategoriesRoute
+  '/admin/marketplace/commissions': typeof AdminMarketplaceCommissionsRoute
+  '/admin/marketplace/communications': typeof AdminMarketplaceCommunicationsRoute
+  '/admin/marketplace/complaints': typeof AdminMarketplaceComplaintsRoute
+  '/admin/marketplace/disputes': typeof AdminMarketplaceDisputesRoute
+  '/admin/marketplace/financial-reports': typeof AdminMarketplaceFinancialReportsRoute
+  '/admin/marketplace/payments': typeof AdminMarketplacePaymentsRoute
+  '/admin/marketplace/payouts': typeof AdminMarketplacePayoutsRoute
+  '/admin/marketplace/promotions': typeof AdminMarketplacePromotionsRoute
+  '/admin/marketplace/providers': typeof AdminMarketplaceProvidersRouteWithChildren
+  '/admin/marketplace/reconciliation': typeof AdminMarketplaceReconciliationRoute
+  '/admin/marketplace/refunds': typeof AdminMarketplaceRefundsRoute
+  '/admin/marketplace/reviews': typeof AdminMarketplaceReviewsRoute
+  '/admin/marketplace/services': typeof AdminMarketplaceServicesRoute
+  '/admin/marketplace/settings': typeof AdminMarketplaceSettingsRoute
+  '/admin/marketplace/settlements': typeof AdminMarketplaceSettlementsRoute
+  '/admin/marketplace/transactions': typeof AdminMarketplaceTransactionsRoute
+  '/admin/marketplace/verification': typeof AdminMarketplaceVerificationRoute
+  '/admin/security/audit-log': typeof AdminSecurityAuditLogRoute
+  '/admin/security/readiness': typeof AdminSecurityReadinessRoute
+  '/api/payments/webhook': typeof ApiPaymentsWebhookRoute
+  '/corporate/employees/groups': typeof CorporateEmployeesGroupsRoute
+  '/marketplace/payment/cancel': typeof MarketplacePaymentCancelRoute
+  '/marketplace/payment/failed': typeof MarketplacePaymentFailedRoute
+  '/marketplace/payment/success': typeof MarketplacePaymentSuccessRoute
+  '/marketplace/provider/$providerId': typeof MarketplaceProviderProviderIdRoute
+  '/marketplace/service/$serviceId': typeof MarketplaceServiceServiceIdRoute
+  '/admin/marketplace': typeof AdminMarketplaceIndexRoute
+  '/admin/marketplace/bookings/$bookingId': typeof AdminMarketplaceBookingsBookingIdRoute
+  '/admin/marketplace/providers/$providerId': typeof AdminMarketplaceProvidersProviderIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -237,19 +757,29 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/calculator': typeof CalculatorRoute
+  '/marketplace': typeof MarketplaceRouteWithChildren
   '/portal': typeof PortalRouteWithChildren
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/provider': typeof ProviderRouteWithChildren
   '/admin/appointments': typeof AdminAppointmentsRoute
   '/admin/communication': typeof AdminCommunicationRoute
+  '/admin/corporate': typeof AdminCorporateRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/finance': typeof AdminFinanceRoute
   '/admin/hr': typeof AdminHrRoute
   '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/loyalty': typeof AdminLoyaltyRoute
+  '/admin/marketplace': typeof AdminMarketplaceRouteWithChildren
   '/admin/mobile': typeof AdminMobileRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/health': typeof ApiHealthRoute
+  '/corporate/analytics': typeof CorporateAnalyticsRoute
+  '/corporate/register': typeof CorporateRegisterRoute
+  '/marketplace/$category': typeof MarketplaceCategoryRoute
+  '/marketplace/booking': typeof MarketplaceBookingRoute
   '/portal/appointments': typeof PortalAppointmentsRoute
   '/portal/dashboard': typeof PortalDashboardRoute
   '/portal/invoices': typeof PortalInvoicesRoute
@@ -259,7 +789,59 @@ export interface FileRoutesById {
   '/portal/programs': typeof PortalProgramsRoute
   '/portal/progress': typeof PortalProgressRoute
   '/portal/security': typeof PortalSecurityRoute
+  '/portal/wallet': typeof PortalWalletRoute
   '/programs/$programId': typeof ProgramsProgramIdRoute
+  '/provider/analytics': typeof ProviderAnalyticsRoute
+  '/provider/appointments': typeof ProviderAppointmentsRoute
+  '/provider/availability': typeof ProviderAvailabilityRoute
+  '/provider/customers': typeof ProviderCustomersRoute
+  '/provider/earnings': typeof ProviderEarningsRoute
+  '/provider/login': typeof ProviderLoginRoute
+  '/provider/messages': typeof ProviderMessagesRoute
+  '/provider/payouts': typeof ProviderPayoutsRoute
+  '/provider/profile': typeof ProviderProfileRoute
+  '/provider/promotions': typeof ProviderPromotionsRoute
+  '/provider/register': typeof ProviderRegisterRoute
+  '/provider/reviews': typeof ProviderReviewsRoute
+  '/provider/services': typeof ProviderServicesRoute
+  '/provider/settings': typeof ProviderSettingsRoute
+  '/corporate/': typeof CorporateIndexRoute
+  '/marketplace/': typeof MarketplaceIndexRoute
+  '/provider/': typeof ProviderIndexRoute
+  '/admin/marketplace/ai-insights': typeof AdminMarketplaceAiInsightsRoute
+  '/admin/marketplace/analytics': typeof AdminMarketplaceAnalyticsRoute
+  '/admin/marketplace/audit-log': typeof AdminMarketplaceAuditLogRoute
+  '/admin/marketplace/bookings': typeof AdminMarketplaceBookingsRouteWithChildren
+  '/admin/marketplace/categories': typeof AdminMarketplaceCategoriesRoute
+  '/admin/marketplace/commissions': typeof AdminMarketplaceCommissionsRoute
+  '/admin/marketplace/communications': typeof AdminMarketplaceCommunicationsRoute
+  '/admin/marketplace/complaints': typeof AdminMarketplaceComplaintsRoute
+  '/admin/marketplace/disputes': typeof AdminMarketplaceDisputesRoute
+  '/admin/marketplace/financial-reports': typeof AdminMarketplaceFinancialReportsRoute
+  '/admin/marketplace/payments': typeof AdminMarketplacePaymentsRoute
+  '/admin/marketplace/payouts': typeof AdminMarketplacePayoutsRoute
+  '/admin/marketplace/promotions': typeof AdminMarketplacePromotionsRoute
+  '/admin/marketplace/providers': typeof AdminMarketplaceProvidersRouteWithChildren
+  '/admin/marketplace/reconciliation': typeof AdminMarketplaceReconciliationRoute
+  '/admin/marketplace/refunds': typeof AdminMarketplaceRefundsRoute
+  '/admin/marketplace/reviews': typeof AdminMarketplaceReviewsRoute
+  '/admin/marketplace/services': typeof AdminMarketplaceServicesRoute
+  '/admin/marketplace/settings': typeof AdminMarketplaceSettingsRoute
+  '/admin/marketplace/settlements': typeof AdminMarketplaceSettlementsRoute
+  '/admin/marketplace/transactions': typeof AdminMarketplaceTransactionsRoute
+  '/admin/marketplace/verification': typeof AdminMarketplaceVerificationRoute
+  '/admin/security/audit-log': typeof AdminSecurityAuditLogRoute
+  '/admin/security/readiness': typeof AdminSecurityReadinessRoute
+  '/api/payments/webhook': typeof ApiPaymentsWebhookRoute
+  '/corporate/employees/groups': typeof CorporateEmployeesGroupsRoute
+  '/marketplace/payment/cancel': typeof MarketplacePaymentCancelRoute
+  '/marketplace/payment/failed': typeof MarketplacePaymentFailedRoute
+  '/marketplace/payment/success': typeof MarketplacePaymentSuccessRoute
+  '/marketplace/provider/$providerId': typeof MarketplaceProviderProviderIdRoute
+  '/marketplace/service/$serviceId': typeof MarketplaceServiceServiceIdRoute
+  '/admin/marketplace/': typeof AdminMarketplaceIndexRoute
+  '/admin/marketplace/bookings/$bookingId': typeof AdminMarketplaceBookingsBookingIdRoute
+  '/admin/marketplace/providers/$providerId': typeof AdminMarketplaceProvidersProviderIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -268,19 +850,29 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/calculator'
+    | '/marketplace'
     | '/portal'
+    | '/privacy-policy'
+    | '/provider'
     | '/admin/appointments'
     | '/admin/communication'
+    | '/admin/corporate'
     | '/admin/dashboard'
     | '/admin/finance'
     | '/admin/hr'
     | '/admin/leads'
     | '/admin/login'
     | '/admin/loyalty'
+    | '/admin/marketplace'
     | '/admin/mobile'
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/users'
+    | '/api/health'
+    | '/corporate/analytics'
+    | '/corporate/register'
+    | '/marketplace/$category'
+    | '/marketplace/booking'
     | '/portal/appointments'
     | '/portal/dashboard'
     | '/portal/invoices'
@@ -290,7 +882,59 @@ export interface FileRouteTypes {
     | '/portal/programs'
     | '/portal/progress'
     | '/portal/security'
+    | '/portal/wallet'
     | '/programs/$programId'
+    | '/provider/analytics'
+    | '/provider/appointments'
+    | '/provider/availability'
+    | '/provider/customers'
+    | '/provider/earnings'
+    | '/provider/login'
+    | '/provider/messages'
+    | '/provider/payouts'
+    | '/provider/profile'
+    | '/provider/promotions'
+    | '/provider/register'
+    | '/provider/reviews'
+    | '/provider/services'
+    | '/provider/settings'
+    | '/corporate/'
+    | '/marketplace/'
+    | '/provider/'
+    | '/admin/marketplace/ai-insights'
+    | '/admin/marketplace/analytics'
+    | '/admin/marketplace/audit-log'
+    | '/admin/marketplace/bookings'
+    | '/admin/marketplace/categories'
+    | '/admin/marketplace/commissions'
+    | '/admin/marketplace/communications'
+    | '/admin/marketplace/complaints'
+    | '/admin/marketplace/disputes'
+    | '/admin/marketplace/financial-reports'
+    | '/admin/marketplace/payments'
+    | '/admin/marketplace/payouts'
+    | '/admin/marketplace/promotions'
+    | '/admin/marketplace/providers'
+    | '/admin/marketplace/reconciliation'
+    | '/admin/marketplace/refunds'
+    | '/admin/marketplace/reviews'
+    | '/admin/marketplace/services'
+    | '/admin/marketplace/settings'
+    | '/admin/marketplace/settlements'
+    | '/admin/marketplace/transactions'
+    | '/admin/marketplace/verification'
+    | '/admin/security/audit-log'
+    | '/admin/security/readiness'
+    | '/api/payments/webhook'
+    | '/corporate/employees/groups'
+    | '/marketplace/payment/cancel'
+    | '/marketplace/payment/failed'
+    | '/marketplace/payment/success'
+    | '/marketplace/provider/$providerId'
+    | '/marketplace/service/$serviceId'
+    | '/admin/marketplace/'
+    | '/admin/marketplace/bookings/$bookingId'
+    | '/admin/marketplace/providers/$providerId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -298,8 +942,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/calculator'
     | '/portal'
+    | '/privacy-policy'
     | '/admin/appointments'
     | '/admin/communication'
+    | '/admin/corporate'
     | '/admin/dashboard'
     | '/admin/finance'
     | '/admin/hr'
@@ -310,6 +956,11 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/users'
+    | '/api/health'
+    | '/corporate/analytics'
+    | '/corporate/register'
+    | '/marketplace/$category'
+    | '/marketplace/booking'
     | '/portal/appointments'
     | '/portal/dashboard'
     | '/portal/invoices'
@@ -319,26 +970,88 @@ export interface FileRouteTypes {
     | '/portal/programs'
     | '/portal/progress'
     | '/portal/security'
+    | '/portal/wallet'
     | '/programs/$programId'
+    | '/provider/analytics'
+    | '/provider/appointments'
+    | '/provider/availability'
+    | '/provider/customers'
+    | '/provider/earnings'
+    | '/provider/login'
+    | '/provider/messages'
+    | '/provider/payouts'
+    | '/provider/profile'
+    | '/provider/promotions'
+    | '/provider/register'
+    | '/provider/reviews'
+    | '/provider/services'
+    | '/provider/settings'
+    | '/corporate'
+    | '/marketplace'
+    | '/provider'
+    | '/admin/marketplace/ai-insights'
+    | '/admin/marketplace/analytics'
+    | '/admin/marketplace/audit-log'
+    | '/admin/marketplace/bookings'
+    | '/admin/marketplace/categories'
+    | '/admin/marketplace/commissions'
+    | '/admin/marketplace/communications'
+    | '/admin/marketplace/complaints'
+    | '/admin/marketplace/disputes'
+    | '/admin/marketplace/financial-reports'
+    | '/admin/marketplace/payments'
+    | '/admin/marketplace/payouts'
+    | '/admin/marketplace/promotions'
+    | '/admin/marketplace/providers'
+    | '/admin/marketplace/reconciliation'
+    | '/admin/marketplace/refunds'
+    | '/admin/marketplace/reviews'
+    | '/admin/marketplace/services'
+    | '/admin/marketplace/settings'
+    | '/admin/marketplace/settlements'
+    | '/admin/marketplace/transactions'
+    | '/admin/marketplace/verification'
+    | '/admin/security/audit-log'
+    | '/admin/security/readiness'
+    | '/api/payments/webhook'
+    | '/corporate/employees/groups'
+    | '/marketplace/payment/cancel'
+    | '/marketplace/payment/failed'
+    | '/marketplace/payment/success'
+    | '/marketplace/provider/$providerId'
+    | '/marketplace/service/$serviceId'
+    | '/admin/marketplace'
+    | '/admin/marketplace/bookings/$bookingId'
+    | '/admin/marketplace/providers/$providerId'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/admin'
     | '/calculator'
+    | '/marketplace'
     | '/portal'
+    | '/privacy-policy'
+    | '/provider'
     | '/admin/appointments'
     | '/admin/communication'
+    | '/admin/corporate'
     | '/admin/dashboard'
     | '/admin/finance'
     | '/admin/hr'
     | '/admin/leads'
     | '/admin/login'
     | '/admin/loyalty'
+    | '/admin/marketplace'
     | '/admin/mobile'
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/users'
+    | '/api/health'
+    | '/corporate/analytics'
+    | '/corporate/register'
+    | '/marketplace/$category'
+    | '/marketplace/booking'
     | '/portal/appointments'
     | '/portal/dashboard'
     | '/portal/invoices'
@@ -348,7 +1061,59 @@ export interface FileRouteTypes {
     | '/portal/programs'
     | '/portal/progress'
     | '/portal/security'
+    | '/portal/wallet'
     | '/programs/$programId'
+    | '/provider/analytics'
+    | '/provider/appointments'
+    | '/provider/availability'
+    | '/provider/customers'
+    | '/provider/earnings'
+    | '/provider/login'
+    | '/provider/messages'
+    | '/provider/payouts'
+    | '/provider/profile'
+    | '/provider/promotions'
+    | '/provider/register'
+    | '/provider/reviews'
+    | '/provider/services'
+    | '/provider/settings'
+    | '/corporate/'
+    | '/marketplace/'
+    | '/provider/'
+    | '/admin/marketplace/ai-insights'
+    | '/admin/marketplace/analytics'
+    | '/admin/marketplace/audit-log'
+    | '/admin/marketplace/bookings'
+    | '/admin/marketplace/categories'
+    | '/admin/marketplace/commissions'
+    | '/admin/marketplace/communications'
+    | '/admin/marketplace/complaints'
+    | '/admin/marketplace/disputes'
+    | '/admin/marketplace/financial-reports'
+    | '/admin/marketplace/payments'
+    | '/admin/marketplace/payouts'
+    | '/admin/marketplace/promotions'
+    | '/admin/marketplace/providers'
+    | '/admin/marketplace/reconciliation'
+    | '/admin/marketplace/refunds'
+    | '/admin/marketplace/reviews'
+    | '/admin/marketplace/services'
+    | '/admin/marketplace/settings'
+    | '/admin/marketplace/settlements'
+    | '/admin/marketplace/transactions'
+    | '/admin/marketplace/verification'
+    | '/admin/security/audit-log'
+    | '/admin/security/readiness'
+    | '/api/payments/webhook'
+    | '/corporate/employees/groups'
+    | '/marketplace/payment/cancel'
+    | '/marketplace/payment/failed'
+    | '/marketplace/payment/success'
+    | '/marketplace/provider/$providerId'
+    | '/marketplace/service/$serviceId'
+    | '/admin/marketplace/'
+    | '/admin/marketplace/bookings/$bookingId'
+    | '/admin/marketplace/providers/$providerId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -356,17 +1121,47 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
   CalculatorRoute: typeof CalculatorRoute
+  MarketplaceRoute: typeof MarketplaceRouteWithChildren
   PortalRoute: typeof PortalRouteWithChildren
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  ProviderRoute: typeof ProviderRouteWithChildren
+  ApiHealthRoute: typeof ApiHealthRoute
+  CorporateAnalyticsRoute: typeof CorporateAnalyticsRoute
+  CorporateRegisterRoute: typeof CorporateRegisterRoute
   ProgramsProgramIdRoute: typeof ProgramsProgramIdRoute
+  CorporateIndexRoute: typeof CorporateIndexRoute
+  ApiPaymentsWebhookRoute: typeof ApiPaymentsWebhookRoute
+  CorporateEmployeesGroupsRoute: typeof CorporateEmployeesGroupsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/provider': {
+      id: '/provider'
+      path: '/provider'
+      fullPath: '/provider'
+      preLoaderRoute: typeof ProviderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portal': {
       id: '/portal'
       path: '/portal'
       fullPath: '/portal'
       preLoaderRoute: typeof PortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/calculator': {
@@ -397,12 +1192,138 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/provider/': {
+      id: '/provider/'
+      path: '/'
+      fullPath: '/provider/'
+      preLoaderRoute: typeof ProviderIndexRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/marketplace/': {
+      id: '/marketplace/'
+      path: '/'
+      fullPath: '/marketplace/'
+      preLoaderRoute: typeof MarketplaceIndexRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
+    '/corporate/': {
+      id: '/corporate/'
+      path: '/corporate'
+      fullPath: '/corporate/'
+      preLoaderRoute: typeof CorporateIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider/settings': {
+      id: '/provider/settings'
+      path: '/settings'
+      fullPath: '/provider/settings'
+      preLoaderRoute: typeof ProviderSettingsRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/services': {
+      id: '/provider/services'
+      path: '/services'
+      fullPath: '/provider/services'
+      preLoaderRoute: typeof ProviderServicesRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/reviews': {
+      id: '/provider/reviews'
+      path: '/reviews'
+      fullPath: '/provider/reviews'
+      preLoaderRoute: typeof ProviderReviewsRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/register': {
+      id: '/provider/register'
+      path: '/register'
+      fullPath: '/provider/register'
+      preLoaderRoute: typeof ProviderRegisterRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/promotions': {
+      id: '/provider/promotions'
+      path: '/promotions'
+      fullPath: '/provider/promotions'
+      preLoaderRoute: typeof ProviderPromotionsRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/profile': {
+      id: '/provider/profile'
+      path: '/profile'
+      fullPath: '/provider/profile'
+      preLoaderRoute: typeof ProviderProfileRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/payouts': {
+      id: '/provider/payouts'
+      path: '/payouts'
+      fullPath: '/provider/payouts'
+      preLoaderRoute: typeof ProviderPayoutsRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/messages': {
+      id: '/provider/messages'
+      path: '/messages'
+      fullPath: '/provider/messages'
+      preLoaderRoute: typeof ProviderMessagesRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/login': {
+      id: '/provider/login'
+      path: '/login'
+      fullPath: '/provider/login'
+      preLoaderRoute: typeof ProviderLoginRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/earnings': {
+      id: '/provider/earnings'
+      path: '/earnings'
+      fullPath: '/provider/earnings'
+      preLoaderRoute: typeof ProviderEarningsRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/customers': {
+      id: '/provider/customers'
+      path: '/customers'
+      fullPath: '/provider/customers'
+      preLoaderRoute: typeof ProviderCustomersRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/availability': {
+      id: '/provider/availability'
+      path: '/availability'
+      fullPath: '/provider/availability'
+      preLoaderRoute: typeof ProviderAvailabilityRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/appointments': {
+      id: '/provider/appointments'
+      path: '/appointments'
+      fullPath: '/provider/appointments'
+      preLoaderRoute: typeof ProviderAppointmentsRouteImport
+      parentRoute: typeof ProviderRoute
+    }
+    '/provider/analytics': {
+      id: '/provider/analytics'
+      path: '/analytics'
+      fullPath: '/provider/analytics'
+      preLoaderRoute: typeof ProviderAnalyticsRouteImport
+      parentRoute: typeof ProviderRoute
+    }
     '/programs/$programId': {
       id: '/programs/$programId'
       path: '/programs/$programId'
       fullPath: '/programs/$programId'
       preLoaderRoute: typeof ProgramsProgramIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/portal/wallet': {
+      id: '/portal/wallet'
+      path: '/wallet'
+      fullPath: '/portal/wallet'
+      preLoaderRoute: typeof PortalWalletRouteImport
+      parentRoute: typeof PortalRoute
     }
     '/portal/security': {
       id: '/portal/security'
@@ -467,6 +1388,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalAppointmentsRouteImport
       parentRoute: typeof PortalRoute
     }
+    '/marketplace/booking': {
+      id: '/marketplace/booking'
+      path: '/booking'
+      fullPath: '/marketplace/booking'
+      preLoaderRoute: typeof MarketplaceBookingRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
+    '/marketplace/$category': {
+      id: '/marketplace/$category'
+      path: '/$category'
+      fullPath: '/marketplace/$category'
+      preLoaderRoute: typeof MarketplaceCategoryRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
+    '/corporate/register': {
+      id: '/corporate/register'
+      path: '/corporate/register'
+      fullPath: '/corporate/register'
+      preLoaderRoute: typeof CorporateRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/corporate/analytics': {
+      id: '/corporate/analytics'
+      path: '/corporate/analytics'
+      fullPath: '/corporate/analytics'
+      preLoaderRoute: typeof CorporateAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
@@ -493,6 +1449,13 @@ declare module '@tanstack/react-router' {
       path: '/mobile'
       fullPath: '/admin/mobile'
       preLoaderRoute: typeof AdminMobileRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/marketplace': {
+      id: '/admin/marketplace'
+      path: '/marketplace'
+      fullPath: '/admin/marketplace'
+      preLoaderRoute: typeof AdminMarketplaceRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/loyalty': {
@@ -537,6 +1500,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDashboardRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/corporate': {
+      id: '/admin/corporate'
+      path: '/corporate'
+      fullPath: '/admin/corporate'
+      preLoaderRoute: typeof AdminCorporateRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/communication': {
       id: '/admin/communication'
       path: '/communication'
@@ -551,40 +1521,397 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAppointmentsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/marketplace/': {
+      id: '/admin/marketplace/'
+      path: '/'
+      fullPath: '/admin/marketplace/'
+      preLoaderRoute: typeof AdminMarketplaceIndexRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/marketplace/service/$serviceId': {
+      id: '/marketplace/service/$serviceId'
+      path: '/service/$serviceId'
+      fullPath: '/marketplace/service/$serviceId'
+      preLoaderRoute: typeof MarketplaceServiceServiceIdRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
+    '/marketplace/provider/$providerId': {
+      id: '/marketplace/provider/$providerId'
+      path: '/provider/$providerId'
+      fullPath: '/marketplace/provider/$providerId'
+      preLoaderRoute: typeof MarketplaceProviderProviderIdRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
+    '/marketplace/payment/success': {
+      id: '/marketplace/payment/success'
+      path: '/payment/success'
+      fullPath: '/marketplace/payment/success'
+      preLoaderRoute: typeof MarketplacePaymentSuccessRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
+    '/marketplace/payment/failed': {
+      id: '/marketplace/payment/failed'
+      path: '/payment/failed'
+      fullPath: '/marketplace/payment/failed'
+      preLoaderRoute: typeof MarketplacePaymentFailedRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
+    '/marketplace/payment/cancel': {
+      id: '/marketplace/payment/cancel'
+      path: '/payment/cancel'
+      fullPath: '/marketplace/payment/cancel'
+      preLoaderRoute: typeof MarketplacePaymentCancelRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
+    '/corporate/employees/groups': {
+      id: '/corporate/employees/groups'
+      path: '/corporate/employees/groups'
+      fullPath: '/corporate/employees/groups'
+      preLoaderRoute: typeof CorporateEmployeesGroupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/payments/webhook': {
+      id: '/api/payments/webhook'
+      path: '/api/payments/webhook'
+      fullPath: '/api/payments/webhook'
+      preLoaderRoute: typeof ApiPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/security/readiness': {
+      id: '/admin/security/readiness'
+      path: '/security/readiness'
+      fullPath: '/admin/security/readiness'
+      preLoaderRoute: typeof AdminSecurityReadinessRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/security/audit-log': {
+      id: '/admin/security/audit-log'
+      path: '/security/audit-log'
+      fullPath: '/admin/security/audit-log'
+      preLoaderRoute: typeof AdminSecurityAuditLogRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/marketplace/verification': {
+      id: '/admin/marketplace/verification'
+      path: '/verification'
+      fullPath: '/admin/marketplace/verification'
+      preLoaderRoute: typeof AdminMarketplaceVerificationRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/transactions': {
+      id: '/admin/marketplace/transactions'
+      path: '/transactions'
+      fullPath: '/admin/marketplace/transactions'
+      preLoaderRoute: typeof AdminMarketplaceTransactionsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/settlements': {
+      id: '/admin/marketplace/settlements'
+      path: '/settlements'
+      fullPath: '/admin/marketplace/settlements'
+      preLoaderRoute: typeof AdminMarketplaceSettlementsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/settings': {
+      id: '/admin/marketplace/settings'
+      path: '/settings'
+      fullPath: '/admin/marketplace/settings'
+      preLoaderRoute: typeof AdminMarketplaceSettingsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/services': {
+      id: '/admin/marketplace/services'
+      path: '/services'
+      fullPath: '/admin/marketplace/services'
+      preLoaderRoute: typeof AdminMarketplaceServicesRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/reviews': {
+      id: '/admin/marketplace/reviews'
+      path: '/reviews'
+      fullPath: '/admin/marketplace/reviews'
+      preLoaderRoute: typeof AdminMarketplaceReviewsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/refunds': {
+      id: '/admin/marketplace/refunds'
+      path: '/refunds'
+      fullPath: '/admin/marketplace/refunds'
+      preLoaderRoute: typeof AdminMarketplaceRefundsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/reconciliation': {
+      id: '/admin/marketplace/reconciliation'
+      path: '/reconciliation'
+      fullPath: '/admin/marketplace/reconciliation'
+      preLoaderRoute: typeof AdminMarketplaceReconciliationRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/providers': {
+      id: '/admin/marketplace/providers'
+      path: '/providers'
+      fullPath: '/admin/marketplace/providers'
+      preLoaderRoute: typeof AdminMarketplaceProvidersRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/promotions': {
+      id: '/admin/marketplace/promotions'
+      path: '/promotions'
+      fullPath: '/admin/marketplace/promotions'
+      preLoaderRoute: typeof AdminMarketplacePromotionsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/payouts': {
+      id: '/admin/marketplace/payouts'
+      path: '/payouts'
+      fullPath: '/admin/marketplace/payouts'
+      preLoaderRoute: typeof AdminMarketplacePayoutsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/payments': {
+      id: '/admin/marketplace/payments'
+      path: '/payments'
+      fullPath: '/admin/marketplace/payments'
+      preLoaderRoute: typeof AdminMarketplacePaymentsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/financial-reports': {
+      id: '/admin/marketplace/financial-reports'
+      path: '/financial-reports'
+      fullPath: '/admin/marketplace/financial-reports'
+      preLoaderRoute: typeof AdminMarketplaceFinancialReportsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/disputes': {
+      id: '/admin/marketplace/disputes'
+      path: '/disputes'
+      fullPath: '/admin/marketplace/disputes'
+      preLoaderRoute: typeof AdminMarketplaceDisputesRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/complaints': {
+      id: '/admin/marketplace/complaints'
+      path: '/complaints'
+      fullPath: '/admin/marketplace/complaints'
+      preLoaderRoute: typeof AdminMarketplaceComplaintsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/communications': {
+      id: '/admin/marketplace/communications'
+      path: '/communications'
+      fullPath: '/admin/marketplace/communications'
+      preLoaderRoute: typeof AdminMarketplaceCommunicationsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/commissions': {
+      id: '/admin/marketplace/commissions'
+      path: '/commissions'
+      fullPath: '/admin/marketplace/commissions'
+      preLoaderRoute: typeof AdminMarketplaceCommissionsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/categories': {
+      id: '/admin/marketplace/categories'
+      path: '/categories'
+      fullPath: '/admin/marketplace/categories'
+      preLoaderRoute: typeof AdminMarketplaceCategoriesRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/bookings': {
+      id: '/admin/marketplace/bookings'
+      path: '/bookings'
+      fullPath: '/admin/marketplace/bookings'
+      preLoaderRoute: typeof AdminMarketplaceBookingsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/audit-log': {
+      id: '/admin/marketplace/audit-log'
+      path: '/audit-log'
+      fullPath: '/admin/marketplace/audit-log'
+      preLoaderRoute: typeof AdminMarketplaceAuditLogRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/analytics': {
+      id: '/admin/marketplace/analytics'
+      path: '/analytics'
+      fullPath: '/admin/marketplace/analytics'
+      preLoaderRoute: typeof AdminMarketplaceAnalyticsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/ai-insights': {
+      id: '/admin/marketplace/ai-insights'
+      path: '/ai-insights'
+      fullPath: '/admin/marketplace/ai-insights'
+      preLoaderRoute: typeof AdminMarketplaceAiInsightsRouteImport
+      parentRoute: typeof AdminMarketplaceRoute
+    }
+    '/admin/marketplace/providers/$providerId': {
+      id: '/admin/marketplace/providers/$providerId'
+      path: '/$providerId'
+      fullPath: '/admin/marketplace/providers/$providerId'
+      preLoaderRoute: typeof AdminMarketplaceProvidersProviderIdRouteImport
+      parentRoute: typeof AdminMarketplaceProvidersRoute
+    }
+    '/admin/marketplace/bookings/$bookingId': {
+      id: '/admin/marketplace/bookings/$bookingId'
+      path: '/$bookingId'
+      fullPath: '/admin/marketplace/bookings/$bookingId'
+      preLoaderRoute: typeof AdminMarketplaceBookingsBookingIdRouteImport
+      parentRoute: typeof AdminMarketplaceBookingsRoute
+    }
   }
 }
+
+interface AdminMarketplaceBookingsRouteChildren {
+  AdminMarketplaceBookingsBookingIdRoute: typeof AdminMarketplaceBookingsBookingIdRoute
+}
+
+const AdminMarketplaceBookingsRouteChildren: AdminMarketplaceBookingsRouteChildren =
+  {
+    AdminMarketplaceBookingsBookingIdRoute:
+      AdminMarketplaceBookingsBookingIdRoute,
+  }
+
+const AdminMarketplaceBookingsRouteWithChildren =
+  AdminMarketplaceBookingsRoute._addFileChildren(
+    AdminMarketplaceBookingsRouteChildren,
+  )
+
+interface AdminMarketplaceProvidersRouteChildren {
+  AdminMarketplaceProvidersProviderIdRoute: typeof AdminMarketplaceProvidersProviderIdRoute
+}
+
+const AdminMarketplaceProvidersRouteChildren: AdminMarketplaceProvidersRouteChildren =
+  {
+    AdminMarketplaceProvidersProviderIdRoute:
+      AdminMarketplaceProvidersProviderIdRoute,
+  }
+
+const AdminMarketplaceProvidersRouteWithChildren =
+  AdminMarketplaceProvidersRoute._addFileChildren(
+    AdminMarketplaceProvidersRouteChildren,
+  )
+
+interface AdminMarketplaceRouteChildren {
+  AdminMarketplaceAiInsightsRoute: typeof AdminMarketplaceAiInsightsRoute
+  AdminMarketplaceAnalyticsRoute: typeof AdminMarketplaceAnalyticsRoute
+  AdminMarketplaceAuditLogRoute: typeof AdminMarketplaceAuditLogRoute
+  AdminMarketplaceBookingsRoute: typeof AdminMarketplaceBookingsRouteWithChildren
+  AdminMarketplaceCategoriesRoute: typeof AdminMarketplaceCategoriesRoute
+  AdminMarketplaceCommissionsRoute: typeof AdminMarketplaceCommissionsRoute
+  AdminMarketplaceCommunicationsRoute: typeof AdminMarketplaceCommunicationsRoute
+  AdminMarketplaceComplaintsRoute: typeof AdminMarketplaceComplaintsRoute
+  AdminMarketplaceDisputesRoute: typeof AdminMarketplaceDisputesRoute
+  AdminMarketplaceFinancialReportsRoute: typeof AdminMarketplaceFinancialReportsRoute
+  AdminMarketplacePaymentsRoute: typeof AdminMarketplacePaymentsRoute
+  AdminMarketplacePayoutsRoute: typeof AdminMarketplacePayoutsRoute
+  AdminMarketplacePromotionsRoute: typeof AdminMarketplacePromotionsRoute
+  AdminMarketplaceProvidersRoute: typeof AdminMarketplaceProvidersRouteWithChildren
+  AdminMarketplaceReconciliationRoute: typeof AdminMarketplaceReconciliationRoute
+  AdminMarketplaceRefundsRoute: typeof AdminMarketplaceRefundsRoute
+  AdminMarketplaceReviewsRoute: typeof AdminMarketplaceReviewsRoute
+  AdminMarketplaceServicesRoute: typeof AdminMarketplaceServicesRoute
+  AdminMarketplaceSettingsRoute: typeof AdminMarketplaceSettingsRoute
+  AdminMarketplaceSettlementsRoute: typeof AdminMarketplaceSettlementsRoute
+  AdminMarketplaceTransactionsRoute: typeof AdminMarketplaceTransactionsRoute
+  AdminMarketplaceVerificationRoute: typeof AdminMarketplaceVerificationRoute
+  AdminMarketplaceIndexRoute: typeof AdminMarketplaceIndexRoute
+}
+
+const AdminMarketplaceRouteChildren: AdminMarketplaceRouteChildren = {
+  AdminMarketplaceAiInsightsRoute: AdminMarketplaceAiInsightsRoute,
+  AdminMarketplaceAnalyticsRoute: AdminMarketplaceAnalyticsRoute,
+  AdminMarketplaceAuditLogRoute: AdminMarketplaceAuditLogRoute,
+  AdminMarketplaceBookingsRoute: AdminMarketplaceBookingsRouteWithChildren,
+  AdminMarketplaceCategoriesRoute: AdminMarketplaceCategoriesRoute,
+  AdminMarketplaceCommissionsRoute: AdminMarketplaceCommissionsRoute,
+  AdminMarketplaceCommunicationsRoute: AdminMarketplaceCommunicationsRoute,
+  AdminMarketplaceComplaintsRoute: AdminMarketplaceComplaintsRoute,
+  AdminMarketplaceDisputesRoute: AdminMarketplaceDisputesRoute,
+  AdminMarketplaceFinancialReportsRoute: AdminMarketplaceFinancialReportsRoute,
+  AdminMarketplacePaymentsRoute: AdminMarketplacePaymentsRoute,
+  AdminMarketplacePayoutsRoute: AdminMarketplacePayoutsRoute,
+  AdminMarketplacePromotionsRoute: AdminMarketplacePromotionsRoute,
+  AdminMarketplaceProvidersRoute: AdminMarketplaceProvidersRouteWithChildren,
+  AdminMarketplaceReconciliationRoute: AdminMarketplaceReconciliationRoute,
+  AdminMarketplaceRefundsRoute: AdminMarketplaceRefundsRoute,
+  AdminMarketplaceReviewsRoute: AdminMarketplaceReviewsRoute,
+  AdminMarketplaceServicesRoute: AdminMarketplaceServicesRoute,
+  AdminMarketplaceSettingsRoute: AdminMarketplaceSettingsRoute,
+  AdminMarketplaceSettlementsRoute: AdminMarketplaceSettlementsRoute,
+  AdminMarketplaceTransactionsRoute: AdminMarketplaceTransactionsRoute,
+  AdminMarketplaceVerificationRoute: AdminMarketplaceVerificationRoute,
+  AdminMarketplaceIndexRoute: AdminMarketplaceIndexRoute,
+}
+
+const AdminMarketplaceRouteWithChildren =
+  AdminMarketplaceRoute._addFileChildren(AdminMarketplaceRouteChildren)
 
 interface AdminRouteChildren {
   AdminAppointmentsRoute: typeof AdminAppointmentsRoute
   AdminCommunicationRoute: typeof AdminCommunicationRoute
+  AdminCorporateRoute: typeof AdminCorporateRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminFinanceRoute: typeof AdminFinanceRoute
   AdminHrRoute: typeof AdminHrRoute
   AdminLeadsRoute: typeof AdminLeadsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminLoyaltyRoute: typeof AdminLoyaltyRoute
+  AdminMarketplaceRoute: typeof AdminMarketplaceRouteWithChildren
   AdminMobileRoute: typeof AdminMobileRoute
   AdminReportsRoute: typeof AdminReportsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminSecurityAuditLogRoute: typeof AdminSecurityAuditLogRoute
+  AdminSecurityReadinessRoute: typeof AdminSecurityReadinessRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAppointmentsRoute: AdminAppointmentsRoute,
   AdminCommunicationRoute: AdminCommunicationRoute,
+  AdminCorporateRoute: AdminCorporateRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminFinanceRoute: AdminFinanceRoute,
   AdminHrRoute: AdminHrRoute,
   AdminLeadsRoute: AdminLeadsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminLoyaltyRoute: AdminLoyaltyRoute,
+  AdminMarketplaceRoute: AdminMarketplaceRouteWithChildren,
   AdminMobileRoute: AdminMobileRoute,
   AdminReportsRoute: AdminReportsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminSecurityAuditLogRoute: AdminSecurityAuditLogRoute,
+  AdminSecurityReadinessRoute: AdminSecurityReadinessRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface MarketplaceRouteChildren {
+  MarketplaceCategoryRoute: typeof MarketplaceCategoryRoute
+  MarketplaceBookingRoute: typeof MarketplaceBookingRoute
+  MarketplaceIndexRoute: typeof MarketplaceIndexRoute
+  MarketplacePaymentCancelRoute: typeof MarketplacePaymentCancelRoute
+  MarketplacePaymentFailedRoute: typeof MarketplacePaymentFailedRoute
+  MarketplacePaymentSuccessRoute: typeof MarketplacePaymentSuccessRoute
+  MarketplaceProviderProviderIdRoute: typeof MarketplaceProviderProviderIdRoute
+  MarketplaceServiceServiceIdRoute: typeof MarketplaceServiceServiceIdRoute
+}
+
+const MarketplaceRouteChildren: MarketplaceRouteChildren = {
+  MarketplaceCategoryRoute: MarketplaceCategoryRoute,
+  MarketplaceBookingRoute: MarketplaceBookingRoute,
+  MarketplaceIndexRoute: MarketplaceIndexRoute,
+  MarketplacePaymentCancelRoute: MarketplacePaymentCancelRoute,
+  MarketplacePaymentFailedRoute: MarketplacePaymentFailedRoute,
+  MarketplacePaymentSuccessRoute: MarketplacePaymentSuccessRoute,
+  MarketplaceProviderProviderIdRoute: MarketplaceProviderProviderIdRoute,
+  MarketplaceServiceServiceIdRoute: MarketplaceServiceServiceIdRoute,
+}
+
+const MarketplaceRouteWithChildren = MarketplaceRoute._addFileChildren(
+  MarketplaceRouteChildren,
+)
 
 interface PortalRouteChildren {
   PortalAppointmentsRoute: typeof PortalAppointmentsRoute
@@ -596,6 +1923,7 @@ interface PortalRouteChildren {
   PortalProgramsRoute: typeof PortalProgramsRoute
   PortalProgressRoute: typeof PortalProgressRoute
   PortalSecurityRoute: typeof PortalSecurityRoute
+  PortalWalletRoute: typeof PortalWalletRoute
 }
 
 const PortalRouteChildren: PortalRouteChildren = {
@@ -608,19 +1936,79 @@ const PortalRouteChildren: PortalRouteChildren = {
   PortalProgramsRoute: PortalProgramsRoute,
   PortalProgressRoute: PortalProgressRoute,
   PortalSecurityRoute: PortalSecurityRoute,
+  PortalWalletRoute: PortalWalletRoute,
 }
 
 const PortalRouteWithChildren =
   PortalRoute._addFileChildren(PortalRouteChildren)
+
+interface ProviderRouteChildren {
+  ProviderAnalyticsRoute: typeof ProviderAnalyticsRoute
+  ProviderAppointmentsRoute: typeof ProviderAppointmentsRoute
+  ProviderAvailabilityRoute: typeof ProviderAvailabilityRoute
+  ProviderCustomersRoute: typeof ProviderCustomersRoute
+  ProviderEarningsRoute: typeof ProviderEarningsRoute
+  ProviderLoginRoute: typeof ProviderLoginRoute
+  ProviderMessagesRoute: typeof ProviderMessagesRoute
+  ProviderPayoutsRoute: typeof ProviderPayoutsRoute
+  ProviderProfileRoute: typeof ProviderProfileRoute
+  ProviderPromotionsRoute: typeof ProviderPromotionsRoute
+  ProviderRegisterRoute: typeof ProviderRegisterRoute
+  ProviderReviewsRoute: typeof ProviderReviewsRoute
+  ProviderServicesRoute: typeof ProviderServicesRoute
+  ProviderSettingsRoute: typeof ProviderSettingsRoute
+  ProviderIndexRoute: typeof ProviderIndexRoute
+}
+
+const ProviderRouteChildren: ProviderRouteChildren = {
+  ProviderAnalyticsRoute: ProviderAnalyticsRoute,
+  ProviderAppointmentsRoute: ProviderAppointmentsRoute,
+  ProviderAvailabilityRoute: ProviderAvailabilityRoute,
+  ProviderCustomersRoute: ProviderCustomersRoute,
+  ProviderEarningsRoute: ProviderEarningsRoute,
+  ProviderLoginRoute: ProviderLoginRoute,
+  ProviderMessagesRoute: ProviderMessagesRoute,
+  ProviderPayoutsRoute: ProviderPayoutsRoute,
+  ProviderProfileRoute: ProviderProfileRoute,
+  ProviderPromotionsRoute: ProviderPromotionsRoute,
+  ProviderRegisterRoute: ProviderRegisterRoute,
+  ProviderReviewsRoute: ProviderReviewsRoute,
+  ProviderServicesRoute: ProviderServicesRoute,
+  ProviderSettingsRoute: ProviderSettingsRoute,
+  ProviderIndexRoute: ProviderIndexRoute,
+}
+
+const ProviderRouteWithChildren = ProviderRoute._addFileChildren(
+  ProviderRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
   CalculatorRoute: CalculatorRoute,
+  MarketplaceRoute: MarketplaceRouteWithChildren,
   PortalRoute: PortalRouteWithChildren,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
+  ProviderRoute: ProviderRouteWithChildren,
+  ApiHealthRoute: ApiHealthRoute,
+  CorporateAnalyticsRoute: CorporateAnalyticsRoute,
+  CorporateRegisterRoute: CorporateRegisterRoute,
   ProgramsProgramIdRoute: ProgramsProgramIdRoute,
+  CorporateIndexRoute: CorporateIndexRoute,
+  ApiPaymentsWebhookRoute: ApiPaymentsWebhookRoute,
+  CorporateEmployeesGroupsRoute: CorporateEmployeesGroupsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
