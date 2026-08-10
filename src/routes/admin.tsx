@@ -37,7 +37,7 @@ export const Route = createFileRoute("/admin")({
 function AdminLayout() {
   const navigate = useNavigate();
   const router = useRouter();
-  const isLoginPage = router.state.location.pathname === "/admin/login";
+  const isLoginPage = router.state.location.pathname.endsWith("/admin/login");
   const [user, setUser] = useState<UserSession | null>(null);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -215,6 +215,13 @@ function AdminLayout() {
     } catch (err: any) {
       console.warn("Master Google Sheets fetch note:", err);
     } finally {
+      // Fallback to static mock CRM data if both cloud and local cache returned empty
+      const cachedNow = localStorage.getItem("optivita_crm_cache");
+      if (!cachedNow) {
+        const fallback = getMockCRMDataset();
+        setData(fallback);
+        localStorage.setItem("optivita_crm_cache", JSON.stringify(fallback));
+      }
       setLoading(false);
     }
   };
