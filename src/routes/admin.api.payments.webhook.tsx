@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { ShieldCheck, ShieldAlert, Cpu, RefreshCw, Send, Check } from "lucide-react";
 
-export const Route = createFileRoute("/api/payments/webhook")({
+export const Route = createFileRoute("/admin/api/payments/webhook")({
   component: WebhookMonitorConsole,
 });
 
@@ -78,7 +78,7 @@ function WebhookMonitorConsole() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 text-xs text-left">
       {/* Title */}
       <div className="flex justify-between items-center pb-5 border-b border-border/40">
         <div>

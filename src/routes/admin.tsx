@@ -359,7 +359,7 @@ function AdminLayout() {
                     { label: "Settlement Center", path: "/admin/marketplace/settlements" },
                     { label: "Reconciliation Desk", path: "/admin/marketplace/reconciliation" },
                     { label: "Financial Reports", path: "/admin/marketplace/financial-reports" },
-                    { label: "Webhook Security Monitor", path: "/api/payments/webhook" },
+                    { label: "Webhook Security Monitor", path: "/admin/api/payments/webhook" },
                     { label: "Communications Center", path: "/admin/marketplace/communications" },
                     { label: "Executive Analytics", path: "/admin/marketplace/analytics" },
                     { label: "AI Insights Center", path: "/admin/marketplace/ai-insights" },

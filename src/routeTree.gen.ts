@@ -71,7 +71,6 @@ import { Route as MarketplacePaymentSuccessRouteImport } from './routes/marketpl
 import { Route as MarketplacePaymentFailedRouteImport } from './routes/marketplace.payment.failed'
 import { Route as MarketplacePaymentCancelRouteImport } from './routes/marketplace.payment.cancel'
 import { Route as CorporateEmployeesGroupsRouteImport } from './routes/corporate.employees.groups'
-import { Route as ApiPaymentsWebhookRouteImport } from './routes/api.payments.webhook'
 import { Route as AdminSecurityReadinessRouteImport } from './routes/admin.security.readiness'
 import { Route as AdminSecurityAuditLogRouteImport } from './routes/admin.security.audit-log'
 import { Route as AdminMarketplaceVerificationRouteImport } from './routes/admin.marketplace.verification'
@@ -98,6 +97,7 @@ import { Route as AdminMarketplaceAnalyticsRouteImport } from './routes/admin.ma
 import { Route as AdminMarketplaceAiInsightsRouteImport } from './routes/admin.marketplace.ai-insights'
 import { Route as AdminMarketplaceProvidersProviderIdRouteImport } from './routes/admin.marketplace.providers.$providerId'
 import { Route as AdminMarketplaceBookingsBookingIdRouteImport } from './routes/admin.marketplace.bookings.$bookingId'
+import { Route as AdminApiPaymentsWebhookRouteImport } from './routes/admin.api.payments.webhook'
 
 const ProviderRoute = ProviderRouteImport.update({
   id: '/provider',
@@ -415,11 +415,6 @@ const CorporateEmployeesGroupsRoute =
     path: '/corporate/employees/groups',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPaymentsWebhookRoute = ApiPaymentsWebhookRouteImport.update({
-  id: '/api/payments/webhook',
-  path: '/api/payments/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminSecurityReadinessRoute = AdminSecurityReadinessRouteImport.update({
   id: '/security/readiness',
   path: '/security/readiness',
@@ -571,6 +566,11 @@ const AdminMarketplaceBookingsBookingIdRoute =
     path: '/$bookingId',
     getParentRoute: () => AdminMarketplaceBookingsRoute,
   } as any)
+const AdminApiPaymentsWebhookRoute = AdminApiPaymentsWebhookRouteImport.update({
+  id: '/api/payments/webhook',
+  path: '/api/payments/webhook',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -652,7 +652,6 @@ export interface FileRoutesByFullPath {
   '/admin/marketplace/verification': typeof AdminMarketplaceVerificationRoute
   '/admin/security/audit-log': typeof AdminSecurityAuditLogRoute
   '/admin/security/readiness': typeof AdminSecurityReadinessRoute
-  '/api/payments/webhook': typeof ApiPaymentsWebhookRoute
   '/corporate/employees/groups': typeof CorporateEmployeesGroupsRoute
   '/marketplace/payment/cancel': typeof MarketplacePaymentCancelRoute
   '/marketplace/payment/failed': typeof MarketplacePaymentFailedRoute
@@ -660,6 +659,7 @@ export interface FileRoutesByFullPath {
   '/marketplace/provider/$providerId': typeof MarketplaceProviderProviderIdRoute
   '/marketplace/service/$serviceId': typeof MarketplaceServiceServiceIdRoute
   '/admin/marketplace/': typeof AdminMarketplaceIndexRoute
+  '/admin/api/payments/webhook': typeof AdminApiPaymentsWebhookRoute
   '/admin/marketplace/bookings/$bookingId': typeof AdminMarketplaceBookingsBookingIdRoute
   '/admin/marketplace/providers/$providerId': typeof AdminMarketplaceProvidersProviderIdRoute
 }
@@ -740,7 +740,6 @@ export interface FileRoutesByTo {
   '/admin/marketplace/verification': typeof AdminMarketplaceVerificationRoute
   '/admin/security/audit-log': typeof AdminSecurityAuditLogRoute
   '/admin/security/readiness': typeof AdminSecurityReadinessRoute
-  '/api/payments/webhook': typeof ApiPaymentsWebhookRoute
   '/corporate/employees/groups': typeof CorporateEmployeesGroupsRoute
   '/marketplace/payment/cancel': typeof MarketplacePaymentCancelRoute
   '/marketplace/payment/failed': typeof MarketplacePaymentFailedRoute
@@ -748,6 +747,7 @@ export interface FileRoutesByTo {
   '/marketplace/provider/$providerId': typeof MarketplaceProviderProviderIdRoute
   '/marketplace/service/$serviceId': typeof MarketplaceServiceServiceIdRoute
   '/admin/marketplace': typeof AdminMarketplaceIndexRoute
+  '/admin/api/payments/webhook': typeof AdminApiPaymentsWebhookRoute
   '/admin/marketplace/bookings/$bookingId': typeof AdminMarketplaceBookingsBookingIdRoute
   '/admin/marketplace/providers/$providerId': typeof AdminMarketplaceProvidersProviderIdRoute
 }
@@ -832,7 +832,6 @@ export interface FileRoutesById {
   '/admin/marketplace/verification': typeof AdminMarketplaceVerificationRoute
   '/admin/security/audit-log': typeof AdminSecurityAuditLogRoute
   '/admin/security/readiness': typeof AdminSecurityReadinessRoute
-  '/api/payments/webhook': typeof ApiPaymentsWebhookRoute
   '/corporate/employees/groups': typeof CorporateEmployeesGroupsRoute
   '/marketplace/payment/cancel': typeof MarketplacePaymentCancelRoute
   '/marketplace/payment/failed': typeof MarketplacePaymentFailedRoute
@@ -840,6 +839,7 @@ export interface FileRoutesById {
   '/marketplace/provider/$providerId': typeof MarketplaceProviderProviderIdRoute
   '/marketplace/service/$serviceId': typeof MarketplaceServiceServiceIdRoute
   '/admin/marketplace/': typeof AdminMarketplaceIndexRoute
+  '/admin/api/payments/webhook': typeof AdminApiPaymentsWebhookRoute
   '/admin/marketplace/bookings/$bookingId': typeof AdminMarketplaceBookingsBookingIdRoute
   '/admin/marketplace/providers/$providerId': typeof AdminMarketplaceProvidersProviderIdRoute
 }
@@ -925,7 +925,6 @@ export interface FileRouteTypes {
     | '/admin/marketplace/verification'
     | '/admin/security/audit-log'
     | '/admin/security/readiness'
-    | '/api/payments/webhook'
     | '/corporate/employees/groups'
     | '/marketplace/payment/cancel'
     | '/marketplace/payment/failed'
@@ -933,6 +932,7 @@ export interface FileRouteTypes {
     | '/marketplace/provider/$providerId'
     | '/marketplace/service/$serviceId'
     | '/admin/marketplace/'
+    | '/admin/api/payments/webhook'
     | '/admin/marketplace/bookings/$bookingId'
     | '/admin/marketplace/providers/$providerId'
   fileRoutesByTo: FileRoutesByTo
@@ -1013,7 +1013,6 @@ export interface FileRouteTypes {
     | '/admin/marketplace/verification'
     | '/admin/security/audit-log'
     | '/admin/security/readiness'
-    | '/api/payments/webhook'
     | '/corporate/employees/groups'
     | '/marketplace/payment/cancel'
     | '/marketplace/payment/failed'
@@ -1021,6 +1020,7 @@ export interface FileRouteTypes {
     | '/marketplace/provider/$providerId'
     | '/marketplace/service/$serviceId'
     | '/admin/marketplace'
+    | '/admin/api/payments/webhook'
     | '/admin/marketplace/bookings/$bookingId'
     | '/admin/marketplace/providers/$providerId'
   id:
@@ -1104,7 +1104,6 @@ export interface FileRouteTypes {
     | '/admin/marketplace/verification'
     | '/admin/security/audit-log'
     | '/admin/security/readiness'
-    | '/api/payments/webhook'
     | '/corporate/employees/groups'
     | '/marketplace/payment/cancel'
     | '/marketplace/payment/failed'
@@ -1112,6 +1111,7 @@ export interface FileRouteTypes {
     | '/marketplace/provider/$providerId'
     | '/marketplace/service/$serviceId'
     | '/admin/marketplace/'
+    | '/admin/api/payments/webhook'
     | '/admin/marketplace/bookings/$bookingId'
     | '/admin/marketplace/providers/$providerId'
   fileRoutesById: FileRoutesById
@@ -1130,7 +1130,6 @@ export interface RootRouteChildren {
   CorporateRegisterRoute: typeof CorporateRegisterRoute
   ProgramsProgramIdRoute: typeof ProgramsProgramIdRoute
   CorporateIndexRoute: typeof CorporateIndexRoute
-  ApiPaymentsWebhookRoute: typeof ApiPaymentsWebhookRoute
   CorporateEmployeesGroupsRoute: typeof CorporateEmployeesGroupsRoute
 }
 
@@ -1570,13 +1569,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CorporateEmployeesGroupsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/payments/webhook': {
-      id: '/api/payments/webhook'
-      path: '/api/payments/webhook'
-      fullPath: '/api/payments/webhook'
-      preLoaderRoute: typeof ApiPaymentsWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/security/readiness': {
       id: '/admin/security/readiness'
       path: '/security/readiness'
@@ -1759,6 +1751,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMarketplaceBookingsBookingIdRouteImport
       parentRoute: typeof AdminMarketplaceBookingsRoute
     }
+    '/admin/api/payments/webhook': {
+      id: '/admin/api/payments/webhook'
+      path: '/api/payments/webhook'
+      fullPath: '/admin/api/payments/webhook'
+      preLoaderRoute: typeof AdminApiPaymentsWebhookRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
@@ -1864,6 +1863,7 @@ interface AdminRouteChildren {
   AdminUsersRoute: typeof AdminUsersRoute
   AdminSecurityAuditLogRoute: typeof AdminSecurityAuditLogRoute
   AdminSecurityReadinessRoute: typeof AdminSecurityReadinessRoute
+  AdminApiPaymentsWebhookRoute: typeof AdminApiPaymentsWebhookRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -1883,6 +1883,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminUsersRoute: AdminUsersRoute,
   AdminSecurityAuditLogRoute: AdminSecurityAuditLogRoute,
   AdminSecurityReadinessRoute: AdminSecurityReadinessRoute,
+  AdminApiPaymentsWebhookRoute: AdminApiPaymentsWebhookRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -1996,7 +1997,6 @@ const rootRouteChildren: RootRouteChildren = {
   CorporateRegisterRoute: CorporateRegisterRoute,
   ProgramsProgramIdRoute: ProgramsProgramIdRoute,
   CorporateIndexRoute: CorporateIndexRoute,
-  ApiPaymentsWebhookRoute: ApiPaymentsWebhookRoute,
   CorporateEmployeesGroupsRoute: CorporateEmployeesGroupsRoute,
 }
 export const routeTree = rootRouteImport
