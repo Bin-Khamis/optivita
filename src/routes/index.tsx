@@ -57,6 +57,7 @@ function Home() {
   // Intro Sequence States
   const [introState, setIntroState] = useState<IntroState>("loading");
   const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -125,18 +126,32 @@ function Home() {
     }
   }, []);
 
-  // Handle autoplay check once video enters DOM
+  // Handle autoplay check once video enters DOM (plays unmuted, fallbacks to muted if blocked)
   useEffect(() => {
     if (introState === "video" && videoRef.current) {
+      videoRef.current.muted = false;
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
+            setIsMuted(false);
             setIsAutoplayBlocked(false);
           })
-          .catch((err) => {
-            console.log("Autoplay was prevented:", err);
-            setIsAutoplayBlocked(true);
+          .catch(() => {
+            // Unmuted autoplay blocked, try muted autoplay
+            console.log("Unmuted autoplay blocked, trying muted autoplay...");
+            if (videoRef.current) {
+              videoRef.current.muted = true;
+              setIsMuted(true);
+              videoRef.current.play()
+                .then(() => {
+                  setIsAutoplayBlocked(false);
+                })
+                .catch((err) => {
+                  console.log("Muted autoplay also blocked:", err);
+                  setIsAutoplayBlocked(true);
+                });
+            }
           });
       }
     }
@@ -205,31 +220,39 @@ function Home() {
     }
   }, [introState]);
 
-  // Scroll listeners for Parallax and Side Tracker
+  // Scroll listeners for Parallax and Side Tracker with requestAnimationFrame Throttling
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    let ticking = false;
     const handleScroll = () => {
-      setScrollY(window.scrollY);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentY = window.scrollY;
+          setScrollY(currentY);
 
-      // Sidebar indicators offsets
-      const scrollPos = window.scrollY + 280;
-      const heroEl = document.getElementById("hero");
-      const flowchartEl = document.getElementById("flowchart");
-      const programsEl = document.getElementById("programs");
-      const marketplaceEl = document.getElementById("marketplace");
-      const clientPortalEl = document.getElementById("client-portal");
+          // Sidebar indicators offsets
+          const scrollPos = currentY + 280;
+          const flowchartEl = document.getElementById("flowchart");
+          const programsEl = document.getElementById("programs");
+          const marketplaceEl = document.getElementById("marketplace");
+          const clientPortalEl = document.getElementById("client-portal");
 
-      if (clientPortalEl && scrollPos >= clientPortalEl.offsetTop) {
-        setCurrentSection("portal");
-      } else if (marketplaceEl && scrollPos >= marketplaceEl.offsetTop) {
-        setCurrentSection("marketplace");
-      } else if (programsEl && scrollPos >= programsEl.offsetTop) {
-        setCurrentSection("programs");
-      } else if (flowchartEl && scrollPos >= flowchartEl.offsetTop) {
-        setCurrentSection("flowchart");
-      } else {
-        setCurrentSection("hero");
+          if (clientPortalEl && scrollPos >= clientPortalEl.offsetTop) {
+            setCurrentSection("portal");
+          } else if (marketplaceEl && scrollPos >= marketplaceEl.offsetTop) {
+            setCurrentSection("marketplace");
+          } else if (programsEl && scrollPos >= programsEl.offsetTop) {
+            setCurrentSection("programs");
+          } else if (flowchartEl && scrollPos >= flowchartEl.offsetTop) {
+            setCurrentSection("flowchart");
+          } else {
+            setCurrentSection("hero");
+          }
+
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 
@@ -362,15 +385,25 @@ function Home() {
 
   const startPlaybackManual = () => {
     if (videoRef.current) {
+      videoRef.current.muted = false;
+      setIsMuted(false);
       videoRef.current.play()
         .then(() => setIsAutoplayBlocked(false))
         .catch(() => {});
     }
   };
 
+  const toggleMute = () => {
+    if (videoRef.current) {
+      const nextMuted = !videoRef.current.muted;
+      videoRef.current.muted = nextMuted;
+      setIsMuted(nextMuted);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300 relative overflow-x-hidden">
-      {/* Self-contained styling module for Premium animations */}
+      {/* Self-contained styling module for Premium GPU Accelerated animations */}
       <style>{`
         @keyframes logoScale {
           0% { transform: scale(0.92); opacity: 0; filter: blur(5px); }
@@ -387,11 +420,12 @@ function Home() {
           animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
         }
 
-        /* Scroll Reveal CSS triggers */
+        /* Scroll Reveal CSS triggers with GPU Layer rendering */
         .scroll-reveal {
           opacity: 0;
           transform: translateY(24px);
-          transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+          will-change: transform, opacity;
+          transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .reveal-active {
           opacity: 1;
@@ -399,6 +433,7 @@ function Home() {
         }
         .scroll-reveal img {
           transform: scale(1.05);
+          will-change: transform;
           transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .reveal-active img {
@@ -435,15 +470,32 @@ function Home() {
                 ref={videoRef}
                 src="/optivita-hero.mp4"
                 className="w-full h-full object-cover"
-                muted
+                muted={isMuted}
                 playsInline
                 autoPlay
                 onEnded={handleVideoEnded}
               />
 
+              {/* Speaker Control (Bottom Left) */}
+              <button
+                onClick={toggleMute}
+                className="absolute bottom-8 left-8 p-3 bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 rounded-full transition-all duration-300 hover:scale-105 cursor-pointer z-50 flex items-center justify-center"
+                title={isMuted ? "Unmute" : "Mute"}
+              >
+                {isMuted ? (
+                  <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6L4.5 9H1.5v6h3l4.5 3.75V5.25z" />
+                  </svg>
+                ) : (
+                  <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                  </svg>
+                )}
+              </button>
+
               <button
                 onClick={skipIntro}
-                className="absolute bottom-8 right-8 px-5 py-2.5 bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-350 hover:scale-105 cursor-pointer"
+                className="absolute bottom-8 right-8 px-5 py-2.5 bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-350 hover:scale-105 cursor-pointer z-50"
               >
                 Skip Intro &rarr;
               </button>
