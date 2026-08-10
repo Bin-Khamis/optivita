@@ -140,7 +140,7 @@ export function SiteHeader() {
 export function SiteFooter() {
   return (
     <footer id="contact" className="bg-primary text-primary-foreground">
-      <div className="max-w-7xl mx-auto px-6 py-14 grid md:grid-cols-3 gap-10">
+      <div className="max-w-7xl mx-auto px-6 py-14 grid md:grid-cols-4 gap-10">
         <div>
           <Link to="/" className="inline-block mb-4">
             <div className="p-3 bg-white rounded-2xl shadow-md hover:scale-105 transition-transform duration-300">
@@ -178,6 +178,26 @@ export function SiteFooter() {
             <li>
               <Link to="/calculator" className="font-semibold text-accent">
                 Free Health Calculator
+              </Link>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 className="font-display font-semibold mb-3">Marketplace Providers</h4>
+          <ul className="space-y-2 text-sm opacity-90">
+            <li>
+              <Link to="/provider/login" className="hover:text-accent hover:underline transition-colors">
+                Provider Login
+              </Link>
+            </li>
+            <li>
+              <Link to="/provider/register" className="hover:text-accent hover:underline transition-colors">
+                Join as Provider
+              </Link>
+            </li>
+            <li>
+              <Link to="/marketplace" className="hover:text-accent hover:underline transition-colors">
+                Browse Directory
               </Link>
             </li>
           </ul>
