@@ -20,6 +20,7 @@ import {
   HeartPulse,
   ChevronRight,
   CheckCircle,
+  ShoppingBag,
 } from "lucide-react";
 import logoAsset from "@/assets/optivita-logo.png.asset.json";
 
