@@ -101,83 +101,109 @@ function Home() {
 
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-12 items-center relative z-10 w-full">
           {/* Left Column: Text Content */}
-          <div className="lg:col-span-6 space-y-8 text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-black uppercase tracking-wider">
-              <Sparkles className="h-4 w-4" />
-              <span>Your Precision Health Partner</span>
+          <div className="lg:col-span-6 space-y-7 text-left">
+            {/* Premium Pill Badge */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest w-fit select-none">
+              <Sparkles className="h-3.5 w-3.5 shrink-0" />
+              <span>YOUR PRECISION HEALTH PARTNER</span>
             </div>
 
-            <h1 className="font-display font-black text-4xl sm:text-6xl lg:text-7xl leading-none tracking-tight text-slate-900 dark:text-white">
+            {/* Headline with Safe Inline Clip style */}
+            <h1 className="font-display font-black text-4xl sm:text-6xl lg:text-7xl leading-[1.12] tracking-tight text-slate-900 dark:text-white select-none">
               YOUR HEALTH.
               <br />
               YOUR DATA.
               <br />
-              <span className="bg-brand-gradient bg-clip-text text-transparent">
+              <span
+                className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent"
+                style={{ WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+              >
                 YOUR PLAN.
               </span>
             </h1>
 
-            <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 max-w-xl leading-relaxed">
-              Tailored medical nutrition programs, certified local experts, and integrated
-              progress tracking — all unified under one secure health-tech ecosystem.
+            {/* Supporting Copy */}
+            <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-[540px] leading-relaxed">
+              Personalized wellness programs, expert guidance and integrated
+              progress tracking — all unified under one secure health-tech
+              ecosystem.
             </p>
 
-            <div className="flex flex-wrap gap-4 pt-2">
-              <Link
-                to="/calculator"
-                className="inline-flex items-center rounded-full bg-brand-gradient text-white px-8 py-4 font-black uppercase tracking-wider text-xs shadow-soft hover:opacity-95 hover:scale-105 transition-all duration-300"
-              >
-                🩺 Check Your Health
-              </Link>
-              <a
-                href="#programs"
-                className="inline-flex items-center rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-white px-8 py-4 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-slate-800 hover:scale-102 transition-all duration-300"
-              >
-                Explore Programs
-              </a>
-              <Link
-                to="/marketplace"
-                className="inline-flex items-center rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-850 dark:text-white px-8 py-4 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-slate-800 hover:scale-102 transition-all duration-300"
-              >
-                Explore Marketplace
-              </Link>
+            {/* Button Layout & CTAs */}
+            <div className="space-y-5 pt-2">
+              <div className="flex flex-wrap gap-4 items-center">
+                <Link
+                  to="/calculator"
+                  className="inline-flex items-center gap-2 rounded-full bg-slate-950 dark:bg-slate-900 hover:bg-emerald-600 dark:hover:bg-emerald-500 text-white px-8 py-4 font-black uppercase tracking-wider text-xs shadow-soft hover:scale-105 transition-all duration-350 border border-slate-950 dark:border-slate-800"
+                >
+                  <Activity className="h-4.5 w-4.5 text-white" />
+                  CHECK YOUR HEALTH
+                </Link>
+                <a
+                  href="#programs"
+                  className="inline-flex items-center rounded-full border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-950 text-slate-900 dark:text-white px-8 py-4 font-bold text-xs uppercase tracking-wider hover:border-emerald-500 hover:text-emerald-500 hover:scale-102 transition-all duration-350"
+                >
+                  EXPLORE PROGRAMS
+                </a>
+              </div>
+              <div className="pl-1">
+                <Link
+                  to="/marketplace"
+                  className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-accent hover:underline"
+                >
+                  <ShoppingBag className="h-4 w-4 shrink-0 text-accent" />
+                  <span>Explore Marketplace</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
             </div>
           </div>
 
-          {/* Right Column: Premium Human Wellness + Floating UI overlay */}
-          <div className="lg:col-span-6 flex justify-center items-center relative">
-            <div className="relative w-full max-w-lg aspect-square rounded-[40px] overflow-hidden shadow-glow border border-slate-200/50 dark:border-slate-800">
+          {/* Right Column: Premium Wellness Visual + Floating Overlays */}
+          <div className="lg:col-span-6 flex justify-center items-center relative py-8">
+            {/* Subtle health-tech vector background graphic */}
+            <div className="absolute inset-0 pointer-events-none opacity-30 select-none hidden sm:block">
+              <svg className="w-full h-full" viewBox="0 0 400 400" fill="none">
+                <circle cx="150" cy="150" r="130" stroke="currentColor" strokeWidth="0.75" strokeDasharray="4 4" className="text-slate-300 dark:text-slate-700" />
+                <line x1="50" y1="50" x2="350" y2="350" stroke="currentColor" strokeWidth="0.75" className="text-slate-300 dark:text-slate-700" />
+                <circle cx="50" cy="50" r="3.5" fill="currentColor" className="text-emerald-500" />
+                <circle cx="350" cy="350" r="3.5" fill="currentColor" className="text-teal-500" />
+              </svg>
+            </div>
+
+            {/* Photo Card container */}
+            <div className="relative w-full max-w-md aspect-[1.1] rounded-[48px] overflow-hidden shadow-glow border border-slate-200/50 dark:border-slate-800/80 bg-slate-100 dark:bg-slate-900">
               <img
-                src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&h=800&fit=crop&q=80"
-                alt="Active lifestyle wellness"
+                src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=800&fit=crop&q=80"
+                alt="Healthy modern wellness active posture"
                 className="h-full w-full object-cover select-none"
                 loading="eager"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent pointer-events-none" />
             </div>
 
-            {/* Floating UI Widget 1: Health Score */}
-            <div className="absolute -top-6 -left-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 rounded-3xl border border-border/80 shadow-glow flex items-center gap-3 animate-bounce-slow">
-              <div className="relative h-12 w-12 rounded-full border-4 border-emerald-500/25 flex items-center justify-center font-bold text-emerald-600 dark:text-emerald-400">
-                <div className="absolute inset-0 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin-slow" />
-                <span className="text-sm font-black">82</span>
+            {/* Overlap Card 1: Sample Health Score */}
+            <div className="absolute -top-4 -left-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4.5 py-3 rounded-2xl border border-border/80 shadow-glow flex items-center gap-3 animate-bounce-slow max-w-[195px] text-left">
+              <div className="relative h-10 w-10 rounded-full border-[3px] border-emerald-500/25 flex items-center justify-center font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                <div className="absolute inset-0 rounded-full border-[3px] border-emerald-500 border-t-transparent animate-spin-slow" />
+                <span className="text-xs font-black">82</span>
               </div>
-              <div className="text-left">
-                <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Health Score</p>
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Excellent Range</p>
+              <div className="min-w-0">
+                <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider truncate">Sample Health Score</p>
+                <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 truncate">Example Profile</p>
               </div>
             </div>
 
-            {/* Floating UI Widget 2: Sleep/Activity */}
-            <div className="absolute bottom-10 -right-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4.5 rounded-3xl border border-border/80 shadow-glow space-y-2 text-left w-48 animate-pulse-slow">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-slate-800 dark:text-slate-200">Daily Hydration</span>
-                <span className="text-[10px] font-black text-cyan-500">84%</span>
+            {/* Overlap Card 2: Hydration Status */}
+            <div className="absolute bottom-6 -right-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4.5 py-3.5 rounded-2xl border border-border/80 shadow-glow space-y-1.5 text-left w-44 animate-pulse-slow">
+              <div className="flex items-center justify-between text-[10px] font-bold">
+                <span className="text-slate-800 dark:text-slate-200">DAILY HYDRATION</span>
+                <span className="font-black text-cyan-500">84%</span>
               </div>
-              <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
                 <div className="bg-cyan-500 h-full w-[84%] rounded-full" />
               </div>
-              <p className="text-[9px] text-slate-400">2.8L of 3.5L target met</p>
+              <p className="text-[8px] text-slate-400 font-semibold uppercase tracking-wider">Sample Progress</p>
             </div>
           </div>
         </div>
